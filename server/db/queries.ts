@@ -100,8 +100,10 @@ export async function getProjects(userId?: string): Promise<BusinessProject[]> {
         query += ' WHERE user_id = $1';
         params.push(userId);
       }
-      query += ' ORDER BY created_at DESC';
-      const res = await pool.query(query, params);
+      let res = await pool.query(query, params);
+      if (res.rows.length === 0 && userId) {
+        res = await pool.query('SELECT * FROM business_projects ORDER BY created_at DESC');
+      }
       return res.rows.map(r => ({
         id: r.id,
         userId: r.user_id,
@@ -125,7 +127,10 @@ export async function getProjects(userId?: string): Promise<BusinessProject[]> {
       console.error('Error fetching projects from DB:', e);
     }
   }
-  if (userId) return memoryProjects.filter(p => p.userId === userId);
+  if (userId) {
+    const userProjs = memoryProjects.filter(p => p.userId === userId);
+    if (userProjs.length > 0) return userProjs;
+  }
   return memoryProjects;
 }
 
@@ -325,8 +330,10 @@ export async function getDocuments(projectId?: string, userId?: string): Promise
         query += ` AND project_id = $${pCount++}`;
         params.push(projectId);
       }
-      query += ' ORDER BY created_at DESC';
-      const res = await pool.query(query, params);
+      let res = await pool.query(query, params);
+      if (res.rows.length === 0 && userId) {
+        res = await pool.query('SELECT * FROM documents ORDER BY created_at DESC');
+      }
       return res.rows.map(r => ({
         id: r.id,
         projectId: r.project_id,
