@@ -49,6 +49,7 @@ import {
   issueNocCertificateApi,
   fetchDocuments,
   uploadDocumentApi,
+  deleteDocumentApi,
   fetchComplianceTasks,
   fetchJointInspections,
   createJointInspectionApi,
@@ -89,7 +90,8 @@ interface AppContextType {
   // Dynamic state helpers
   addProject: (projData: Omit<BusinessProject, 'id' | 'createdAt' | 'userId'>) => BusinessProject;
   applyForApproval: (approvalId: string, approvalName: string, department: string, documentIds?: string[], remarks?: string) => Application;
-  uploadDocument: (docName: string, category: string, file: File | null) => DocumentItem;
+  uploadDocument: (docName: string, category: string, file: File | null, ocrResult?: any, customFileUrl?: string) => DocumentItem;
+  deleteDocument: (docId: string) => Promise<boolean>;
   respondToQuery: (queryId: string, responseText: string, responseDocName?: string) => void;
   updateApplicationStatus: (appId: string, status: ApprovalStatus, remarks?: string) => void;
   raiseOfficerQuery: (appId: string, queryCategory: string, queryText: string, dueDate: string) => void;
@@ -422,51 +424,73 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return newApp;
   };
 
-  const uploadDocument = (docName: string, category: string, file: File | null): DocumentItem => {
-    const fileNameLower = file ? file.name.toLowerCase() : '';
-    let status: DocumentItem['status'] = 'Valid';
-    let issues: string[] = [];
-    let recommendations: string[] = [];
+  const uploadDocument = (
+    docName: string, 
+    category: string, 
+    file: File | null, 
+    ocrResult?: any, 
+    customFileUrl?: string
+  ): DocumentItem => {
+    let status: DocumentItem['status'] = ocrResult?.status || 'Valid';
+    let issues: string[] = ocrResult?.issues || [];
+    let recommendations: string[] = ocrResult?.recommendations || [];
 
-    if (fileNameLower.includes('old') || fileNameLower.includes('2022') || fileNameLower.includes('expired')) {
-      status = 'Expired';
-      issues.push('Certificate validity period expired.');
-      recommendations.push('Upload a renewed version from issuing authority.');
-    } else if (fileNameLower.includes('mismatch') || fileNameLower.includes('unit1')) {
-      status = 'Name Mismatch';
-      issues.push(`Name on document does not match project "${activeProject.businessName}".`);
-      recommendations.push('Upload a corrected document or name change affidavit.');
-    } else if (fileNameLower.includes('blurry') || fileNameLower.includes('low_res')) {
-      status = 'Blurry / Unreadable';
-      issues.push('Resolution is under 200 DPI. Seal unreadable.');
-      recommendations.push('Re-scan document at 300 DPI or higher.');
-    } else {
-      recommendations.push('Document text and seal verified cleanly by PermitFlow AI.');
+    if (!ocrResult) {
+      const fileNameLower = file ? file.name.toLowerCase() : '';
+      if (fileNameLower.includes('old') || fileNameLower.includes('2022') || fileNameLower.includes('expired')) {
+        status = 'Expired';
+        issues.push('Certificate validity period expired.');
+        recommendations.push('Upload a renewed version from issuing authority.');
+      } else if (fileNameLower.includes('mismatch') || fileNameLower.includes('unit1')) {
+        status = 'Name Mismatch';
+        issues.push(`Name on document does not match project "${activeProject.businessName}".`);
+        recommendations.push('Upload a corrected document or name change affidavit.');
+      } else if (fileNameLower.includes('blurry') || fileNameLower.includes('low_res')) {
+        status = 'Blurry / Unreadable';
+        issues.push('Resolution is under 200 DPI. Seal unreadable.');
+        recommendations.push('Re-scan document at 300 DPI or higher.');
+      } else {
+        recommendations.push('Document text and seal verified cleanly by PermitFlow AI.');
+      }
     }
+
+    const resolvedFileUrl = customFileUrl || (file ? URL.createObjectURL(file) : '/mock_documents/sample.pdf');
 
     const newDoc: DocumentItem = {
       id: `doc-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       projectId: activeProject.id,
       docName,
       category,
-      fileUrl: file ? URL.createObjectURL(file) : '/mock_documents/sample.pdf',
+      fileUrl: resolvedFileUrl,
       fileSize: file ? `${Math.round(file.size / 1024)} KB` : '1.2 MB',
       uploadDate: new Date().toISOString().split('T')[0],
       status,
       aiValidationResult: {
-        confidence: status === 'Valid' ? 96 : 48,
+        confidence: ocrResult?.confidence ?? (status === 'Valid' ? 96 : 48),
         issues,
         recommendations,
-        extractedName: status === 'Name Mismatch' ? 'Alternate Unit' : activeProject.businessName
+        extractedName: ocrResult?.extractedName || (status === 'Name Mismatch' ? 'Alternate Unit' : activeProject.businessName),
+        extractedRegNo: ocrResult?.extractedRegNo,
+        extractedExpiry: ocrResult?.extractedExpiry
       }
     };
 
     setDocuments([newDoc, ...documents]);
 
-    // Persist document to Supabase
+    // Persist document to Supabase / Backend Express Database
     uploadDocumentApi(newDoc).catch(err => console.warn('Could not save document to backend:', err));
 
     return newDoc;
+  };
+
+  const deleteDocument = async (docId: string): Promise<boolean> => {
+    setDocuments(prev => prev.filter(d => d.id !== docId));
+    try {
+      await deleteDocumentApi(docId);
+    } catch (e) {
+      console.warn('Could not delete document from backend:', e);
+    }
+    return true;
   };
 
   const respondToQuery = (queryId: string, responseText: string, responseDocName?: string) => {
@@ -865,6 +889,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addProject,
         applyForApproval,
         uploadDocument,
+        deleteDocument,
         respondToQuery,
         updateApplicationStatus,
         raiseOfficerQuery,

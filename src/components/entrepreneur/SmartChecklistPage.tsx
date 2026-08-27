@@ -47,6 +47,11 @@ export const SmartChecklistPage: React.FC = () => {
   };
   const checklist = generateSmartChecklist(previewProject, applications);
 
+  // SLA Verification Timeline Calculations
+  const totalSlaDays = checklist.reduce((acc, curr) => acc + (curr.estimatedTimelineDays || 15), 0);
+  const maxCriticalPathDays = checklist.length > 0 ? Math.max(...checklist.map(c => c.estimatedTimelineDays || 15)) : 30;
+  const avgDaysPerClearance = Math.round(totalSlaDays / (checklist.length || 1));
+
   const currentSectorConfig = MASTER_SECTOR_DATA.find(s => s.id === selectedSector);
   const subSectorOptions = currentSectorConfig ? currentSectorConfig.subSectors : [];
 
@@ -145,29 +150,46 @@ export const SmartChecklistPage: React.FC = () => {
       </div>
 
       {/* Live Sector & Sub-Sector Switcher Card */}
-      <div className="bg-[#F8FCF9] dark:bg-[#16261C] p-6 rounded-2xl border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-[#D4EEDC] dark:border-[#253D2C] pb-3">
-          <div>
+      <div className="bg-gradient-to-r from-[#F8FCF9] to-[#EDF8F1] dark:from-[#16261C] dark:to-[#122017] p-5 sm:p-6 rounded-3xl border border-[#D4EEDC] dark:border-[#253D2C] shadow-sm space-y-4">
+        
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#D4EEDC]/60 dark:border-[#253D2C] pb-3">
+          <div className="space-y-0.5">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#2E6F40] text-white font-extrabold text-[10px] uppercase shadow-xs">
-                Industry Selector & Rules Engine
+              <span className="px-2.5 py-0.5 rounded-full bg-[#2E6F40] text-white font-extrabold text-[10px] tracking-wide uppercase shadow-xs flex items-center gap-1">
+                <span>⚡</span>
+                <span>Smart Rules Engine</span>
               </span>
-              <h2 className="font-extrabold text-sm text-[#192A1E] dark:text-[#E8F7ED]">Select Sector & Sub-Sector to Generate Approval Checklist</h2>
+              <h2 className="font-extrabold text-sm sm:text-base text-[#192A1E] dark:text-[#E8F7ED] flex items-center gap-1.5">
+                <span>🏭</span>
+                <span>Select Industry Sector</span>
+              </h2>
             </div>
-            <p className="text-xs text-[#4A6B53] dark:text-[#A3D4B3] mt-1 font-medium">
-              Select any Maharashtra industry sector below (e.g., <strong className="text-[#2E6F40] font-extrabold">Manufacturing → Textiles</strong> or <strong className="text-[#2E6F40] font-extrabold">Food Processing → Edible Oil & Spices</strong>) to view exact statutory permissions & required licences.
+            <p className="text-xs text-[#4A6B53] dark:text-[#A3D4B3] font-medium">
+              Pick your sector to generate exact statutory permits & licences.
             </p>
           </div>
 
-          <div className="px-3.5 py-1.5 bg-white dark:bg-slate-900 rounded-xl border border-[#D4EEDC] dark:border-[#253D2C] text-[#2E6F40] dark:text-[#CFFFDC] font-extrabold text-xs shrink-0 shadow-xs">
-            {checklist.length} Required Clearances
+          <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white dark:bg-slate-900 rounded-2xl border border-[#D4EEDC] dark:border-[#253D2C] text-[#2E6F40] dark:text-[#CFFFDC] font-extrabold text-xs shrink-0 shadow-xs">
+            <span>📋</span>
+            <span>{checklist.length} Clearances Required</span>
           </div>
         </div>
 
-        {/* 6 Sector Buttons */}
+        {/* 6 Attractive Sector Cards with Emojis */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
           {MASTER_SECTOR_DATA.map((sec) => {
             const isSelected = selectedSector === sec.id;
+            const metaMap: Record<string, { emoji: string; label: string }> = {
+              'Manufacturing': { emoji: '🏭', label: 'Manufacturing' },
+              'Packaging': { emoji: '📦', label: 'Packaging' },
+              'Services': { emoji: '💼', label: 'Services' },
+              'Food Processing': { emoji: '🥗', label: 'Food & Agro' },
+              'Retail': { emoji: '🛒', label: 'Retail' },
+              'IT / IT-enabled Services': { emoji: '💻', label: 'IT & Tech' }
+            };
+            const meta = metaMap[sec.id] || { emoji: '🏢', label: sec.name };
+
             return (
               <button
                 key={sec.id}
@@ -178,15 +200,20 @@ export const SmartChecklistPage: React.FC = () => {
                     setSelectedSubSector(sec.subSectors[0].name);
                   }
                 }}
-                className={`p-3 rounded-xl border text-center transition-all text-xs font-extrabold cursor-pointer ${
+                className={`p-3 rounded-2xl border text-center transition-all duration-200 cursor-pointer flex flex-col items-center justify-center space-y-1 ${
                   isSelected
-                    ? 'bg-[#2E6F40] text-white border-[#2E6F40] shadow-md scale-[1.02] ring-2 ring-[#68BA7F]/40'
-                    : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-[#F8FCF9] hover:border-[#68BA7F] shadow-xs'
+                    ? 'bg-[#2E6F40] text-white border-[#2E6F40] shadow-md scale-[1.03] ring-2 ring-[#68BA7F]/40'
+                    : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border-slate-200/80 dark:border-slate-800 hover:bg-[#F0FAF3] hover:border-[#68BA7F] hover:scale-[1.01] shadow-xs'
                 }`}
               >
-                <div>{sec.name}</div>
-                <div className={`text-[10px] font-semibold mt-0.5 ${isSelected ? 'text-[#CFFFDC]' : 'text-slate-500'}`}>
-                  {sec.subSectors.length} Sub-Sectors
+                <div className="text-xl sm:text-2xl">{meta.emoji}</div>
+                <div className="text-xs font-extrabold leading-tight">{meta.label}</div>
+                <div className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                  isSelected 
+                    ? 'bg-white/20 text-[#CFFFDC]' 
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                }`}>
+                  {sec.subSectors.length} Types
                 </div>
               </button>
             );
@@ -195,15 +222,16 @@ export const SmartChecklistPage: React.FC = () => {
 
         {/* Sub-Sector Dropdown Selector */}
         {subSectorOptions.length > 0 && (
-          <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-[#D4EEDC] dark:border-[#253D2C] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xs">
-            <div className="flex items-center gap-2 text-[#192A1E] dark:text-[#E8F7ED] shrink-0">
-              <span className="font-extrabold uppercase text-[10px] text-[#2E6F40] dark:text-[#CFFFDC]">Sub-Sector ({selectedSector}):</span>
+          <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl border border-[#D4EEDC] dark:border-[#253D2C] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs shadow-xs">
+            <div className="flex items-center gap-2 text-[#192A1E] dark:text-[#E8F7ED] shrink-0 font-extrabold">
+              <span className="text-sm">🎯</span>
+              <span className="uppercase text-[11px] text-[#2E6F40] dark:text-[#CFFFDC]">Sub-Sector:</span>
             </div>
             
             <select
               value={selectedSubSector}
               onChange={(e) => setSelectedSubSector(e.target.value)}
-              className="w-full sm:w-auto flex-1 bg-[#F8FCF9] dark:bg-slate-800 text-slate-900 dark:text-white font-extrabold border border-[#D4EEDC] dark:border-[#253D2C] rounded-xl px-3 py-2 focus:ring-2 focus:ring-[#2E6F40] outline-none text-xs shadow-xs"
+              className="w-full sm:w-auto flex-1 bg-[#F8FCF9] dark:bg-slate-800 text-slate-900 dark:text-white font-extrabold border border-[#D4EEDC] dark:border-[#253D2C] rounded-xl px-3.5 py-2 focus:ring-2 focus:ring-[#2E6F40] outline-none text-xs shadow-xs cursor-pointer"
             >
               {subSectorOptions.map((sub) => (
                 <option key={sub.id} value={sub.name}>
@@ -215,22 +243,68 @@ export const SmartChecklistPage: React.FC = () => {
         )}
       </div>
 
-      {/* Category Filter Pills */}
+      {/* ================= ESTIMATED VERIFICATION TIMELINE SUMMARY ================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="p-4 rounded-2xl bg-gradient-to-br from-white to-[#F8FCF9] dark:from-slate-900 dark:to-slate-950 border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-[#2E6F40] dark:text-[#CFFFDC] flex items-center justify-center text-xl shrink-0 border border-emerald-200/60 dark:border-emerald-800/40">
+            ⚡
+          </div>
+          <div>
+            <div className="text-[10px] font-extrabold uppercase text-[#2E6F40] dark:text-[#68BA7F]">Single Window Parallel SLA</div>
+            <div className="text-lg font-black text-[#192A1E] dark:text-white">~{maxCriticalPathDays} Working Days</div>
+            <div className="text-[10px] text-slate-500 font-medium">Fast-track multi-agency critical path</div>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300 flex items-center justify-center text-xl shrink-0 border border-blue-200/60 dark:border-blue-800/40">
+            ⏱️
+          </div>
+          <div>
+            <div className="text-[10px] font-extrabold uppercase text-blue-600 dark:text-blue-400">Average Clearance Time</div>
+            <div className="text-lg font-black text-slate-900 dark:text-white">~{avgDaysPerClearance} Days / Permit</div>
+            <div className="text-[10px] text-slate-500 font-medium">Standard departmental turnaround</div>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-300 flex items-center justify-center text-xl shrink-0 border border-amber-200/60 dark:border-amber-800/40">
+            📅
+          </div>
+          <div>
+            <div className="text-[10px] font-extrabold uppercase text-amber-700 dark:text-amber-400">Cumulative SLA Days</div>
+            <div className="text-lg font-black text-slate-900 dark:text-white">{totalSlaDays} Total Department Days</div>
+            <div className="text-[10px] text-slate-500 font-medium">Across all {checklist.length} statutory permits</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Category Filter Pills with Emojis */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-        <span className="text-slate-500 font-bold uppercase text-[10px] mr-1">Category Filter:</span>
+        <span className="text-slate-500 font-extrabold uppercase text-[10px] mr-1 flex items-center gap-1">
+          <span>🔍</span>
+          <span>Filter:</span>
+        </span>
         {categories.map(cat => {
           const isActive = categoryFilter === cat;
+          const filterEmoji: Record<string, string> = {
+            'ALL': '🌐 All',
+            'Pre-Establishment': '🏗️ Pre-Setup',
+            'Pre-Operation': '⚙️ Operations',
+            'Incentives': '💰 Subsidies',
+            'Post-Operation': '🛡️ Compliance'
+          };
           return (
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
-              className={`px-3 py-1.5 rounded-xl border font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-xl border font-bold whitespace-nowrap transition-all duration-150 cursor-pointer text-xs flex items-center gap-1.5 ${
                 isActive
-                  ? 'bg-[#2E6F40] text-white border-[#2E6F40] shadow-xs'
+                  ? 'bg-[#2E6F40] text-white border-[#2E6F40] shadow-xs scale-[1.02]'
                   : 'bg-[#F8FCF9] dark:bg-slate-900 text-[#192A1E] dark:text-[#E8F7ED] border-[#D4EEDC] dark:border-slate-700 hover:bg-[#E8F7ED]'
               }`}
             >
-              {cat}
+              {filterEmoji[cat] || cat}
             </button>
           );
         })}

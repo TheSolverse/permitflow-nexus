@@ -147,6 +147,12 @@ export async function uploadDocumentApi(docData: any) {
   });
 }
 
+export async function deleteDocumentApi(id: string) {
+  return apiRequest<any>(`/documents/${id}`, {
+    method: 'DELETE'
+  });
+}
+
 // Queries
 export async function raiseApplicationQueryApi(id: string, queryData: { officerName?: string; department?: string; queryCategory?: string; queryText: string; dueDate?: string }) {
   return apiRequest<any>(`/applications/${id}/query`, {

@@ -347,6 +347,68 @@ export async function getDocuments(projectId?: string, userId?: string): Promise
   return memoryDocuments;
 }
 
+export async function createDocument(docData: Partial<DocumentItem>): Promise<DocumentItem> {
+  const newDoc: DocumentItem = {
+    id: docData.id || `doc-${Date.now()}`,
+    projectId: docData.projectId || memoryProjects[0]?.id || 'proj-1',
+    docName: docData.docName || 'Uploaded Document',
+    category: docData.category || 'General Proof',
+    fileUrl: docData.fileUrl || '/mock_documents/uploaded_doc.pdf',
+    fileSize: docData.fileSize || '1.5 MB',
+    uploadDate: docData.uploadDate || new Date().toISOString().split('T')[0],
+    status: docData.status || 'Valid',
+    aiValidationResult: docData.aiValidationResult || {
+      confidence: 95,
+      issues: [],
+      recommendations: ['AI OCR verified document seal stamp and text content.']
+    }
+  };
+
+  if (isDbConnected()) {
+    try {
+      await pool.query(
+        `INSERT INTO documents (id, project_id, doc_name, category, file_url, file_size, upload_date, status, ai_validation_result)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         ON CONFLICT (id) DO UPDATE SET 
+           doc_name = EXCLUDED.doc_name,
+           category = EXCLUDED.category,
+           file_url = EXCLUDED.file_url,
+           status = EXCLUDED.status,
+           ai_validation_result = EXCLUDED.ai_validation_result`,
+        [
+          newDoc.id, newDoc.projectId, newDoc.docName, newDoc.category,
+          newDoc.fileUrl, newDoc.fileSize, newDoc.uploadDate, newDoc.status,
+          JSON.stringify(newDoc.aiValidationResult)
+        ]
+      );
+    } catch (e) {
+      console.error('Error inserting document into DB:', e);
+    }
+  }
+
+  // Update memory store
+  const existingIdx = memoryDocuments.findIndex(d => d.id === newDoc.id);
+  if (existingIdx >= 0) {
+    memoryDocuments[existingIdx] = newDoc;
+  } else {
+    memoryDocuments.unshift(newDoc);
+  }
+
+  return newDoc;
+}
+
+export async function deleteDocument(docId: string): Promise<{ success: boolean }> {
+  if (isDbConnected()) {
+    try {
+      await pool.query('DELETE FROM documents WHERE id = $1', [docId]);
+    } catch (e) {
+      console.error('Error deleting document from DB:', e);
+    }
+  }
+  memoryDocuments = memoryDocuments.filter(d => d.id !== docId);
+  return { success: true };
+}
+
 // ================= NOC APPLICATIONS =================
 export async function getNocApplications(filters?: { userId?: string; projectId?: string; status?: string; nocType?: string }): Promise<NocApplication[]> {
   if (isDbConnected()) {

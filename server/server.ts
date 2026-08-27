@@ -13,6 +13,8 @@ import {
   getApplications,
   createApplication,
   getDocuments,
+  createDocument,
+  deleteDocument,
   getNocApplications,
   getJointInspections,
   getAuditLogs,
@@ -363,36 +365,28 @@ app.get('/api/documents', async (req, res) => {
 app.post('/api/documents', async (req, res) => {
   try {
     const { id, projectId, docName, category, fileUrl, fileSize, status, aiValidationResult } = req.body;
-    const projectsList = await getProjects();
-    const newDoc: DocumentItem = {
-      id: id || `doc-${Date.now()}`,
-      projectId: projectId || projectsList[0]?.id || 'proj-1',
-      docName: docName || 'Uploaded Document',
-      category: category || 'General Proof',
-      fileUrl: fileUrl || '/mock_documents/uploaded_doc.pdf',
-      fileSize: fileSize || '1.5 MB',
-      uploadDate: new Date().toISOString().split('T')[0],
-      status: status || 'Valid',
-      aiValidationResult: aiValidationResult || {
-        confidence: 95,
-        issues: [],
-        recommendations: ['AI OCR verified document seal stamp and text content.']
-      }
-    };
-
-    if (isDbConnected()) {
-      await pool.query(
-        `INSERT INTO documents (id, project_id, doc_name, category, file_url, file_size, upload_date, status, ai_validation_result)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-        [
-          newDoc.id, newDoc.projectId, newDoc.docName, newDoc.category,
-          newDoc.fileUrl, newDoc.fileSize, newDoc.uploadDate, newDoc.status,
-          JSON.stringify(newDoc.aiValidationResult)
-        ]
-      );
-    }
+    const newDoc = await createDocument({
+      id,
+      projectId,
+      docName,
+      category,
+      fileUrl,
+      fileSize,
+      status,
+      aiValidationResult
+    });
 
     res.status(201).json(newDoc);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/documents/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await deleteDocument(id);
+    res.json(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

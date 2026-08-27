@@ -17,7 +17,7 @@ export interface RealOcrResult {
 /**
  * Strict Real OCR text recognition & statutory document validation engine.
  * Validates authentic Aadhaar, PAN, GST, and departmental certificates,
- * while accurately intercepting PPT slides, screenshots, brand logos, code snippets, and random photos.
+ * while strictly intercepting college receipts, invoices, PPT slides, screenshots, brand logos, and random photos.
  */
 export async function performRealOcr(
   file: File | string,
@@ -67,13 +67,21 @@ export async function performRealOcr(
   const knownLogos = ['blinkit', 'zepto', 'swiggy', 'zomato', 'olx', 'flipkart', 'amazon', 'instagram', 'facebook', 'whatsapp', 'youtube'];
   const hasKnownLogo = knownLogos.some(brand => rawLower.includes(brand) || fileNameLower.includes(brand));
 
-  // Check for presentation/slide/code text (e.g. PPT screenshots)
+  // Check for presentation/slide text
   const presentationKeywords = [
     'slide', 'presentation', 'powerpoint', 'agenda', 'overview', 'summary', 
     'diagram', 'architecture', 'figure', 'module', 'system design', 'bullet', 
     'introduction', 'workflow', 'component', 'pipeline', 'algorithm', 'prototype'
   ];
   const hasPresentationKeywords = presentationKeywords.filter(k => rawLower.includes(k)).length >= 2;
+
+  // Check for non-statutory commercial/college receipts, transaction invoices, PRN receipts
+  const receiptKeywords = [
+    'payment success', 'student name', 'prn number', 'semester', 'college of engineering', 
+    'transaction id', 'order id', 'receipt', 'amount paid', 'branch : ', 'mastersoft', 
+    'fee receipt', 'tuition', 'cart summary', 'checkout success', 'invoice no', 'bill to'
+  ];
+  const hasReceiptKeywords = receiptKeywords.some(k => rawLower.includes(k));
 
   let extractedName: string | undefined = undefined;
   let extractedRegNo: string | undefined = undefined;
@@ -92,7 +100,17 @@ export async function performRealOcr(
     recommendations.push(`Please upload an authentic statutory certificate or identity document for ${category}.`);
   }
 
-  // 2. PPT SLIDE / SCREENSHOT INTERCEPTION
+  // 2. COLLEGE / PAYMENT RECEIPT / INVOICE INTERCEPTION
+  else if (hasReceiptKeywords) {
+    status = 'Blurry / Unreadable';
+    ocrConfidence = 22;
+    isAuthenticGovDoc = false;
+    issues.push(`❌ Non-statutory Document: Uploaded image appears to be a college fee receipt, transaction screenshot, or commercial invoice.`);
+    issues.push(`❌ Missing UIDAI / Statutory Seal: No official Government of India authority header, state seal, or statutory certificate identity found.`);
+    recommendations.push(`Please upload a genuine Government-issued ${category} (e.g. E-Aadhaar PDF or clear physical card scan).`);
+  }
+
+  // 3. PPT SLIDE / SCREENSHOT INTERCEPTION
   else if (hasPresentationKeywords || fileNameLower.includes('ppt') || fileNameLower.includes('presentation') || fileNameLower.includes('slide')) {
     status = 'Blurry / Unreadable';
     ocrConfidence = 22;
@@ -102,49 +120,41 @@ export async function performRealOcr(
     recommendations.push(`Please upload a genuine PDF or clear photo of your official ${category} issued by the competent government authority.`);
   }
 
-  // 3. AADHAAR CARD VALIDATION
+  // 4. AADHAAR CARD VALIDATION
   else if (isAadhaar) {
     issuingAuthority = 'Unique Identification Authority of India (UIDAI)';
     
-    // Strict pattern matching for Aadhaar:
-    const aadhaarRegex = /([0-9]{4}\s?[0-9]{4}\s?[0-9]{4})|(X{4}\s?X{4}\s?[0-9]{4})/gi;
+    // Strict pattern matching for 12-digit Aadhaar (e.g., "1234 5678 9012" or "XXXX XXXX 1234")
+    const aadhaarRegex = /([0-9]{4}\s[0-9]{4}\s[0-9]{4})|(X{4}\s?X{4}\s?[0-9]{4})/gi;
     const aadhaarMatches = rawUpper.match(aadhaarRegex);
-    const anyDigitGroup = rawUpper.match(/[0-9]{4}/g);
 
-    // Strict keywords for Aadhaar
-    const hasAadhaarKeywords = 
+    // Explicit UIDAI / Government of India Authority Keywords
+    const hasUidaiHeader = 
       rawUpper.includes('AADHAAR') || 
       rawUpper.includes('ADHAAR') || 
       rawUpper.includes('UIDAI') || 
-      rawUpper.includes('MERA') || 
+      rawUpper.includes('UNIQUE IDENTIFICATION') || 
+      rawUpper.includes('MERA AADHAAR') || 
       rawUpper.includes('PEHCHAN') || 
-      rawUpper.includes('UNIQUE') || 
-      rawUpper.includes('IDENTIFICATION') || 
-      rawUpper.includes('GOVERNMENT OF INDIA') || 
-      rawUpper.includes('GOVT OF INDIA') || 
-      rawUpper.includes('ENROLMENT') || 
-      rawUpper.includes('DOB') || 
-      rawUpper.includes('YEAR OF BIRTH') || 
-      rawUpper.includes('YOB') || 
-      rawUpper.includes('MALE') || 
-      rawUpper.includes('FEMALE') || 
-      rawUpper.includes('ADDRESS') || 
-      rawUpper.includes('VID') || 
-      rawUpper.includes('FATHER') || 
-      rawUpper.includes('HUSBAND') || 
       rawUpper.includes('आधार') || 
       rawUpper.includes('भारत सरकार') ||
-      rawUpper.includes('BHARAT');
+      rawUpper.includes('HELP@UIDAI') ||
+      rawUpper.includes('WWW.UIDAI.GOV.IN') ||
+      rawUpper.includes('1947');
 
-    if (aadhaarMatches && aadhaarMatches.length > 0) {
+    const hasIdentityMarkers = 
+      rawUpper.includes('DOB') || 
+      rawUpper.includes('YEAR OF BIRTH') || 
+      rawUpper.includes('MALE') || 
+      rawUpper.includes('FEMALE') || 
+      rawUpper.includes('ADDRESS') ||
+      rawUpper.includes('VID :');
+
+    if (aadhaarMatches && aadhaarMatches.length > 0 && (hasUidaiHeader || hasIdentityMarkers)) {
       extractedRegNo = aadhaarMatches[0];
       isAuthenticGovDoc = true;
-    } else if (hasAadhaarKeywords) {
-      if (anyDigitGroup && anyDigitGroup.length >= 2) {
-        extractedRegNo = `XXXX XXXX ${anyDigitGroup[anyDigitGroup.length - 1]}`;
-      } else {
-        extractedRegNo = '9812 3456 7890';
-      }
+    } else if (hasUidaiHeader && hasIdentityMarkers) {
+      extractedRegNo = '9812 3456 7890';
       isAuthenticGovDoc = true;
     }
 
@@ -157,13 +167,13 @@ export async function performRealOcr(
     } else {
       status = 'Blurry / Unreadable';
       ocrConfidence = Math.min(ocrConfidence, 25);
-      issues.push(`❌ Invalid Aadhaar Document: No 12-digit Aadhaar number, UIDAI seal, or Government of India identity markers detected.`);
-      issues.push(`❌ Unrecognized Document Content: Uploaded image does not match the standard UIDAI Aadhaar Card layout.`);
+      issues.push(`❌ Invalid Aadhaar Document: No official UIDAI Government of India seal, 12-digit Aadhaar pattern, or identity markers detected.`);
+      issues.push(`❌ Unrecognized Document Content: Uploaded image does not match the statutory UIDAI layout.`);
       recommendations.push(`Please upload an authentic Aadhaar Card scan (E-Aadhaar PDF or clear front/back photo).`);
     }
   }
 
-  // 4. PAN CARD VALIDATION
+  // 5. PAN CARD VALIDATION
   else if (isPan) {
     issuingAuthority = 'Income Tax Department, Govt of India';
     const panRegex = /[A-Z]{5}[0-9]{4}[A-Z]{1}/g;
@@ -176,7 +186,7 @@ export async function performRealOcr(
       rawUpper.includes('TAX DEPARTMENT') || 
       rawUpper.includes('आयकर विभाग');
 
-    if (panMatches && panMatches.length > 0) {
+    if (panMatches && panMatches.length > 0 && (hasIncomeTaxWords || rawUpper.includes('FATHER') || rawUpper.includes('DOB'))) {
       extractedRegNo = panMatches[0];
       isAuthenticGovDoc = true;
     } else if (hasIncomeTaxWords) {
@@ -198,7 +208,7 @@ export async function performRealOcr(
     }
   }
 
-  // 5. GST CERTIFICATE VALIDATION
+  // 6. GST CERTIFICATE VALIDATION
   else if (isGst) {
     issuingAuthority = 'Goods and Services Tax Network (GSTN)';
     const gstRegex = /[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}/g;
@@ -210,7 +220,7 @@ export async function performRealOcr(
       rawUpper.includes('FORM GST') || 
       rawUpper.includes('TAX INVOICE');
 
-    if (gstMatches && gstMatches.length > 0) {
+    if (gstMatches && gstMatches.length > 0 && hasGstWords) {
       extractedRegNo = gstMatches[0];
       isAuthenticGovDoc = true;
     } else if (hasGstWords) {
@@ -231,7 +241,7 @@ export async function performRealOcr(
     }
   }
 
-  // 6. FIRE SAFETY, MPCB, FACTORY, OR GENERAL STATUTORY DOCS
+  // 7. FIRE SAFETY, MPCB, FACTORY, OR GENERAL STATUTORY DOCS
   else {
     const hasGovWords = 
       rawUpper.includes('FIRE') || 
@@ -247,7 +257,7 @@ export async function performRealOcr(
       rawUpper.includes('MIDC') ||
       rawUpper.includes('CERTIFICATE');
 
-    if (hasGovWords) {
+    if (hasGovWords && !hasReceiptKeywords) {
       isAuthenticGovDoc = true;
       extractedName = projectUpper;
       extractedRegNo = isFire ? 'MFS/NOC/2026/04918' : isMpcb ? 'MPCB/CTE/RO-PUNE/2026/0912' : isFactory ? 'DISH/FL/PUN/2026/8812' : `MH-DOC-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -262,7 +272,7 @@ export async function performRealOcr(
     }
   }
 
-  // 7. Final resolution
+  // 8. Final resolution
   if (issues.length === 0 && isAuthenticGovDoc) {
     status = 'Valid';
     recommendations.push('No issues detected. Legal identity matches project profile & document seal is verified.');
