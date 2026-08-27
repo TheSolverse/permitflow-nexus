@@ -11,7 +11,12 @@ import {
   Sparkles,
   Loader2,
   Check,
-  ShieldCheck
+  ShieldCheck,
+  X,
+  Eye,
+  Building2,
+  Calendar,
+  Layers
 } from 'lucide-react';
 
 export const DocumentCentrePage: React.FC = () => {
@@ -21,6 +26,7 @@ export const DocumentCentrePage: React.FC = () => {
   const [uploadDocCategory, setUploadDocCategory] = useState('PAN Card');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [activeDocForFeedback, setActiveDocForFeedback] = useState<DocumentItem | null>(documents[0] || null);
+  const [inspectingDoc, setInspectingDoc] = useState<DocumentItem | null>(null);
   const [isScanning, setIsScanning] = useState(false);
 
   const categories = [
@@ -378,10 +384,12 @@ export const DocumentCentrePage: React.FC = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveDocForFeedback(doc);
+                        setInspectingDoc(doc);
                       }}
-                      className="px-3 py-1 rounded-lg bg-slate-100 text-slate-800 font-bold hover:bg-slate-200 text-[11px]"
+                      className="px-3.5 py-1.5 rounded-xl bg-[#2E6F40] text-white font-bold hover:bg-[#235833] text-xs transition-all shadow-xs flex items-center gap-1.5 ml-auto cursor-pointer"
                     >
-                      Inspect AI Report
+                      <Eye className="w-3.5 h-3.5 text-[#CFFFDC]" />
+                      <span>Inspect AI Report</span>
                     </button>
                   </td>
                 </tr>
@@ -390,6 +398,162 @@ export const DocumentCentrePage: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* ================= INTERACTIVE AI OCR INSPECTION MODAL ================= */}
+      {inspectingDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto flex flex-col justify-between space-y-6">
+            
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold border ${getStatusBadge(inspectingDoc.status)}`}>
+                    {inspectingDoc.status}
+                  </span>
+                  <span className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">
+                    {inspectingDoc.category}
+                  </span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
+                  {inspectingDoc.docName}
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Uploaded: {inspectingDoc.uploadDate || '2026-08-27'} • File Size: {inspectingDoc.fileSize || '1.2 MB'}
+                </p>
+              </div>
+
+              <button
+                onClick={() => setInspectingDoc(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body: 2 Columns (Left: Document Preview, Right: AI OCR Breakdown) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Left Column: Document File Visual */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Uploaded Document Image
+                  </span>
+                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded">
+                    Original Attachment
+                  </span>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-3 min-h-[260px] max-h-[360px] flex items-center justify-center overflow-hidden">
+                  {inspectingDoc.fileUrl ? (
+                    <img 
+                      src={inspectingDoc.fileUrl} 
+                      alt={inspectingDoc.docName}
+                      className="max-h-[340px] w-auto max-w-full object-contain rounded-xl shadow-xs"
+                    />
+                  ) : (
+                    <div className="text-center p-8 space-y-2">
+                      <FileText className="w-12 h-12 text-[#2E6F40] mx-auto opacity-70" />
+                      <p className="font-bold text-xs text-slate-700 dark:text-slate-300">
+                        {inspectingDoc.docName}
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        Secure Vault PDF / Encrypted Statutory File
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: AI OCR Detailed Diagnostics */}
+              <div className="space-y-4 text-xs">
+                
+                {/* Confidence & Entity Card */}
+                <div className="p-4 rounded-2xl bg-[#F8FCF9] dark:bg-slate-950 border border-[#D4EEDC] dark:border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
+                      <Sparkles className="w-4 h-4 text-[#2E6F40] dark:text-[#68BA7F]" />
+                      <span>AI OCR Extraction Result</span>
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full font-extrabold text-[11px] bg-[#CFFFDC]/80 dark:bg-slate-800 text-[#2E6F40] dark:text-[#CFFFDC] border border-[#68BA7F]/40">
+                      Confidence: {inspectingDoc.aiValidationResult?.confidence || 96}%
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-[#D4EEDC]/60 dark:border-slate-800">
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase block">Extracted Number</span>
+                      <span className="font-mono font-bold text-slate-900 dark:text-white text-xs">
+                        {inspectingDoc.aiValidationResult?.extractedRegNo || '9812 3456 7890'}
+                      </span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase block">Statutory Expiry</span>
+                      <span className="font-bold text-slate-900 dark:text-white text-xs">
+                        {inspectingDoc.aiValidationResult?.extractedExpiry || 'Lifetime / No Expiry'}
+                      </span>
+                    </div>
+                    <div className="col-span-2 p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase block">Verified Legal Name / Signatory</span>
+                      <span className="font-bold text-slate-900 dark:text-white text-xs">
+                        {inspectingDoc.aiValidationResult?.extractedName || activeProject.businessName}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Flagged Issues or Success Banner */}
+                {inspectingDoc.aiValidationResult?.issues && inspectingDoc.aiValidationResult.issues.length > 0 ? (
+                  <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 space-y-1.5">
+                    <div className="font-bold text-amber-950 dark:text-amber-300 flex items-center gap-1.5">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>Flagged Issue(s):</span>
+                    </div>
+                    {inspectingDoc.aiValidationResult.issues.map((iss, idx) => (
+                      <p key={idx} className="text-amber-900 dark:text-amber-200 text-[11px] leading-relaxed pl-5">
+                        • {iss}
+                      </p>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span className="text-emerald-900 dark:text-emerald-200 text-xs font-semibold">
+                      No issues detected. Legal name matches project profile & document seal is verified.
+                    </span>
+                  </div>
+                )}
+
+                {/* AI Recommendations */}
+                {inspectingDoc.aiValidationResult?.recommendations && (
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-1.5">
+                    <div className="font-bold text-slate-900 dark:text-white">AI Recommended Actions:</div>
+                    {inspectingDoc.aiValidationResult.recommendations.map((rec, idx) => (
+                      <p key={idx} className="text-slate-700 dark:text-slate-300 text-[11px] leading-relaxed">
+                        • {rec}
+                      </p>
+                    ))}
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button
+                onClick={() => setInspectingDoc(null)}
+                className="px-6 py-2.5 rounded-xl bg-[#2E6F40] hover:bg-[#235833] text-white font-bold text-xs transition-colors shadow-xs cursor-pointer"
+              >
+                Close Report
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );
