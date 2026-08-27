@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export const DocumentCentrePage: React.FC = () => {
-  const { documents, uploadDocument, activeProject } = useApp();
+  const { documents, uploadDocument, activeProject, currentUser } = useApp();
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [uploadDocName, setUploadDocName] = useState('');
   const [uploadDocCategory, setUploadDocCategory] = useState('PAN Card');
@@ -53,6 +53,7 @@ export const DocumentCentrePage: React.FC = () => {
         // Run Real OCR with Tesseract on the uploaded file
         ocrRes = await performRealOcr(selectedFile, uploadDocCategory, finalDocName, {
           businessName: activeProject.businessName,
+          applicantName: currentUser?.name || 'Rajesh V. Patil',
           district: activeProject.district
         });
       } else {
