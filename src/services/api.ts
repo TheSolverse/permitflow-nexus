@@ -24,6 +24,8 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
     }
 
     if (!res.ok) {
+      const errorJson = await res.json().catch(() => null);
+      if (errorJson) return errorJson as T;
       console.warn(`[API] Request to ${endpoint} returned status ${res.status}`);
       return null;
     }
@@ -40,6 +42,8 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
         ...options
       });
       if (res.ok) return await res.json();
+      const errorJson = await res.json().catch(() => null);
+      if (errorJson) return errorJson as T;
     } catch (fallbackErr) {
       console.warn(`[API] Failed to fetch ${endpoint}:`, err);
     }
