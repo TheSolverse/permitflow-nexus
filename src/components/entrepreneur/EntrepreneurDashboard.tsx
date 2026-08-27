@@ -24,32 +24,55 @@ import { ComplianceExpiryAlertModal } from './ComplianceExpiryAlertModal';
 export const EntrepreneurDashboard: React.FC = () => {
   const { 
     currentUser, 
+    projects,
     activeProject, 
     applications, 
     complianceTasks, 
+    jointInspections,
+    incentiveSchemes,
     setActiveTab, 
+    setSelectedAppDetail,
     language 
   } = useApp();
 
   const [isExpiryAlertOpen, setIsExpiryAlertOpen] = useState(false);
 
-  const checklist = generateSmartChecklist(activeProject, applications);
+  const hasProjects = projects.length > 0 && !!activeProject?.id;
+  const checklist = hasProjects ? generateSmartChecklist(activeProject, applications) : [];
   const totalApprovals = checklist.length;
 
-  const approvedCount = checklist.filter(c => c.status === 'Approved').length;
-  const underReviewCount = checklist.filter(c => c.status === 'Under Review' || c.status === 'Submitted' || c.status === 'Inspection Scheduled').length;
-  const actionRequiredCount = checklist.filter(c => c.status === 'Query Raised' || c.status === 'Documents Needed').length;
+  const approvedCount = applications.filter(a => a.status === 'Approved').length;
+  const underReviewCount = applications.filter(a => a.status === 'Under Review' || a.status === 'Submitted' || a.status === 'Inspection Scheduled').length;
+  
+  // Real pending queries raised by officers from DB
+  const realPendingQueries = applications.flatMap(app => 
+    (app.queries || []).filter(q => q.status === 'OPEN').map(q => ({ app, query: q }))
+  );
+  const actionRequiredCount = realPendingQueries.length;
   const upcomingRenewalsCount = complianceTasks.filter(t => t.status === 'DUE_SOON' || t.status === 'OVERDUE').length;
 
-  const completionPercentage = Math.round((approvedCount / Math.max(totalApprovals, 1)) * 100);
+  const completionPercentage = totalApprovals > 0 ? Math.round((approvedCount / totalApprovals) * 100) : 0;
 
   // Recharts dataset
-  const chartData = [
-    { name: 'Approved', value: approvedCount, color: '#10B981' },
-    { name: 'Under Review', value: underReviewCount, color: '#2563EB' },
+  const chartData = totalApprovals > 0 ? [
+    { name: 'Approved', value: approvedCount, color: '#2E6F40' },
+    { name: 'Under Review', value: underReviewCount, color: '#68BA7F' },
     { name: 'Action Required', value: actionRequiredCount, color: '#D97706' },
-    { name: 'Not Started', value: totalApprovals - (approvedCount + underReviewCount + actionRequiredCount), color: '#94A3B8' }
+    { name: 'Not Started', value: Math.max(0, totalApprovals - (approvedCount + underReviewCount + actionRequiredCount)), color: '#94A3B8' }
+  ] : [
+    { name: 'Not Started', value: 1, color: '#CBD5E1' }
   ];
+
+  // Real deadlines & inspections from DB
+  const activeDeadlines = complianceTasks.filter(t => t.status === 'DUE_SOON' || t.status === 'OVERDUE');
+  const activeInspections = jointInspections.filter(i => i.status === 'SCHEDULED');
+
+  // Real matching incentive scheme for the business sector
+  const matchingScheme = (incentiveSchemes || []).find(s => 
+    Array.isArray(s.applicableSectors) && (
+      s.applicableSectors.includes(activeProject?.sector) || s.applicableSectors.includes('ALL')
+    )
+  );
 
   return (
     <div className="space-y-6">
@@ -60,93 +83,120 @@ export const EntrepreneurDashboard: React.FC = () => {
         onClose={() => setIsExpiryAlertOpen(false)} 
       />
       
-      {/* Rich Enterprise Welcome Banner - Sky & Blue Gradient */}
-      <div className="bg-gradient-to-r from-sky-100/80 via-blue-50/70 to-white rounded-2xl p-6 text-slate-900 border border-sky-200 shadow-xs relative overflow-hidden">
+      {/* Rich Enterprise Welcome Banner - Plain Clean Box */}
+      <div className="bg-[#F8FCF9] dark:bg-[#16261C] rounded-2xl p-6 text-[#192A1E] dark:text-[#E8F7ED] border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs relative overflow-hidden transition-colors duration-200">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-600/10 text-blue-900 text-xs font-extrabold mb-2 border border-blue-200">
-              <Building2 className="w-3.5 h-3.5 text-blue-600" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#CFFFDC]/60 dark:bg-[#253D2C] text-[#2E6F40] dark:text-[#CFFFDC] text-xs font-extrabold mb-2 border border-[#68BA7F]/40 dark:border-[#68BA7F]">
+              <Building2 className="w-3.5 h-3.5 text-[#2E6F40] dark:text-[#68BA7F]" />
               <span>Maharashtra Business Approval Hub</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#253D2C] dark:text-white">
               {t('welcomeBack', language)}, {currentUser.name}!
             </h1>
-            <p className="text-xs sm:text-sm text-slate-600 mt-1 font-medium">
-              Active Project: <strong className="text-slate-900 font-extrabold">{activeProject.businessName}</strong> ({activeProject.sector}{activeProject.subSector ? ` • ${activeProject.subSector}` : ''} • {activeProject.midcArea})
-            </p>
+            {hasProjects ? (
+              <p className="text-xs sm:text-sm text-[#4A6B53] dark:text-[#A3D4B3] mt-1 font-medium">
+                Active Project: <strong className="text-[#253D2C] dark:text-[#CFFFDC] font-extrabold">{activeProject.businessName}</strong> ({activeProject.sector}{activeProject.subSector ? ` • ${activeProject.subSector}` : ''} • {activeProject.midcArea})
+              </p>
+            ) : (
+              <p className="text-xs sm:text-sm text-[#4A6B53] dark:text-[#A3D4B3] mt-1 font-medium">
+                No active projects registered yet. Click <strong className="text-[#2E6F40] dark:text-[#CFFFDC] font-bold">"+ Add New Project"</strong> to set up your business profile.
+              </p>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setIsExpiryAlertOpen(true)}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white text-xs font-extrabold shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer animate-pulse"
-            >
-              <ShieldAlert className="w-3.5 h-3.5 text-amber-200" />
-              <span>Expiry Alert Pop-up</span>
-            </button>
+            {hasProjects && (
+              <button
+                onClick={() => setIsExpiryAlertOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <ShieldAlert className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                <span>Expiry Alerts</span>
+              </button>
+            )}
             <button
               onClick={() => setActiveTab('new-project')}
-              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-[#2E6F40] hover:bg-[#253D2C] text-white text-xs font-semibold shadow-xs hover:shadow transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <PlusCircle className="w-3.5 h-3.5" />
+              <PlusCircle className="w-3.5 h-3.5 text-[#CFFFDC]" />
               <span>{t('addProject', language)}</span>
             </button>
             <button
               onClick={() => setActiveTab('ai-assistant')}
-              className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-950 border border-indigo-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-white dark:bg-[#1E3326] hover:bg-[#F0FAF3] dark:hover:bg-[#253D2C] text-[#253D2C] dark:text-[#E8F7ED] border border-[#D4EEDC] dark:border-[#2A4736] text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <HelpCircle className="w-3.5 h-3.5 text-indigo-700" />
-              <span>Approval Helpdesk</span>
+              <HelpCircle className="w-3.5 h-3.5 text-[#2E6F40] dark:text-[#68BA7F]" />
+              <span>Helpdesk</span>
             </button>
           </div>
         </div>
 
         {/* Approval Journey Progress Meter */}
-        <div className="mt-6 pt-5 border-t border-amber-200/50">
+        <div className="mt-6 pt-5 border-t border-[#D4EEDC] dark:border-[#2A4736]">
           <div className="flex items-center justify-between text-xs mb-1.5">
-            <span className="font-bold text-slate-700">{t('journeyCompletion', language)}</span>
-            <span className="font-extrabold text-amber-700">{completionPercentage}% Complete</span>
+            <span className="font-semibold text-[#4A6B53] dark:text-[#A3D4B3]">{t('journeyCompletion', language)}</span>
+            <span className="font-bold text-[#2E6F40] dark:text-[#68BA7F]">{completionPercentage}% Complete</span>
           </div>
-          <div className="w-full h-3 bg-white rounded-full overflow-hidden p-0.5 border border-amber-300/80 shadow-xs">
+          <div className="w-full h-2.5 bg-slate-100 dark:bg-[#101A14] rounded-full overflow-hidden p-0.5 border border-[#D4EEDC] dark:border-[#2A4736] shadow-xs">
             <div
-              className="h-full bg-gradient-to-r from-amber-500 to-indigo-600 rounded-full transition-all duration-1000"
+              className="h-full bg-[#2E6F40] rounded-full transition-all duration-700"
               style={{ width: `${completionPercentage}%` }}
             />
           </div>
         </div>
       </div>
 
-      {/* 5 Key Metric Cards - Distinct Professional Light Colors */}
+      {/* Onboarding Box if zero projects */}
+      {!hasProjects && (
+        <div className="p-6 rounded-2xl bg-[#F0FAF3] dark:bg-[#16261C] border-2 border-dashed border-[#68BA7F] dark:border-[#253D2C] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 className="text-base font-bold text-[#253D2C] dark:text-white">🚀 Set up your First Business Project</h3>
+            <p className="text-xs text-[#4A6B53] dark:text-[#A3D4B3] mt-1">
+              Register your business sector, investment scale, and district to generate your dynamic approval roadmap.
+            </p>
+          </div>
+          <button
+            onClick={() => setActiveTab('new-project')}
+            className="px-4 py-2.5 rounded-xl bg-[#2E6F40] hover:bg-[#253D2C] text-white text-xs font-bold shadow-xs transition-all flex items-center gap-2 shrink-0 cursor-pointer"
+          >
+            <PlusCircle className="w-4 h-4 text-[#CFFFDC]" />
+            <span>Create Business Project</span>
+          </button>
+        </div>
+      )}
+
+      {/* 5 Key Metric Cards - Plain Clean Boxes */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         
-        <div className="bg-gradient-to-br from-indigo-50/80 to-white p-4 rounded-2xl border border-indigo-200/90 shadow-xs">
-          <div className="text-[11px] font-extrabold text-indigo-900 uppercase tracking-wider">{t('totalApprovals', language)}</div>
-          <div className="text-2xl font-extrabold text-slate-900 mt-1">{totalApprovals}</div>
-          <div className="text-[10px] text-indigo-700 mt-1 font-semibold">Required for setup</div>
+        <div className="bg-white dark:bg-[#16261C] p-4 rounded-2xl border border-[#D4EEDC] dark:border-[#2A4736] shadow-xs transition-colors">
+          <div className="text-[11px] font-extrabold text-[#253D2C] dark:text-[#9CE0B2] uppercase tracking-wider">{t('totalApprovals', language)}</div>
+          <div className="text-2xl font-extrabold text-[#192A1E] dark:text-white mt-1">{totalApprovals}</div>
+          <div className="text-[10px] text-[#4A6B53] dark:text-[#68BA7F] mt-1 font-semibold">Required for setup</div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-50/80 to-white p-4 rounded-2xl border border-blue-200/90 shadow-xs">
-          <div className="text-[11px] font-extrabold text-blue-900 uppercase tracking-wider">{t('approved', language)}</div>
-          <div className="text-2xl font-extrabold text-blue-900 mt-1">{approvedCount}</div>
-          <div className="text-[10px] text-blue-700 mt-1 font-semibold">{Math.round((approvedCount/totalApprovals)*100)}% cleared</div>
+        <div className="bg-white dark:bg-[#16261C] p-4 rounded-2xl border border-[#D4EEDC] dark:border-[#2E6F40] shadow-xs transition-colors">
+          <div className="text-[11px] font-extrabold text-[#2E6F40] dark:text-[#CFFFDC] uppercase tracking-wider">{t('approved', language)}</div>
+          <div className="text-2xl font-extrabold text-[#2E6F40] dark:text-[#CFFFDC] mt-1">{approvedCount}</div>
+          <div className="text-[10px] text-[#4A6B53] dark:text-[#68BA7F] mt-1 font-semibold">{completionPercentage}% cleared</div>
         </div>
 
-        <div className="bg-gradient-to-br from-amber-50/80 to-white p-4 rounded-2xl border border-amber-200/90 shadow-xs">
-          <div className="text-[11px] font-extrabold text-amber-900 uppercase tracking-wider">{t('underReview', language)}</div>
-          <div className="text-2xl font-extrabold text-amber-900 mt-1">{underReviewCount}</div>
-          <div className="text-[10px] text-amber-700 mt-1 font-semibold">Processing with depts</div>
+        <div className="bg-white dark:bg-[#16261C] p-4 rounded-2xl border border-[#D4EEDC] dark:border-[#2A4736] shadow-xs transition-colors">
+          <div className="text-[11px] font-extrabold text-[#4A6B53] dark:text-[#A3D4B3] uppercase tracking-wider">{t('underReview', language)}</div>
+          <div className="text-2xl font-extrabold text-[#253D2C] dark:text-white mt-1">{underReviewCount}</div>
+          <div className="text-[10px] text-[#4A6B53] dark:text-[#A3D4B3] mt-1 font-semibold">Processing with depts</div>
         </div>
 
-        <div className="bg-gradient-to-br from-rose-50/80 to-white p-4 rounded-2xl border border-rose-200/90 shadow-xs">
-          <div className="text-[11px] font-extrabold text-rose-900 uppercase tracking-wider">{t('actionRequired', language)}</div>
-          <div className="text-2xl font-extrabold text-rose-900 mt-1">{actionRequiredCount}</div>
-          <div className="text-[10px] text-rose-700 mt-1 font-semibold">Queries / missing docs</div>
+        <div className="bg-white dark:bg-[#16261C] p-4 rounded-2xl border border-rose-200/90 dark:border-rose-900 shadow-xs transition-colors">
+          <div className="text-[11px] font-extrabold text-rose-900 dark:text-rose-300 uppercase tracking-wider">{t('actionRequired', language)}</div>
+          <div className="text-2xl font-extrabold text-rose-900 dark:text-rose-200 mt-1">{actionRequiredCount}</div>
+          <div className="text-[10px] text-rose-700 dark:text-rose-400 mt-1 font-semibold">Queries / missing docs</div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-50/80 to-white p-4 rounded-2xl border border-purple-200/90 shadow-xs col-span-2 sm:col-span-1">
-          <div className="text-[11px] font-extrabold text-purple-900 uppercase tracking-wider">{t('upcomingRenewals', language)}</div>
-          <div className="text-2xl font-extrabold text-purple-900 mt-1">{upcomingRenewalsCount}</div>
-          <div className="text-[10px] text-purple-700 mt-1 font-semibold">Factory Licence in 30d</div>
+        <div className="bg-white dark:bg-[#16261C] p-4 rounded-2xl border border-[#D4EEDC] dark:border-[#2A4736] shadow-xs col-span-2 sm:col-span-1 transition-colors">
+          <div className="text-[11px] font-extrabold text-[#2E6F40] dark:text-[#CFFFDC] uppercase tracking-wider">{t('upcomingRenewals', language)}</div>
+          <div className="text-2xl font-extrabold text-[#253D2C] dark:text-white mt-1">{upcomingRenewalsCount}</div>
+          <div className="text-[10px] text-[#4A6B53] dark:text-[#A3D4B3] mt-1 font-semibold">Factory Licence in 30d</div>
         </div>
 
       </div>
@@ -218,37 +268,36 @@ export const EntrepreneurDashboard: React.FC = () => {
               </h3>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 flex items-start justify-between gap-3">
-                <div>
-                  <span className="font-bold text-amber-950">Department Query Raised - MPCB Pollution CTE</span>
-                  <p className="text-amber-900 mt-0.5">
-                    Dr. V. K. Patil requested revised ETP capacity engineering drawings for spice washwater. Response due by 2026-09-01.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setActiveTab('applications')}
-                  className="px-3 py-1.5 rounded-lg bg-amber-700 text-white font-bold shrink-0 hover:bg-amber-800"
-                >
-                  Respond
-                </button>
+            {realPendingQueries.length === 0 ? (
+              <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 text-center text-slate-500">
+                <CheckCircle2 className="w-6 h-6 text-emerald-600 mx-auto mb-1.5" />
+                <p className="font-bold text-xs text-slate-700">No pending queries or actions required</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">All applications in the database are currently clear with departments.</p>
               </div>
-
-              <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 flex items-start justify-between gap-3">
-                <div>
-                  <span className="font-bold text-blue-950">Missing Document - Fire Safety Audit</span>
-                  <p className="text-blue-900 mt-0.5">
-                    Upload Form B Fire Safety Certificate to clear Fire NOC review.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setActiveTab('documents')}
-                  className="px-3 py-1.5 rounded-lg bg-blue-700 text-white font-bold shrink-0 hover:bg-blue-800"
-                >
-                  Upload
-                </button>
+            ) : (
+              <div className="space-y-3 text-xs">
+                {realPendingQueries.map((item) => (
+                  <div key={item.query.id} className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 flex items-start justify-between gap-3">
+                    <div>
+                      <span className="font-bold text-amber-950">Department Query Raised - {item.app.approvalName}</span>
+                      <p className="text-amber-900 mt-0.5">{item.query.queryText || item.query.question}</p>
+                      {item.query.dueDate && (
+                        <span className="text-[10px] font-semibold text-amber-700 block mt-1">Due Date: {item.query.dueDate}</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedAppDetail(item.app);
+                        setActiveTab('applications');
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-amber-700 text-white font-bold shrink-0 hover:bg-amber-800"
+                    >
+                      Respond
+                    </button>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </div>
 
         </div>
@@ -300,27 +349,38 @@ export const EntrepreneurDashboard: React.FC = () => {
               </button>
             </div>
 
-            <div className="space-y-2.5 text-xs">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                <div>
-                  <div className="font-bold text-slate-900">Factory Licence Renewal</div>
-                  <div className="text-[10px] text-slate-500">DISH Maharashtra • Form 1</div>
-                </div>
-                <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold text-[10px]">
-                  In 30 days
-                </span>
+            {activeDeadlines.length === 0 && activeInspections.length === 0 ? (
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center text-slate-500 py-4">
+                <Clock className="w-5 h-5 text-slate-400 mx-auto mb-1" />
+                <p className="font-bold text-xs text-slate-700">No upcoming statutory renewals</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Database contains no overdue tasks or pending site audits.</p>
               </div>
-
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                <div>
-                  <div className="font-bold text-slate-900">Joint Site Inspection</div>
-                  <div className="text-[10px] text-slate-500">MPCB + DISH + Fire Dept</div>
-                </div>
-                <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]">
-                  2026-09-02
-                </span>
+            ) : (
+              <div className="space-y-2.5 text-xs">
+                {activeDeadlines.map((task) => (
+                  <div key={task.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-slate-900">{task.taskName}</div>
+                      <div className="text-[10px] text-slate-500">{task.issuingAuthority} • Due {task.dueDate}</div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold text-[10px]">
+                      {task.daysRemaining} days left
+                    </span>
+                  </div>
+                ))}
+                {activeInspections.map((insp) => (
+                  <div key={insp.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-slate-900">Joint Site Inspection</div>
+                      <div className="text-[10px] text-slate-500">{insp.departmentsInvolved?.join(' + ') || 'MPCB + DISH + Fire Dept'}</div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]">
+                      {insp.scheduledDate}
+                    </span>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </div>
 
           {/* Eligible Incentives Highlight */}
@@ -331,13 +391,20 @@ export const EntrepreneurDashboard: React.FC = () => {
                 State Subsidy Alert
               </span>
               <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-bold">
-                PSI 2019 Scheme
+                {matchingScheme ? matchingScheme.schemeCode || 'State Scheme' : 'Maharashtra State Policy'}
               </span>
             </div>
             <div>
-              <h4 className="font-extrabold text-sm text-slate-900">₹45,00,000 Capital Subsidy Eligible</h4>
+              <h4 className="font-extrabold text-sm text-slate-900">
+                {matchingScheme ? matchingScheme.schemeName : 'Industrial Subsidies & Incentives'}
+              </h4>
               <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                Your Chakan MIDC Food Processing unit qualifies for 80% SGST refund + capital grant.
+                {matchingScheme 
+                  ? matchingScheme.benefitSummary 
+                  : (hasProjects 
+                      ? `Your ${activeProject.district || 'Maharashtra'} project qualifies for capital subsidies & SGST rebates under the state industrial policy.` 
+                      : 'Create your enterprise profile to view verified state capital subsidies & tax rebates.')
+                }
               </p>
             </div>
             <button

@@ -192,40 +192,73 @@ export const ApplicationReviewModal: React.FC<Props> = ({ app, onClose }) => {
           {/* TAB 2: DOCUMENTS & AI OCR */}
           {activeSubTab === 'docs' && (
             <div className="space-y-4">
-              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Submitted Documents & AI Pre-Screening Findings</h3>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Submitted Documents & AI Pre-Screening Findings</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Official documents uploaded by applicant <strong className="text-slate-700 dark:text-slate-200">{app.businessName}</strong>
+                  </p>
+                </div>
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                  {documents.filter(d => (app.documentIds && app.documentIds.includes(d.id)) || (d.projectId === app.projectId)).length} Documents Attached
+                </span>
+              </div>
               
               <div className="space-y-3">
-                {documents.slice(0, 4).map((d) => (
-                  <div key={d.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
-                    <div>
-                      <div className="font-extrabold text-slate-900 dark:text-white text-sm">{d.docName}</div>
-                      <div className="text-[11px] text-slate-500 font-semibold">{d.category} • Uploaded {d.uploadDate}</div>
-                      
-                      {d.aiValidationResult?.issues && d.aiValidationResult.issues.length > 0 && (
-                        <div className="mt-2 p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 text-[11px] font-semibold border border-rose-200">
-                          <strong>AI Flag:</strong> {d.aiValidationResult.issues[0]}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                      <button 
-                        onClick={() => setSelectedPreviewDoc(d)}
-                        className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer transition-all"
-                      >
-                        <Eye className="w-4 h-4 text-amber-300" />
-                        <span>View Document</span>
-                      </button>
-
-                      <button className="px-3 py-2 rounded-xl bg-emerald-600 text-white font-extrabold text-xs hover:bg-emerald-700 shadow-xs cursor-pointer">
-                        Approve Doc
-                      </button>
-                      <button className="px-3 py-2 rounded-xl bg-rose-600 text-white font-extrabold text-xs hover:bg-rose-700 shadow-xs cursor-pointer">
-                        Reject Doc
-                      </button>
-                    </div>
+                {documents.filter(d => (app.documentIds && app.documentIds.includes(d.id)) || (d.projectId === app.projectId)).length === 0 ? (
+                  <div className="p-8 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 text-center text-slate-500">
+                    <FileText className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                    <p className="font-bold text-xs text-slate-700 dark:text-slate-300">No documents uploaded for this application yet.</p>
+                    <p className="text-[11px] text-slate-400 mt-1">Applicant will attach mandatory certificates upon submission.</p>
                   </div>
-                ))}
+                ) : (
+                  documents
+                    .filter(d => (app.documentIds && app.documentIds.includes(d.id)) || (d.projectId === app.projectId))
+                    .map((d) => (
+                      <div key={d.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+                        <div>
+                          <div className="font-extrabold text-slate-900 dark:text-white text-sm">{d.docName}</div>
+                          <div className="text-[11px] text-slate-500 font-semibold">{d.category} • Uploaded {d.uploadDate} • Size: {d.fileSize || '1.5 MB'}</div>
+                          
+                          {d.aiValidationResult?.issues && d.aiValidationResult.issues.length > 0 && (
+                            <div className="mt-2 p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 text-[11px] font-semibold border border-rose-200">
+                              <strong>AI Flag:</strong> {d.aiValidationResult.issues[0]}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                          <button 
+                            type="button"
+                            onClick={() => setSelectedPreviewDoc(d)}
+                            className="px-3.5 py-2 rounded-xl bg-[#2E6F40] hover:bg-[#253D2C] text-white font-extrabold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer transition-all"
+                          >
+                            <Eye className="w-4 h-4 text-[#CFFFDC]" />
+                            <span>View Document</span>
+                          </button>
+
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              setSelectedPreviewDoc(d);
+                            }}
+                            className="px-3 py-2 rounded-xl bg-emerald-600 text-white font-extrabold text-xs hover:bg-emerald-700 shadow-xs cursor-pointer"
+                          >
+                            Approve Doc
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              setSelectedPreviewDoc(d);
+                            }}
+                            className="px-3 py-2 rounded-xl bg-rose-600 text-white font-extrabold text-xs hover:bg-rose-700 shadow-xs cursor-pointer"
+                          >
+                            Reject Doc
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                )}
               </div>
             </div>
           )}
@@ -236,67 +269,133 @@ export const ApplicationReviewModal: React.FC<Props> = ({ app, onClose }) => {
               document={selectedPreviewDoc}
               onClose={() => setSelectedPreviewDoc(null)}
               onApprove={(docId) => {
-                // Approved state
+                setSelectedPreviewDoc(null);
               }}
               onReject={(docId) => {
-                // Rejected state
+                setSelectedPreviewDoc(null);
               }}
             />
           )}
 
-          {/* TAB 3: RAISE QUERY */}
+          {/* TAB 3: RAISE QUERY & VIEW RESPONSES */}
           {activeSubTab === 'query' && (
-            <form onSubmit={handleQuerySubmit} className="space-y-4">
-              <div className="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-xl border border-amber-300 dark:border-amber-800 space-y-3">
-                <div className="font-bold text-sm text-amber-900 dark:text-amber-200">Raise Formal Department Query</div>
-                
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Query Template Category</label>
-                  <select
-                    value={queryCategory}
-                    onChange={(e) => setQueryCategory(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2"
-                  >
-                    <option value="ETP Washwater & Discharge Capacity">ETP Washwater & Discharge Capacity</option>
-                    <option value="Fire Hydrant Pressure Drawing Revision">Fire Hydrant Pressure Drawing Revision</option>
-                    <option value="Structural Engineer Certificate Clarification">Structural Engineer Certificate Clarification</option>
-                    <option value="NABL Water Quality Test Addendum">NABL Water Quality Test Addendum</option>
-                  </select>
-                </div>
+            <div className="space-y-6">
+              
+              {/* Existing Queries and Responses History */}
+              {app.queries && app.queries.length > 0 && (
+                <div className="space-y-3">
+                  <div className="font-bold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                    <span>Department Queries & Applicant Responses ({app.queries.length})</span>
+                  </div>
 
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Query Instructions & Specific Message</label>
-                  <textarea
-                    rows={4}
-                    required
-                    value={queryText}
-                    onChange={(e) => setQueryText(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white"
-                  />
-                </div>
+                  {app.queries.map((q) => {
+                    const respDoc = q.responseDocName 
+                      ? documents.find(d => d.docName.toLowerCase().includes(q.responseDocName!.toLowerCase()) || d.id === q.responseDocName)
+                      : null;
 
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Response Due Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={queryDueDate}
-                    onChange={(e) => setQueryDueDate(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2"
-                  />
-                </div>
+                    return (
+                      <div key={q.id} className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 shadow-xs">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-bold text-xs text-amber-800 dark:text-amber-300">{q.category}</span>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${q.status === 'RESPONDED' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'}`}>
+                            {q.status === 'RESPONDED' ? '✓ Responded by Applicant' : '⏳ Pending Response'}
+                          </span>
+                        </div>
 
-                <div className="pt-2 flex justify-end">
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md flex items-center gap-1.5"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>Issue Official Department Query</span>
-                  </button>
+                        <div className="text-xs text-slate-800 dark:text-slate-200 bg-amber-50/60 dark:bg-amber-950/30 p-3 rounded-xl border border-amber-200 dark:border-amber-900/40">
+                          <div className="text-[10px] text-amber-700 dark:text-amber-400 font-bold uppercase mb-1">Officer Query ({q.dueDate ? `Due: ${q.dueDate}` : ''})</div>
+                          <p>{q.question}</p>
+                        </div>
+
+                        {q.status === 'RESPONDED' && (
+                          <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200 space-y-2">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                              <span>Applicant Official Clarification:</span>
+                              <span>{q.responseDate || 'Received'}</span>
+                            </div>
+                            <p className="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
+                              "{q.responseText}"
+                            </p>
+
+                            {q.responseDocName && (
+                              <div className="pt-2 flex items-center justify-between border-t border-emerald-200/80 dark:border-emerald-800/80 gap-2">
+                                <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
+                                  📎 Attached Clarification File: <strong>{q.responseDocName}</strong>
+                                </span>
+                                {respDoc && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedPreviewDoc(respDoc)}
+                                    className="px-3 py-1.5 rounded-xl bg-[#2E6F40] hover:bg-[#253D2C] text-white font-extrabold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+                                  >
+                                    <Eye className="w-3.5 h-3.5 text-[#CFFFDC]" />
+                                    <span>View Response File</span>
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
-            </form>
+              )}
+
+              {/* Form to Raise New Query */}
+              <form onSubmit={handleQuerySubmit} className="space-y-4">
+                <div className="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-xl border border-amber-300 dark:border-amber-800 space-y-3">
+                  <div className="font-bold text-sm text-amber-900 dark:text-amber-200">Raise Formal Department Query</div>
+                  
+                  <div>
+                    <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Query Template Category</label>
+                    <select
+                      value={queryCategory}
+                      onChange={(e) => setQueryCategory(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs"
+                    >
+                      <option value="ETP Washwater & Discharge Capacity">ETP Washwater & Discharge Capacity</option>
+                      <option value="Fire Hydrant Pressure Drawing Revision">Fire Hydrant Pressure Drawing Revision</option>
+                      <option value="Structural Engineer Certificate Clarification">Structural Engineer Certificate Clarification</option>
+                      <option value="NABL Water Quality Test Addendum">NABL Water Quality Test Addendum</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Query Instructions & Specific Message</label>
+                    <textarea
+                      rows={3}
+                      required
+                      value={queryText}
+                      onChange={(e) => setQueryText(e.target.value)}
+                      placeholder="Specify the exact documentation, revised layout drawing, or technical parameters required from the entrepreneur..."
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Response Due Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={queryDueDate}
+                      onChange={(e) => setQueryDueDate(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs"
+                    />
+                  </div>
+
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="submit"
+                      className="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md flex items-center gap-1.5 cursor-pointer text-xs"
+                    >
+                      <Send className="w-4 h-4" />
+                      <span>Issue Official Department Query</span>
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
           )}
 
           {/* TAB 4: SCHEDULE INSPECTION */}

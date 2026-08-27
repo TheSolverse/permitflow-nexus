@@ -19,17 +19,17 @@ export const InspectionPlannerPage: React.FC = () => {
   return (
     <div className="space-y-6">
       
-      {/* Header Banner */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Header Banner - Consistent Maharashtra Gov Forest Green Theme */}
+      <div className="bg-[#F8FCF9] dark:bg-[#16261C] p-6 rounded-2xl border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Department Inspection Planner</h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 text-xs font-bold border border-purple-300">
-              Joint Audits Scheduled
+            <h1 className="text-xl font-extrabold text-[#192A1E] dark:text-[#E8F7ED]">Department Inspection Planner</h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-[#2E6F40] text-white text-xs font-bold shadow-xs">
+              Single-Window Inspection Protocol
             </span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Site inspections for <strong className="text-slate-800 dark:text-slate-200">{activeProject.businessName}</strong> ({activeProject.midcArea}).
+          <p className="text-xs text-[#4A6B53] dark:text-[#A3D4B3] mt-1 font-medium">
+            Synchronized departmental site audits for <strong className="text-slate-900 dark:text-white font-extrabold">{activeProject.businessName}</strong> ({activeProject.midcArea || 'Maharashtra Industrial Zone'}).
           </p>
         </div>
       </div>

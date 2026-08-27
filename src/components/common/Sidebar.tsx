@@ -61,29 +61,29 @@ export const Sidebar: React.FC = () => {
     currentUser.role === 'OFFICER' ? officerNav : adminNav;
 
   return (
-    <aside className="w-64 bg-white text-slate-700 min-h-[calc(100vh-4rem)] flex flex-col border-r border-sky-200/80 shrink-0 shadow-xs rounded-2xl overflow-hidden my-1">
+    <aside className="w-64 bg-white dark:bg-[#16261C] text-[#253D2C] dark:text-[#E8F7ED] min-h-[calc(100vh-4rem)] flex flex-col border-r border-[#D4EEDC] dark:border-[#253D2C] shrink-0 shadow-xs rounded-2xl overflow-hidden my-1 transition-colors duration-200">
       
-      {/* Active Workspace Header - Light Blue Tint */}
-      <div className="p-4 border-b border-sky-200/80 bg-gradient-to-r from-sky-50 via-blue-50/60 to-white">
-        <div className="text-[10px] uppercase tracking-wider font-extrabold text-blue-800 mb-0.5">
+      {/* Active Workspace Header - Plain Clean Box */}
+      <div className="p-4 border-b border-[#D4EEDC] dark:border-[#253D2C] bg-white dark:bg-[#16261C]">
+        <div className="text-[10px] uppercase tracking-wider font-extrabold text-[#2E6F40] dark:text-[#68BA7F] mb-0.5">
           Active Portal Workspace
         </div>
-        <div className="font-bold text-sm text-slate-900 truncate flex items-center gap-1.5">
-          <Building2 className="w-4 h-4 text-blue-600" />
+        <div className="font-bold text-sm text-[#253D2C] dark:text-white truncate flex items-center gap-1.5">
+          <Building2 className="w-4 h-4 text-[#2E6F40] dark:text-[#68BA7F]" />
           <span>
             {currentUser.role === 'ENTREPRENEUR' ? 'Entrepreneur Portal' :
              currentUser.role === 'OFFICER' ? (currentUser.department || 'Officer Desk') :
              'PFN Admin Console'}
           </span>
         </div>
-        <div className="text-xs text-slate-600 truncate mt-0.5 font-medium">
+        <div className="text-xs text-[#60826A] dark:text-[#A3D4B3] truncate mt-0.5 font-medium">
           {currentUser.name}
         </div>
       </div>
 
       {/* Navigation Links */}
       <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
-        <div className="px-3 pb-2 text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">
+        <div className="px-3 pb-2 text-[10px] font-extrabold tracking-wider text-[#60826A] dark:text-[#68BA7F] uppercase">
           Main Menu
         </div>
         {navItems.map((item) => {
@@ -96,27 +96,27 @@ export const Sidebar: React.FC = () => {
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer group ${
                 isActive
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-md'
-                  : 'text-slate-700 hover:text-blue-900 hover:bg-sky-50'
+                  ? 'bg-[#2E6F40] text-white shadow-xs'
+                  : 'text-[#253D2C] dark:text-[#D1E8DA] hover:text-[#2E6F40] dark:hover:text-white hover:bg-[#F4FAF6] dark:hover:bg-[#1E3326]'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Icon className={`w-4 h-4 transition-transform ${isActive ? 'text-amber-300' : 'text-slate-400 group-hover:text-blue-600'}`} />
+                <Icon className={`w-4 h-4 transition-transform ${isActive ? 'text-[#CFFFDC]' : 'text-[#68BA7F] dark:text-[#68BA7F] group-hover:text-[#2E6F40] dark:group-hover:text-[#CFFFDC]'}`} />
                 <span>{item.label}</span>
               </div>
-              {isActive && <ChevronRight className="w-3.5 h-3.5 text-amber-200" />}
+              {isActive && <ChevronRight className="w-3.5 h-3.5 text-[#CFFFDC]" />}
             </button>
           );
         })}
       </nav>
 
       {/* Official Department Tag */}
-      <div className="p-4 m-3 rounded-xl bg-sky-50/80 border border-sky-200 text-xs text-slate-700 space-y-1">
-        <div className="flex items-center gap-1.5 text-blue-950 font-extrabold text-[11px]">
-          <Layers className="w-3.5 h-3.5 text-blue-600" />
+      <div className="p-4 m-3 rounded-xl bg-[#CFFFDC]/25 dark:bg-[#1E3326] border border-[#D4EEDC] dark:border-[#2A4736] text-xs text-[#253D2C] dark:text-[#D1E8DA] space-y-1">
+        <div className="flex items-center gap-1.5 text-[#2E6F40] dark:text-[#CFFFDC] font-extrabold text-[11px]">
+          <Layers className="w-3.5 h-3.5 text-[#2E6F40] dark:text-[#68BA7F]" />
           Single Window System
         </div>
-        <p className="text-[11px] text-slate-600 leading-tight font-medium">
+        <p className="text-[11px] text-[#4A6B53] dark:text-[#A3D4B3] leading-tight font-medium">
           Government of Maharashtra Industry Department Integration.
         </p>
       </div>

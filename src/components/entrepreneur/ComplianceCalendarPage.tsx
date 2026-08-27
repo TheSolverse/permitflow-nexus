@@ -38,12 +38,12 @@ export const ComplianceCalendarPage: React.FC = () => {
   return (
     <div className="space-y-6">
       
-      {/* Header Banner */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Header Banner - Consistent Maharashtra Gov Forest Green Theme */}
+      <div className="bg-[#F8FCF9] dark:bg-[#16261C] p-6 rounded-2xl border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Compliance & Renewal Calendar</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Automated compliance tracking & renewal reminders for <strong className="text-slate-800 dark:text-slate-200">{activeProject.businessName}</strong>.
+          <h1 className="text-xl font-extrabold text-[#192A1E] dark:text-[#E8F7ED]">Compliance & Renewal Calendar</h1>
+          <p className="text-xs text-[#4A6B53] dark:text-[#A3D4B3] mt-1 font-medium">
+            Automated compliance tracking & renewal reminders for <strong className="text-slate-900 dark:text-white font-extrabold">{activeProject.businessName}</strong>.
           </p>
         </div>
 
@@ -51,25 +51,25 @@ export const ComplianceCalendarPage: React.FC = () => {
         <div className="flex items-center gap-4">
           
           {/* Compliance Health Badge */}
-          <div className="bg-emerald-50 dark:bg-emerald-950/60 p-3 rounded-xl border border-emerald-300 dark:border-emerald-700 flex items-center gap-3">
-            <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-[#D4EEDC] dark:border-[#253D2C] flex items-center gap-3 shadow-xs">
+            <Activity className="w-5 h-5 text-[#2E6F40] dark:text-[#68BA7F]" />
             <div>
-              <div className="text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-300">Compliance Health</div>
-              <div className="font-extrabold text-base text-emerald-700 dark:text-emerald-300">{complianceHealthPct}%</div>
+              <div className="text-[10px] uppercase font-bold text-[#4A6B53] dark:text-[#A3D4B3]">Compliance Health</div>
+              <div className="font-extrabold text-base text-[#2E6F40] dark:text-[#68BA7F]">{complianceHealthPct}%</div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold">
+          <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-xl border border-[#D4EEDC] dark:border-[#253D2C] text-xs font-semibold shadow-xs">
             <button
               onClick={() => setViewMode('list')}
-              className={`px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors ${viewMode === 'list' ? 'bg-mh-navy text-white shadow-xs' : 'text-slate-600 dark:text-slate-400'}`}
+              className={`px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-[#2E6F40] text-white shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'}`}
             >
               <List className="w-3.5 h-3.5" />
               <span>List View</span>
             </button>
             <button
               onClick={() => setViewMode('calendar')}
-              className={`px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors ${viewMode === 'calendar' ? 'bg-mh-navy text-white shadow-xs' : 'text-slate-600 dark:text-slate-400'}`}
+              className={`px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors cursor-pointer ${viewMode === 'calendar' ? 'bg-[#2E6F40] text-white shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'}`}
             >
               <Calendar className="w-3.5 h-3.5" />
               <span>Calendar View</span>

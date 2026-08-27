@@ -71,33 +71,33 @@ export const AiAssistantPage: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-4 font-sans">
       
-      {/* Header */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+      {/* Header - Consistent Maharashtra Gov Forest Green Theme */}
+      <div className="bg-[#F8FCF9] dark:bg-[#16261C] p-5 rounded-2xl border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold shadow-xs">
-            <HelpCircle className="w-6 h-6 text-amber-400" />
+          <div className="w-10 h-10 rounded-xl bg-[#CFFFDC]/60 dark:bg-[#253D2C] text-[#2E6F40] dark:text-[#CFFFDC] flex items-center justify-center font-bold border border-[#68BA7F]/40 shadow-xs">
+            <HelpCircle className="w-6 h-6 text-[#2E6F40] dark:text-[#68BA7F]" />
           </div>
           <div>
-            <h1 className="text-base font-extrabold text-slate-900">Approval Helpdesk & Assistant</h1>
-            <p className="text-xs text-slate-500">Official guidance for Maharashtra approval rules, document flags & incentives.</p>
+            <h1 className="text-base font-extrabold text-[#192A1E] dark:text-[#E8F7ED]">Approval Helpdesk & Assistant</h1>
+            <p className="text-xs text-[#4A6B53] dark:text-[#A3D4B3] font-medium">Official guidance for Maharashtra approval rules, document flags & incentives.</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
-          <button onClick={() => setLanguage('en')} className={`px-2.5 py-1 rounded ${language === 'en' ? 'bg-slate-900 text-white' : 'text-slate-600'}`}>English</button>
-          <button onClick={() => setLanguage('mr')} className={`px-2.5 py-1 rounded ${language === 'mr' ? 'bg-slate-900 text-white' : 'text-slate-600'}`}>मराठी</button>
-          <button onClick={() => setLanguage('hi')} className={`px-2.5 py-1 rounded ${language === 'hi' ? 'bg-slate-900 text-white' : 'text-slate-600'}`}>हिंदी</button>
+        <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-xl text-xs font-semibold border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs">
+          <button onClick={() => setLanguage('en')} className={`px-2.5 py-1 rounded-lg font-bold cursor-pointer transition-colors ${language === 'en' ? 'bg-[#2E6F40] text-white' : 'text-slate-600 dark:text-slate-300'}`}>English</button>
+          <button onClick={() => setLanguage('mr')} className={`px-2.5 py-1 rounded-lg font-bold cursor-pointer transition-colors ${language === 'mr' ? 'bg-[#2E6F40] text-white' : 'text-slate-600 dark:text-slate-300'}`}>मराठी</button>
+          <button onClick={() => setLanguage('hi')} className={`px-2.5 py-1 rounded-lg font-bold cursor-pointer transition-colors ${language === 'hi' ? 'bg-[#2E6F40] text-white' : 'text-slate-600 dark:text-slate-300'}`}>हिंदी</button>
         </div>
       </div>
 
       {/* Advisory Disclaimer */}
-      <div className="bg-amber-50 p-3 rounded-xl border border-amber-300 flex items-center gap-2 text-xs text-amber-950">
-        <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+      <div className="bg-[#F8FCF9] dark:bg-[#16261C] p-3 rounded-xl border border-[#D4EEDC] dark:border-[#253D2C] flex items-center gap-2 text-xs text-[#192A1E] dark:text-[#E8F7ED] shadow-xs">
+        <AlertCircle className="w-4 h-4 text-[#2E6F40] dark:text-[#68BA7F] shrink-0" />
         <span><strong>Advisory Disclaimer:</strong> Helpdesk guidance is for assistance. Final approval decisions are strictly made by authorized government departments.</span>
       </div>
 
-      {/* Chat Messages Box (Light Theme) */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs h-[420px] flex flex-col overflow-hidden">
+      {/* Chat Messages Box */}
+      <div className="bg-white dark:bg-[#16261C] rounded-2xl border border-slate-200 dark:border-[#253D2C] shadow-xs h-[420px] flex flex-col overflow-hidden">
         <div className="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
           {messages.map((m) => (
             <div
@@ -105,22 +105,22 @@ export const AiAssistantPage: React.FC = () => {
               className={`flex items-start gap-2.5 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {m.sender === 'bot' && (
-                <div className="w-7 h-7 rounded-lg bg-slate-900 text-amber-400 flex items-center justify-center shrink-0 font-bold">
+                <div className="w-7 h-7 rounded-lg bg-[#2E6F40] text-white flex items-center justify-center shrink-0 font-bold">
                   H
                 </div>
               )}
               <div
                 className={`max-w-lg p-3.5 rounded-2xl leading-relaxed whitespace-pre-line ${
                   m.sender === 'user'
-                    ? 'bg-slate-900 text-white rounded-tr-none'
-                    : 'bg-slate-50 text-slate-800 rounded-tl-none border border-slate-200 font-medium'
+                    ? 'bg-[#2E6F40] text-white rounded-tr-none'
+                    : 'bg-[#F8FCF9] dark:bg-slate-900 text-[#192A1E] dark:text-[#E8F7ED] rounded-tl-none border border-[#D4EEDC] dark:border-slate-800 font-medium'
                 }`}
               >
                 <div>{m.text}</div>
-                <div className="text-[9px] text-slate-400 mt-1 text-right">{m.timestamp}</div>
+                <div className={`text-[9px] mt-1 text-right ${m.sender === 'user' ? 'text-[#CFFFDC]' : 'text-slate-400'}`}>{m.timestamp}</div>
               </div>
               {m.sender === 'user' && (
-                <div className="w-7 h-7 rounded-lg bg-amber-600 text-white flex items-center justify-center shrink-0 font-bold">
+                <div className="w-7 h-7 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0 font-bold">
                   U
                 </div>
               )}
@@ -129,13 +129,13 @@ export const AiAssistantPage: React.FC = () => {
         </div>
 
         {/* Suggested Quick Questions Chips */}
-        <div className="p-2.5 bg-slate-50 border-t border-slate-200 flex items-center gap-1.5 overflow-x-auto text-[11px]">
-          <span className="text-slate-400 font-bold uppercase text-[9px] shrink-0">Suggested Questions:</span>
+        <div className="p-2.5 bg-[#F8FCF9] dark:bg-slate-900 border-t border-[#D4EEDC] dark:border-[#253D2C] flex items-center gap-1.5 overflow-x-auto text-[11px]">
+          <span className="text-[#4A6B53] dark:text-[#A3D4B3] font-bold uppercase text-[9px] shrink-0">Suggested Questions:</span>
           {suggestedQuestions.map((q) => (
             <button
               key={q}
               onClick={() => handleSend(q)}
-              className="px-2.5 py-1 rounded-full bg-white text-slate-700 border border-slate-300 hover:border-slate-900 transition-colors shrink-0 font-semibold"
+              className="px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-[#D4EEDC] dark:border-slate-700 hover:border-[#2E6F40] hover:text-[#2E6F40] transition-colors shrink-0 font-semibold cursor-pointer shadow-xs"
             >
               {q}
             </button>
@@ -143,18 +143,18 @@ export const AiAssistantPage: React.FC = () => {
         </div>
 
         {/* Input Bar */}
-        <div className="p-3 border-t border-slate-200 bg-white flex gap-2">
+        <div className="p-3 border-t border-slate-200 dark:border-[#253D2C] bg-white dark:bg-[#16261C] flex gap-2">
           <input
             type="text"
             value={inputQuery}
             onChange={(e) => setInputQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend(inputQuery)}
             placeholder="Ask PermitFlow Helpdesk about your business approvals..."
-            className="flex-1 text-xs bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:border-amber-500"
+            className="flex-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-[#2E6F40]"
           />
           <button
             onClick={() => handleSend(inputQuery)}
-            className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors shadow-xs"
+            className="px-5 py-2.5 rounded-xl bg-[#2E6F40] hover:bg-[#235833] text-white font-bold text-xs transition-colors shadow-xs cursor-pointer"
           >
             Send Question
           </button>

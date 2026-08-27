@@ -34,31 +34,8 @@ export function generateSmartChecklist(project: BusinessProject, currentApplicat
   // Build checklist items with status & dependency readiness
   const checklist: SmartChecklistItem[] = selectedApprovals.map(appr => {
     const appMatch = currentApplications.find(app => app.approvalId === appr.id);
-    let status: ApprovalStatus = appMatch ? appMatch.status : 'Not Started';
+    const status: ApprovalStatus = appMatch ? appMatch.status : 'Not Started';
     const applicationId = appMatch ? appMatch.id : undefined;
-
-    // Default status fallback if new project
-    if (!appMatch) {
-      if (appr.id === 'appr-1' || appr.id === 'appr-2') {
-        status = 'Approved';
-      } else if (appr.id === 'appr-5') {
-        status = 'Approved';
-      } else if (appr.id === 'appr-6') {
-        status = 'Under Review';
-      } else if (appr.id === 'appr-8') {
-        status = 'Query Raised';
-      } else if (appr.id === 'appr-7') {
-        status = 'Inspection Scheduled';
-      } else if (appr.id === 'appr-12') {
-        status = 'Documents Needed';
-      } else if (appr.id === 'appr-14') {
-        status = 'Approved';
-      } else if (appr.id === 'appr-15') {
-        status = 'Inspection Scheduled';
-      } else {
-        status = 'Not Started';
-      }
-    }
 
     // Determine dependency readiness
     let canApply = true;

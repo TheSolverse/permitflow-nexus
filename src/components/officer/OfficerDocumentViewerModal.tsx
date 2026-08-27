@@ -132,8 +132,30 @@ export const OfficerDocumentViewerModal: React.FC<Props> = ({
                 </span>
               </div>
 
+              {/* REAL UPLOADED FILE PREVIEW (If entrepreneur uploaded an actual image/file) */}
+              {doc.fileUrl && (doc.fileUrl.startsWith('blob:') || doc.fileUrl.startsWith('data:image') || doc.docName.match(/\.(png|jpg|jpeg|webp)$/i)) && (
+                <div className="space-y-4 mb-6">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                    <div>
+                      <div className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider">Entrepreneur Uploaded Original Attachment</div>
+                      <div className="text-sm font-extrabold text-slate-900 mt-0.5">{doc.docName}</div>
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                      Live Upload ({doc.fileSize || '1.2 MB'})
+                    </span>
+                  </div>
+                  <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center p-3">
+                    <img 
+                      src={doc.fileUrl} 
+                      alt={doc.docName} 
+                      className="max-h-[420px] w-auto max-w-full object-contain rounded-xl shadow-xs"
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* TEMPLATE 1: COMPANY PAN CARD */}
-              {isPan && (
+              {isPan && !doc.fileUrl.startsWith('blob:') && !doc.fileUrl.startsWith('data:image') && (
                 <div className="space-y-6">
                   <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-4 rounded-xl flex items-center justify-between border-b-4 border-amber-500">
                     <div className="flex items-center gap-3">

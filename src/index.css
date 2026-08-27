@@ -1,11 +1,25 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-  --color-mh-navy: #0A192F;
-  --color-mh-saffron: #FF9933;
-  --color-mh-saffronDark: #D97706;
-  --color-mh-green: #10B981;
-  --color-mh-blue: #1E3A8A;
+  --color-forest-50: #F0FAF3;
+  --color-forest-100: #DCF5E4;
+  --color-forest-200: #CFFFDC;
+  --color-forest-300: #9CE0B2;
+  --color-forest-400: #68BA7F;
+  --color-forest-500: #4B9B62;
+  --color-forest-600: #2E6F40;
+  --color-forest-700: #255833;
+  --color-forest-800: #253D2C;
+  --color-forest-900: #192A1E;
+  --color-forest-950: #0F1B13;
+
+  --color-mh-navy: #253D2C;
+  --color-mh-saffron: #68BA7F;
+  --color-mh-saffronDark: #2E6F40;
+  --color-mh-green: #2E6F40;
+  --color-mh-blue: #253D2C;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 

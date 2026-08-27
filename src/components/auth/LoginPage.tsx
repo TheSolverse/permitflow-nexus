@@ -2,14 +2,18 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Role } from '../../types';
 import { INITIAL_USERS } from '../../data/mockData';
-import { ShieldCheck, User as UserIcon, Lock, Mail, ArrowRight, UserPlus } from 'lucide-react';
+import { ShieldCheck, User as UserIcon, Lock, Mail, ArrowRight, UserPlus, AlertCircle } from 'lucide-react';
 import { LanguageSelector } from '../common/LanguageSelector';
 import { ThemeToggle } from '../common/ThemeToggle';
+
+import { signupUser, loginUser } from '../../services/api';
 
 export const LoginPage: React.FC = () => {
   const { setCurrentUser, setActiveTab } = useApp();
   const [selectedRole, setSelectedRole] = useState<Role>('ENTREPRENEUR');
   const [isSignup, setIsSignup] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authError, setAuthError] = useState<string>('');
 
   // Form states
   const [email, setEmail] = useState('');
@@ -17,38 +21,78 @@ export const LoginPage: React.FC = () => {
   const [name, setName] = useState('');
   const [businessName, setBusinessName] = useState('');
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const match = INITIAL_USERS.find(u => u.role === selectedRole && u.email === email);
-    if (match) {
-      setCurrentUser(match);
-    } else {
-      const fallback = INITIAL_USERS.find(u => u.role === selectedRole) || INITIAL_USERS[0];
-      setCurrentUser(fallback);
+    setAuthError('');
+    setIsSubmitting(true);
+
+    try {
+      const res = await loginUser(email, password, selectedRole);
+      if (res?.error) {
+        setAuthError(res.error);
+        setIsSubmitting(false);
+        return;
+      }
+      if (res?.user) {
+        setCurrentUser(res.user);
+        setIsSubmitting(false);
+        if (selectedRole === 'ENTREPRENEUR') setActiveTab('dashboard');
+        else if (selectedRole === 'OFFICER') setActiveTab('officer-dashboard');
+        else setActiveTab('admin-dashboard');
+      } else {
+        setAuthError('Invalid credentials. Please check your email and password.');
+        setIsSubmitting(false);
+      }
+    } catch (err: any) {
+      setAuthError(err.message || 'Login failed. Please check your credentials.');
+      setIsSubmitting(false);
     }
-
-    if (selectedRole === 'ENTREPRENEUR') setActiveTab('dashboard');
-    else if (selectedRole === 'OFFICER') setActiveTab('officer-dashboard');
-    else setActiveTab('admin-dashboard');
   };
 
-  const handleSignupSubmit = (e: React.FormEvent) => {
+  const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newUser = {
-      id: `usr-${Date.now()}`,
+    setAuthError('');
+    setIsSubmitting(true);
+    const userData = {
       name: name || 'New Entrepreneur',
-      email: email || 'entrepreneur@newunit.in',
-      role: 'ENTREPRENEUR' as Role,
-      organization: businessName || 'New Maharashtra Enterprise'
+      email: email.trim().toLowerCase(),
+      password: password,
+      role: 'ENTREPRENEUR',
+      district: 'Pune'
     };
-    setCurrentUser(newUser);
-    setActiveTab('new-project');
+
+    try {
+      const res = await signupUser(userData);
+      if (res?.error) {
+        setAuthError(res.error);
+        setIsSubmitting(false);
+        return;
+      }
+      if (res?.user) {
+        setCurrentUser(res.user);
+        setIsSubmitting(false);
+        setActiveTab('new-project');
+      } else {
+        setAuthError('Failed to create account. Please try again.');
+        setIsSubmitting(false);
+      }
+    } catch (err: any) {
+      setAuthError(err.message || 'Signup failed.');
+      setIsSubmitting(false);
+    }
   };
 
-  const loginAsDemo = (role: Role) => {
+  const loginAsDemo = async (role: Role) => {
+    setAuthError('');
     const demoUser = INITIAL_USERS.find(u => u.role === role);
     if (demoUser) {
       setCurrentUser(demoUser);
+      await signupUser({
+        name: demoUser.name,
+        email: demoUser.email,
+        password: 'Password@123',
+        role: demoUser.role
+      }).catch(() => {});
       if (role === 'ENTREPRENEUR') setActiveTab('dashboard');
       else if (role === 'OFFICER') setActiveTab('officer-dashboard');
       else setActiveTab('admin-dashboard');
@@ -127,6 +171,14 @@ export const LoginPage: React.FC = () => {
               >
                 Admin
               </button>
+            </div>
+          )}
+
+          {/* Auth Error Banner */}
+          {authError && (
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-start gap-2.5 shadow-xs animate-in fade-in">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <div className="leading-relaxed">{authError}</div>
             </div>
           )}
 

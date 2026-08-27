@@ -57,18 +57,18 @@ export const ApplicationTrackerPage: React.FC = () => {
   return (
     <div className="space-y-6">
       
-      {/* Header Banner - Light Blue Sky Gradient */}
-      <div className="bg-gradient-to-r from-sky-100/80 via-blue-50/60 to-white p-6 rounded-2xl border border-sky-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Header Banner - Consistent Maharashtra Gov Forest Green Theme */}
+      <div className="bg-[#F8FCF9] dark:bg-[#16261C] p-6 rounded-2xl border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-extrabold text-slate-900">Unified Application Tracker</h1>
-          <p className="text-xs text-slate-600 mt-1 font-medium">
-            Real-time status, officer assignments & SLA countdowns for <strong className="text-slate-900 font-extrabold">{activeProject.businessName}</strong>.
+          <h1 className="text-xl font-extrabold text-[#192A1E] dark:text-[#E8F7ED]">Unified Application Tracker</h1>
+          <p className="text-xs text-[#4A6B53] dark:text-[#A3D4B3] mt-1 font-medium">
+            Real-time status, officer assignments & SLA countdowns for <strong className="text-slate-900 dark:text-white font-extrabold">{activeProject.businessName}</strong>.
           </p>
         </div>
       </div>
 
-      {/* Filter Bar & Search - White Card with Royal Indigo Active Pills */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* Filter Bar & Search */}
+      <div className="bg-white dark:bg-[#16261C] p-4 rounded-2xl border border-slate-200 dark:border-[#253D2C] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
         
         {/* Status Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 text-xs">
@@ -80,8 +80,8 @@ export const ApplicationTrackerPage: React.FC = () => {
                 onClick={() => setStatusFilter(st)}
                 className={`px-3.5 py-1.5 rounded-xl border font-bold transition-all whitespace-nowrap cursor-pointer ${
                   isActive
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                    : 'bg-indigo-50/60 text-indigo-900 border-indigo-200/80 hover:bg-indigo-100'
+                    ? 'bg-[#2E6F40] text-white border-[#2E6F40] shadow-xs'
+                    : 'bg-[#F8FCF9] dark:bg-slate-900 text-[#192A1E] dark:text-[#E8F7ED] border-[#D4EEDC] dark:border-slate-700 hover:bg-[#E8F7ED]'
                 }`}
               >
                 {st}
@@ -98,7 +98,7 @@ export const ApplicationTrackerPage: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search App ID or approval..."
-            className="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-2 text-slate-900 focus:outline-none focus:border-amber-500 font-semibold"
+            className="w-full text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-[#2E6F40] font-semibold"
           />
         </div>
       </div>

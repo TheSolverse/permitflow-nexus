@@ -77,23 +77,23 @@ export const NewProjectForm: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       
-      {/* Page Header - Rich Light Gradient */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-indigo-50/40 to-white p-6 rounded-2xl border border-amber-200 shadow-xs">
+      {/* Page Header - Consistent Maharashtra Gov Forest Green Theme */}
+      <div className="bg-[#F8FCF9] dark:bg-[#16261C] p-6 rounded-2xl border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-700 flex items-center justify-center font-bold border border-amber-300/80 shadow-xs">
-            <Building2 className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-xl bg-[#CFFFDC]/60 dark:bg-[#253D2C] text-[#2E6F40] dark:text-[#CFFFDC] flex items-center justify-center font-bold border border-[#68BA7F]/40 shadow-xs">
+            <Building2 className="w-6 h-6 text-[#2E6F40] dark:text-[#68BA7F]" />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold text-slate-900">Register New Business Project</h1>
-            <p className="text-xs text-slate-600 font-medium mt-0.5">
+            <h1 className="text-xl font-extrabold text-[#192A1E] dark:text-[#E8F7ED]">Register New Business Project</h1>
+            <p className="text-xs text-[#4A6B53] dark:text-[#A3D4B3] font-medium mt-0.5">
               PFN Single-Window Wizard • Automatically configures your statutory Maharashtra permissions & licences
             </p>
           </div>
         </div>
       </div>
 
-      {/* Wizard Progress Stepper - White Background with Royal Indigo Completed Badges */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex justify-between items-center text-xs">
+      {/* Wizard Progress Stepper */}
+      <div className="bg-white dark:bg-[#16261C] p-4 rounded-2xl border border-slate-200 dark:border-[#253D2C] shadow-xs flex justify-between items-center text-xs">
         {[
           { step: 1, label: '1. Sector & Entity' },
           { step: 2, label: '2. Scale & Features' },
@@ -105,19 +105,19 @@ export const NewProjectForm: React.FC = () => {
             onClick={() => setCurrentStep(item.step)}
             className={`flex items-center gap-2 cursor-pointer font-bold ${
               currentStep === item.step
-                ? 'text-amber-600 font-extrabold'
+                ? 'text-[#2E6F40] dark:text-[#68BA7F] font-extrabold'
                 : currentStep > item.step
-                ? 'text-indigo-700'
+                ? 'text-[#2E6F40]'
                 : 'text-slate-400'
             }`}
           >
             <span
               className={`w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-xs ${
                 currentStep === item.step
-                  ? 'bg-amber-500 text-white font-extrabold'
+                  ? 'bg-[#2E6F40] text-white font-extrabold'
                   : currentStep > item.step
-                  ? 'bg-indigo-600 text-white font-extrabold'
-                  : 'bg-slate-100 text-slate-600 font-semibold'
+                  ? 'bg-[#D4EEDC] text-[#2E6F40] font-extrabold'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 font-semibold'
               }`}
             >
               {currentStep > item.step ? '✓' : item.step}
@@ -127,45 +127,45 @@ export const NewProjectForm: React.FC = () => {
         ))}
       </div>
 
-      {/* Form Card Body - White Background */}
-      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xs">
+      {/* Form Card Body */}
+      <div className="bg-white dark:bg-[#16261C] p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-[#253D2C] shadow-xs">
         
         {/* STEP 1: BASIC BUSINESS IDENTITY */}
         {currentStep === 1 && (
           <div className="space-y-5 text-xs">
-            <h2 className="text-base font-extrabold text-slate-900 mb-4 pb-2 border-b border-slate-100">
+            <h2 className="text-base font-extrabold text-slate-900 dark:text-white mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">
               Step 1: Primary Business Identity & Sector Classification
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Business Name</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Business Name</label>
                 <input
                   type="text"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
                   placeholder="e.g. Apex Agro Processing Hub"
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Business Type</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Business Type</label>
                 <input
                   type="text"
                   value={businessType}
                   onChange={(e) => setBusinessType(e.target.value)}
                   placeholder="e.g. Food Processing & Spice Extraction"
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Project Type</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Project Type</label>
                 <select
                   value={projectType}
                   onChange={(e) => setProjectType(e.target.value as ProjectType)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 >
                   <option value="New Setup">New Setup (Greenfield)</option>
                   <option value="Expansion">Expansion (Brownfield)</option>
@@ -174,11 +174,11 @@ export const NewProjectForm: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Entity Constitution</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Entity Constitution</label>
                 <select
                   value={entityType}
                   onChange={(e) => setEntityType(e.target.value as EntityType)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 >
                   <option value="Private Limited">Private Limited Company</option>
                   <option value="LLP">Limited Liability Partnership (LLP)</option>
@@ -189,7 +189,7 @@ export const NewProjectForm: React.FC = () => {
 
               {/* Major Sector Selection */}
               <div className="sm:col-span-2">
-                <label className="block text-slate-900 font-extrabold mb-2">
+                <label className="block text-slate-900 dark:text-white font-extrabold mb-2">
                   Primary Industry Sector *
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -207,12 +207,12 @@ export const NewProjectForm: React.FC = () => {
                         }}
                         className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
                           isSelected
-                            ? 'bg-amber-500 text-white border-amber-500 font-extrabold shadow-md scale-[1.02] ring-2 ring-amber-300'
-                            : 'bg-indigo-50/50 hover:bg-indigo-100/70 border-indigo-200/80 text-indigo-950 font-bold hover:border-amber-400'
+                            ? 'bg-[#2E6F40] text-white border-[#2E6F40] font-extrabold shadow-md scale-[1.02] ring-2 ring-[#68BA7F]/40'
+                            : 'bg-slate-50 dark:bg-slate-900 hover:bg-[#F8FCF9] border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-bold hover:border-[#68BA7F]'
                         }`}
                       >
                         <div className="text-xs font-extrabold">{sec.name}</div>
-                        <div className={`text-[10px] font-semibold mt-0.5 ${isSelected ? 'text-amber-100' : 'text-indigo-600'}`}>
+                        <div className={`text-[10px] font-semibold mt-0.5 ${isSelected ? 'text-[#CFFFDC]' : 'text-slate-500'}`}>
                           {sec.subSectors.length} Sub-Sectors
                         </div>
                       </button>
@@ -222,14 +222,14 @@ export const NewProjectForm: React.FC = () => {
               </div>
 
               {/* Sub-Sector Selection */}
-              <div className="sm:col-span-2 p-4 rounded-xl bg-amber-50/90 border border-amber-300 shadow-xs space-y-2">
-                <label className="block text-amber-950 font-extrabold text-xs">
+              <div className="sm:col-span-2 p-4 rounded-xl bg-[#F8FCF9] dark:bg-[#16261C] border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs space-y-2">
+                <label className="block text-[#192A1E] dark:text-[#E8F7ED] font-extrabold text-xs">
                   Select Specific Sub-Sector ({sector}):
                 </label>
                 <select
                   value={subSector}
                   onChange={(e) => setSubSector(e.target.value)}
-                  className="w-full bg-white border border-amber-300 rounded-xl px-3 py-2.5 text-slate-900 font-extrabold focus:outline-none focus:border-amber-500 shadow-xs"
+                  className="w-full bg-white dark:bg-slate-900 border border-[#D4EEDC] dark:border-[#253D2C] rounded-xl px-3 py-2.5 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#2E6F40] shadow-xs"
                 >
                   {subSectorOptions.map((sub) => (
                     <option key={sub.id} value={sub.name}>
@@ -237,7 +237,7 @@ export const NewProjectForm: React.FC = () => {
                     </option>
                   ))}
                 </select>
-                <p className="text-[11px] text-slate-700 font-medium italic">
+                <p className="text-[11px] text-[#4A6B53] dark:text-[#A3D4B3] font-medium italic">
                   {subSectorOptions.find(s => s.name === subSector)?.description}
                 </p>
               </div>
@@ -248,7 +248,7 @@ export const NewProjectForm: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
-                className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold flex items-center gap-2 shadow-md shadow-amber-500/20 cursor-pointer transition-all"
+                className="px-6 py-2.5 rounded-xl bg-[#2E6F40] hover:bg-[#235833] text-white font-extrabold flex items-center gap-2 shadow-md shadow-[#2E6F40]/20 cursor-pointer transition-all"
               >
                 <span>Continue to Step 2</span>
                 <ArrowRight className="w-4 h-4" />
@@ -260,15 +260,17 @@ export const NewProjectForm: React.FC = () => {
         {/* STEP 2: PROJECT DETAILS */}
         {currentStep === 2 && (
           <div className="space-y-4 text-xs">
-            <h2 className="text-base font-extrabold text-slate-900 mb-4 pb-2 border-b border-slate-100">Step 2: Project Scale & Operational Features</h2>
+            <h2 className="text-base font-extrabold text-slate-900 dark:text-white mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">
+              Step 2: Project Scale & Operational Features
+            </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Total Investment Range</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Total Investment Range</label>
                 <select
                   value={investmentRange}
                   onChange={(e) => setInvestmentRange(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 >
                   <option value="₹50 Lakhs - ₹1 Cr">₹50 Lakhs - ₹1 Cr (Micro)</option>
                   <option value="₹1 Cr - ₹5 Cr">₹1 Cr - ₹5 Cr (Small)</option>
@@ -279,22 +281,22 @@ export const NewProjectForm: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Estimated Employees / Workers</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Estimated Employees / Workers</label>
                 <input
                   type="number"
                   value={employeeCount}
                   onChange={(e) => setEmployeeCount(Number(e.target.value))}
                   placeholder="35"
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Current Project Stage</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Current Project Stage</label>
                 <select
                   value={projectStage}
                   onChange={(e) => setProjectStage(e.target.value as ProjectStage)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 >
                   <option value="Planning">Planning & Land Survey</option>
                   <option value="Site Acquisition">Site Acquisition / Lease Deed</option>
@@ -305,39 +307,39 @@ export const NewProjectForm: React.FC = () => {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-slate-700 font-semibold mb-1">Primary Business Activity Description</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Primary Business Activity Description</label>
                 <textarea
                   rows={2}
                   value={businessActivity}
                   onChange={(e) => setBusinessActivity(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 />
               </div>
 
               {/* Checkboxes */}
               <div className="sm:col-span-2 space-y-3 pt-2">
-                <label className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
+                <label className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 transition-colors">
                   <input
                     type="checkbox"
                     checked={hasConstruction}
                     onChange={(e) => setHasConstruction(e.target.checked)}
-                    className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500"
+                    className="w-4 h-4 text-[#2E6F40] rounded focus:ring-[#2E6F40]"
                   />
                   <div>
-                    <div className="font-extrabold text-slate-900">Building / Civil Construction Required</div>
+                    <div className="font-extrabold text-slate-900 dark:text-white">Building / Civil Construction Required</div>
                     <div className="text-[10px] text-slate-500">Triggers MIDC Building Plan Approval & Provisional Fire NOC requirements</div>
                   </div>
                 </label>
 
-                <label className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
+                <label className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 transition-colors">
                   <input
                     type="checkbox"
                     checked={hasHazardousMaterials}
                     onChange={(e) => setHasHazardousMaterials(e.target.checked)}
-                    className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500"
+                    className="w-4 h-4 text-[#2E6F40] rounded focus:ring-[#2E6F40]"
                   />
                   <div>
-                    <div className="font-extrabold text-slate-900">Hazardous / Flammable Materials Handled</div>
+                    <div className="font-extrabold text-slate-900 dark:text-white">Hazardous / Flammable Materials Handled</div>
                     <div className="text-[10px] text-slate-500">Triggers State Environmental Clearance (EC) & DISH Hazardous Authorization</div>
                   </div>
                 </label>
@@ -348,7 +350,7 @@ export const NewProjectForm: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setCurrentStep(1)}
-                className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-extrabold hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-extrabold hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back
@@ -356,7 +358,7 @@ export const NewProjectForm: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setCurrentStep(3)}
-                className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold flex items-center gap-2 shadow-xs cursor-pointer"
+                className="px-6 py-2.5 rounded-xl bg-[#2E6F40] hover:bg-[#235833] text-white font-extrabold flex items-center gap-2 shadow-md shadow-[#2E6F40]/20 cursor-pointer transition-all"
               >
                 <span>Continue to Step 3</span>
                 <ArrowRight className="w-4 h-4" />
@@ -368,15 +370,17 @@ export const NewProjectForm: React.FC = () => {
         {/* STEP 3: LOCATION */}
         {currentStep === 3 && (
           <div className="space-y-4 text-xs">
-            <h2 className="text-base font-extrabold text-slate-900 mb-4 pb-2 border-b border-slate-100">Step 3: Maharashtra Location & Land Profile</h2>
+            <h2 className="text-base font-extrabold text-slate-900 dark:text-white mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">
+              Step 3: Maharashtra Location & Land Profile
+            </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">District</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">District</label>
                 <select
                   value={district}
                   onChange={(e) => setDistrict(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 >
                   {maharashtraDistricts.map(d => (
                     <option key={d} value={d}>{d}</option>
@@ -385,33 +389,33 @@ export const NewProjectForm: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">City / Taluka</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">City / Taluka</label>
                 <input
                   type="text"
                   value={cityTaluka}
                   onChange={(e) => setCityTaluka(e.target.value)}
                   placeholder="e.g. Khed / Chakan"
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Pincode</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Pincode</label>
                 <input
                   type="text"
                   value={pincode}
                   onChange={(e) => setPincode(e.target.value)}
                   placeholder="410501"
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Industrial Area / MIDC Cluster</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Industrial Area / MIDC Cluster</label>
                 <select
                   value={midcArea}
                   onChange={(e) => setMidcArea(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 >
                   {midcAreas.map(m => (
                     <option key={m} value={m}>{m}</option>
@@ -420,11 +424,11 @@ export const NewProjectForm: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Land Ownership Category</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Land Ownership Category</label>
                 <select
                   value={landType}
                   onChange={(e) => setLandType(e.target.value as LandType)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 >
                   <option value="MIDC Allotted">MIDC Allotted Industrial Plot</option>
                   <option value="Private Industrial">Private Industrial Zone Plot</option>
@@ -433,12 +437,12 @@ export const NewProjectForm: React.FC = () => {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-slate-700 font-semibold mb-1">Plot Number & Full Address</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Plot Number & Full Address</label>
                 <textarea
                   rows={2}
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 />
               </div>
             </div>
@@ -447,7 +451,7 @@ export const NewProjectForm: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
-                className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-extrabold hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-extrabold hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back
@@ -455,7 +459,7 @@ export const NewProjectForm: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setCurrentStep(4)}
-                className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold flex items-center gap-2 shadow-xs cursor-pointer"
+                className="px-6 py-2.5 rounded-xl bg-[#2E6F40] hover:bg-[#235833] text-white font-extrabold flex items-center gap-2 shadow-md shadow-[#2E6F40]/20 cursor-pointer transition-all"
               >
                 <span>Review & Generate Checklist</span>
                 <ArrowRight className="w-4 h-4" />
@@ -468,27 +472,27 @@ export const NewProjectForm: React.FC = () => {
         {currentStep === 4 && (
           <div className="space-y-6 text-xs">
             <div>
-              <h2 className="text-base font-extrabold text-slate-900">Step 4: Summary Review</h2>
+              <h2 className="text-base font-extrabold text-slate-900 dark:text-white">Step 4: Summary Review</h2>
               <p className="text-slate-500 font-medium">Verify your entered profile parameters before initiating rules engine analysis.</p>
             </div>
 
-            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
+            <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <span className="text-slate-400 font-medium">Business Name:</span>
-                  <div className="font-extrabold text-slate-900">{businessName}</div>
+                  <div className="font-extrabold text-slate-900 dark:text-white">{businessName}</div>
                 </div>
                 <div>
                   <span className="text-slate-400 font-medium">Sector & Scale:</span>
-                  <div className="font-extrabold text-slate-900">{sector} • {investmentRange}</div>
+                  <div className="font-extrabold text-slate-900 dark:text-white">{sector} • {investmentRange}</div>
                 </div>
                 <div>
                   <span className="text-slate-400 font-medium">Entity & Workers:</span>
-                  <div className="font-extrabold text-slate-900">{entityType} ({employeeCount} Workers)</div>
+                  <div className="font-extrabold text-slate-900 dark:text-white">{entityType} ({employeeCount} Workers)</div>
                 </div>
                 <div>
                   <span className="text-slate-400 font-medium">Location:</span>
-                  <div className="font-extrabold text-slate-900">{district} ({midcArea})</div>
+                  <div className="font-extrabold text-slate-900 dark:text-white">{district} ({midcArea})</div>
                 </div>
                 <div>
                   <span className="text-slate-400 font-medium">Construction Needed:</span>
@@ -501,9 +505,9 @@ export const NewProjectForm: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-amber-50 p-4 rounded-xl border border-amber-300 flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-amber-600 shrink-0" />
-              <p className="text-amber-950 font-medium">
+            <div className="bg-[#F8FCF9] dark:bg-[#16261C] p-4 rounded-xl border border-[#D4EEDC] dark:border-[#253D2C] flex items-center gap-3">
+              <Sparkles className="w-5 h-5 text-[#2E6F40] dark:text-[#68BA7F] shrink-0" />
+              <p className="text-[#192A1E] dark:text-[#E8F7ED] font-medium">
                 PermitFlow Rules Engine will auto-generate exact prerequisite approvals, fees, document checklists & state incentive matches for this project profile.
               </p>
             </div>
@@ -512,7 +516,7 @@ export const NewProjectForm: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setCurrentStep(3)}
-                className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-extrabold hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-extrabold hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Edit Details
@@ -520,10 +524,10 @@ export const NewProjectForm: React.FC = () => {
               <button
                 type="button"
                 onClick={handleComplete}
-                className="px-8 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                className="px-8 py-3.5 rounded-xl bg-[#2E6F40] hover:bg-[#235833] text-white font-extrabold text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer"
               >
                 <span>Generate Smart Checklist</span>
-                <CheckCircle2 className="w-4 h-4 text-amber-400" />
+                <CheckCircle2 className="w-4 h-4 text-[#CFFFDC]" />
               </button>
             </div>
           </div>

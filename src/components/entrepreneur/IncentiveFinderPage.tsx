@@ -187,39 +187,39 @@ export const IncentiveFinderPage: React.FC = () => {
         </div>
       )}
 
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-purple-900 via-mh-navy to-slate-900 p-6 rounded-2xl text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      {/* Header Banner - Consistent Maharashtra Gov Forest Green Theme */}
+      <div className="bg-[#F8FCF9] dark:bg-[#16261C] p-6 rounded-2xl border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Gift className="w-6 h-6 text-purple-400" />
-            <h1 className="text-xl font-extrabold text-white">Maharashtra Government Incentive Finder</h1>
+            <Gift className="w-6 h-6 text-[#2E6F40] dark:text-[#68BA7F]" />
+            <h1 className="text-xl font-extrabold text-[#192A1E] dark:text-[#E8F7ED]">Maharashtra Government Incentive Finder</h1>
           </div>
-          <p className="text-xs text-purple-200 mt-1">
-            Personalized scheme matching for <strong className="text-amber-400 font-semibold">{activeProject.businessName}</strong> ({activeProject.sector} • {activeProject.investmentRange}).
+          <p className="text-xs text-[#4A6B53] dark:text-[#A3D4B3] mt-1 font-medium">
+            Personalized scheme matching for <strong className="text-slate-900 dark:text-white font-extrabold">{activeProject.businessName}</strong> ({activeProject.sector} • {activeProject.investmentRange}).
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="bg-purple-800/40 p-3 rounded-xl border border-purple-600/40 text-center">
-            <div className="text-[10px] text-purple-200 font-semibold uppercase">Total Matched Subsidies</div>
-            <div className="text-lg font-extrabold text-amber-400">Est. ₹82,40,000</div>
+          <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-[#D4EEDC] dark:border-[#253D2C] text-center shadow-xs">
+            <div className="text-[10px] text-[#4A6B53] dark:text-[#A3D4B3] font-bold uppercase">Total Matched Subsidies</div>
+            <div className="text-lg font-extrabold text-[#2E6F40] dark:text-[#68BA7F]">Est. ₹82,40,000</div>
           </div>
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-[#16261C] p-3.5 rounded-xl border border-slate-200 dark:border-[#253D2C] shadow-xs">
         <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 font-semibold">
-          <Filter className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+          <Filter className="w-4 h-4 text-[#2E6F40] dark:text-[#68BA7F]" />
           <span>Filter by Category:</span>
         </div>
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setFilterTag('ALL')}
-            className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
               filterTag === 'ALL'
-                ? 'bg-purple-900 text-white'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                ? 'bg-[#2E6F40] text-white shadow-xs'
+                : 'bg-[#F8FCF9] dark:bg-slate-900 text-[#192A1E] dark:text-[#E8F7ED] border border-[#D4EEDC] dark:border-slate-700 hover:bg-[#E8F7ED]'
             }`}
           >
             All Schemes ({incentiveSchemes.length})
@@ -228,10 +228,10 @@ export const IncentiveFinderPage: React.FC = () => {
             <button
               key={tag}
               onClick={() => setFilterTag(tag)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
                 filterTag === tag
-                  ? 'bg-purple-900 text-white font-bold'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                  ? 'bg-[#2E6F40] text-white shadow-xs'
+                  : 'bg-[#F8FCF9] dark:bg-slate-900 text-[#192A1E] dark:text-[#E8F7ED] border border-[#D4EEDC] dark:border-slate-700 hover:bg-[#E8F7ED]'
               }`}
             >
               #{tag}
@@ -352,7 +352,7 @@ export const IncentiveFinderPage: React.FC = () => {
                     aria-label={`Apply for ${schemeTitle} on official government website`}
                     className={`px-4 py-2.5 rounded-xl font-bold text-xs shadow-xs flex items-center gap-1.5 shrink-0 transition-all ${
                       isUrlValid
-                        ? 'bg-mh-navy hover:bg-slate-800 text-white cursor-pointer hover:shadow-md'
+                        ? 'bg-[#2E6F40] hover:bg-[#235833] text-white cursor-pointer hover:shadow-md'
                         : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                     }`}
                   >

@@ -34,6 +34,32 @@ import {
 } from '../data/mockData';
 import { generateSmartChecklist } from '../utils/rulesEngine';
 import { calculateRiskScore } from '../utils/riskCalculator';
+import {
+  fetchProjects,
+  createProjectApi,
+  fetchApplications,
+  createApplicationApi,
+  updateApplicationStatusApi,
+  raiseApplicationQueryApi,
+  respondToApplicationQueryApi,
+  fetchNocApplications,
+  createNocApplicationApi,
+  raiseNocQueryApi,
+  respondToNocQueryApi,
+  issueNocCertificateApi,
+  fetchDocuments,
+  uploadDocumentApi,
+  fetchComplianceTasks,
+  fetchJointInspections,
+  createJointInspectionApi,
+  fetchIncentiveSchemes,
+  fetchAuditLogs,
+  fetchNotifications,
+  markNotificationReadApi,
+  fetchRules,
+  createRuleApi,
+  deleteUserAccount
+} from '../services/api';
 
 interface AppContextType {
   currentUser: User;
@@ -62,8 +88,8 @@ interface AppContextType {
 
   // Dynamic state helpers
   addProject: (projData: Omit<BusinessProject, 'id' | 'createdAt' | 'userId'>) => BusinessProject;
-  applyForApproval: (approvalId: string, approvalName: string, department: string) => void;
-  uploadDocument: (docName: string, category: string, file: File | null) => void;
+  applyForApproval: (approvalId: string, approvalName: string, department: string, documentIds?: string[], remarks?: string) => Application;
+  uploadDocument: (docName: string, category: string, file: File | null) => DocumentItem;
   respondToQuery: (queryId: string, responseText: string, responseDocName?: string) => void;
   updateApplicationStatus: (appId: string, status: ApprovalStatus, remarks?: string) => void;
   raiseOfficerQuery: (appId: string, queryCategory: string, queryText: string, dueDate: string) => void;
@@ -78,6 +104,7 @@ interface AppContextType {
   raiseNocQuery: (nocId: string, question: string) => void;
   respondToNocQuery: (nocId: string, queryId: string, responseText: string, responseDocName?: string) => void;
   issueNocCertificate: (nocId: string, certType: 'PROVISIONAL' | 'FINAL') => void;
+  deleteAccount: (userId?: string) => Promise<boolean>;
 
   // View state
   activeTab: string;
@@ -96,7 +123,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [language, setLanguage] = useState<Language>('en');
-  const [darkMode, setDarkMode] = useState<boolean>(false);
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('pfn_dark_mode');
+    if (saved !== null) {
+      return JSON.parse(saved);
+    }
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('pfn_dark_mode', JSON.stringify(darkMode));
+  }, [darkMode]);
 
   const [projects, setProjects] = useState<BusinessProject[]>(() => {
     const saved = localStorage.getItem('pfn_projects');
@@ -140,14 +182,90 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : INITIAL_JOINT_INSPECTIONS;
   });
 
-  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>(INITIAL_AUDIT_LOGS);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [rules, setRules] = useState<ApprovalRule[]>(INITIAL_RULES);
 
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [activeTab, setActiveTab] = useState<string>('login');
   const [selectedAppDetail, setSelectedAppDetail] = useState<Application | null>(null);
 
-  // Sync to LocalStorage
+  // Live Backend Hydration from Supabase with Strict User Isolation
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const isEntrepreneur = currentUser.role === 'ENTREPRENEUR';
+    const isOfficer = currentUser.role === 'OFFICER';
+    const userId = isEntrepreneur ? currentUser.id : undefined;
+
+    // 1. Projects (isolated by userId for entrepreneurs)
+    fetchProjects(userId).then(data => {
+      if (data) {
+        setProjects(data);
+        if (data.length > 0) {
+          setActiveProjectId(data[0].id);
+        } else {
+          setActiveProjectId('');
+        }
+      }
+    });
+
+    // 2. Applications (isolated to user's projects or officer's department)
+    fetchApplications(isOfficer ? { department: currentUser.department } : { userId }).then(data => {
+      if (data) setApplications(data);
+    });
+
+    // 3. NOC Applications
+    fetchNocApplications({ userId }).then(data => {
+      if (data) setNocApplications(data);
+    });
+
+    // 4. Documents (isolated to user's projects)
+    fetchDocuments(undefined, userId).then(data => {
+      if (data) setDocuments(data);
+    });
+
+    // 5. Compliance Tasks (isolated to user's projects)
+    fetchComplianceTasks(undefined, userId).then(data => {
+      if (data) setComplianceTasks(data);
+    });
+
+    // 6. Common Catalogues & Logs
+    fetchIncentiveSchemes().then(data => {
+      if (data && data.length > 0) setIncentiveSchemes(data);
+    });
+
+    fetchJointInspections().then(data => {
+      if (data && data.length > 0) setJointInspections(data);
+    });
+
+    fetchAuditLogs().then(data => {
+      if (data && data.length > 0) setAuditLogs(data);
+    });
+
+    fetchNotifications().then(data => {
+      if (data && data.length > 0) setNotifications(data);
+    });
+
+    fetchRules().then(data => {
+      if (data && data.length > 0) setRules(data);
+    });
+  }, [currentUser?.id, currentUser?.role]);
+
+  // Sync Project-Specific Records on Active Project Change
+  useEffect(() => {
+    if (!activeProjectId || !currentUser) return;
+    const userId = currentUser.role === 'ENTREPRENEUR' ? currentUser.id : undefined;
+
+    fetchDocuments(activeProjectId, userId).then(data => {
+      if (data) setDocuments(data);
+    });
+
+    fetchComplianceTasks(activeProjectId, userId).then(data => {
+      if (data) setComplianceTasks(data);
+    });
+  }, [activeProjectId, currentUser?.id]);
+
+  // Sync to LocalStorage as fallback cache
   useEffect(() => {
     localStorage.setItem('pfn_user', JSON.stringify(currentUser));
   }, [currentUser]);
@@ -176,7 +294,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('pfn_joint_inspections', JSON.stringify(jointInspections));
   }, [jointInspections]);
 
-  const activeProject = projects.find(p => p.id === activeProjectId) || projects[0];
+  const activeProject: BusinessProject = projects.find(p => p.id === activeProjectId) || projects[0] || {
+    id: `proj-${currentUser?.id || 'default'}`,
+    userId: currentUser?.id || 'usr-1',
+    businessName: `${currentUser?.name || 'My'} Enterprise`,
+    sector: 'Manufacturing',
+    subSector: 'Clean-Tech & Green Energy',
+    investmentRange: '₹5 Cr - ₹10 Cr',
+    proposedEmployees: 25,
+    landStatus: 'MIDC Allotted',
+    midcArea: 'Chakan MIDC Phase II',
+    district: currentUser?.district || 'Pune',
+    taluka: 'Haveli',
+    hazardousMaterials: false,
+    projectStage: 'PLANNING',
+    createdAt: new Date().toISOString().split('T')[0]
+  };
 
   const addProject = (projData: Omit<BusinessProject, 'id' | 'createdAt' | 'userId'>): BusinessProject => {
     const newProj: BusinessProject = {
@@ -188,6 +321,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updated = [newProj, ...projects];
     setProjects(updated);
     setActiveProjectId(newProj.id);
+
+    // Persist to Supabase Database
+    createProjectApi(newProj).catch(err => console.warn('Could not save project to backend:', err));
 
     // Audit log
     const log: AuditLogItem = {
@@ -204,7 +340,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return newProj;
   };
 
-  const applyForApproval = (approvalId: string, approvalName: string, department: string) => {
+  const applyForApproval = (
+    approvalId: string, 
+    approvalName: string, 
+    department: string, 
+    documentIds?: string[], 
+    remarks?: string
+  ): Application => {
     const deptPrefix = department.split(' ')[0].replace(/[^a-zA-Z]/g, '').substring(0, 4).toUpperCase();
     const newApp: Application = {
       id: `app-${Date.now()}`,
@@ -219,6 +361,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       slaDaysRemaining: 15,
       status: 'Submitted',
       riskScore: Math.floor(20 + Math.random() * 25),
+      remarks: remarks || undefined,
       timeline: [
         {
           id: `t-${Date.now()}`,
@@ -230,10 +373,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       ],
       queries: [],
-      documentIds: documents.map(d => d.id)
+      documentIds: documentIds && documentIds.length > 0 ? documentIds : documents.map(d => d.id)
     };
 
     setApplications([newApp, ...applications]);
+
+    // Persist to Supabase Database
+    createApplicationApi(newApp).catch(err => console.warn('Could not save application to backend:', err));
 
     // Audit log
     setAuditLogs([
@@ -265,9 +411,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       },
       ...notifications
     ]);
+
+    return newApp;
   };
 
-  const uploadDocument = (docName: string, category: string, file: File | null) => {
+  const uploadDocument = (docName: string, category: string, file: File | null): DocumentItem => {
     const fileNameLower = file ? file.name.toLowerCase() : '';
     let status: DocumentItem['status'] = 'Valid';
     let issues: string[] = [];
@@ -290,7 +438,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const newDoc: DocumentItem = {
-      id: `doc-${Date.now()}`,
+      id: `doc-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       projectId: activeProject.id,
       docName,
       category,
@@ -307,6 +455,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setDocuments([newDoc, ...documents]);
+
+    // Persist document to Supabase
+    uploadDocumentApi(newDoc).catch(err => console.warn('Could not save document to backend:', err));
+
+    return newDoc;
   };
 
   const respondToQuery = (queryId: string, responseText: string, responseDocName?: string) => {
@@ -343,6 +496,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     setApplications(updatedApps);
+
+    // Persist query response to Supabase
+    respondToApplicationQueryApi(queryId, responseText, responseDocName).catch(err => console.warn('Could not save query response to backend:', err));
 
     setNotifications([
       {
@@ -402,6 +558,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     setApplications(updatedApps);
+
+    // Persist status update to Supabase
+    updateApplicationStatusApi(appId, status, remarks, currentUser.name).catch(err => console.warn('Could not save status update to backend:', err));
   };
 
   const raiseOfficerQuery = (appId: string, queryCategory: string, queryText: string, dueDate: string) => {
@@ -440,6 +599,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     setApplications(updatedApps);
+
+    // Persist officer query to Supabase
+    raiseApplicationQueryApi(appId, {
+      officerName: currentUser.name,
+      department: currentUser.department,
+      queryCategory,
+      queryText,
+      dueDate
+    }).catch(err => console.warn('Could not save query to backend:', err));
   };
 
   const scheduleInspection = (inspData: Omit<InspectionItem, 'id'>) => {
@@ -475,6 +643,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const markNotificationRead = (id: string) => {
     setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+    markNotificationReadApi(id).catch(err => console.warn('Could not update notification in backend:', err));
   };
 
   const addRule = (ruleData: Omit<ApprovalRule, 'id'>) => {
@@ -483,6 +652,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: `rule-${Date.now()}`
     };
     setRules([newRule, ...rules]);
+    createRuleApi(newRule).catch(err => console.warn('Could not save rule in backend:', err));
   };
 
   const updateIncentiveUrl = (id: string, officialUrl: string, officialApplyUrl?: string, officialInfoUrl?: string) => {
@@ -520,6 +690,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setNocApplications(prev => [newNoc, ...prev]);
 
+    // Persist to Supabase
+    createNocApplicationApi(newNoc).catch(err => console.warn('Could not save NOC to backend:', err));
+
     // Also push audit log
     const newLog: AuditLogItem = {
       id: `log-${Date.now()}`,
@@ -544,6 +717,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setJointInspections(prev => [newInsp, ...prev]);
+
+    // Persist to Supabase
+    createJointInspectionApi(newInsp).catch(err => console.warn('Could not save Joint Inspection to backend:', err));
 
     // Update NOC application status
     if (data.nocApplicationId) {
@@ -624,6 +800,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return app;
       })
     );
+
+    // Persist certificate issuance to Supabase
+    issueNocCertificateApi(nocId, certType).catch(err => console.warn('Could not save certificate to backend:', err));
+  };
+
+  const deleteAccount = async (targetUserId?: string): Promise<boolean> => {
+    const uid = targetUserId || currentUser.id;
+    try {
+      await deleteUserAccount(uid);
+    } catch (e) {
+      console.warn('Backend delete error, cleaning client state:', e);
+    }
+
+    // Clean localStorage cache
+    localStorage.removeItem('pfn_user');
+    localStorage.removeItem('pfn_projects');
+    localStorage.removeItem('pfn_applications');
+    localStorage.removeItem('pfn_documents');
+    localStorage.removeItem('pfn_noc_applications');
+    localStorage.removeItem('pfn_compliance_tasks');
+
+    // Reset current user to initial demo entrepreneur or redirect to login
+    setProjects([]);
+    setApplications([]);
+    setDocuments([]);
+    setNocApplications([]);
+    setComplianceTasks([]);
+    setCurrentUser(INITIAL_USERS[0]);
+    setActiveTab('login');
+    return true;
   };
 
   return (
@@ -664,6 +870,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         raiseNocQuery,
         respondToNocQuery,
         issueNocCertificate,
+        deleteAccount,
         activeTab,
         setActiveTab,
         selectedAppDetail,

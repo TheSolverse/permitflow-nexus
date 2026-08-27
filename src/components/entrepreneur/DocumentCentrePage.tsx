@@ -15,7 +15,7 @@ export const DocumentCentrePage: React.FC = () => {
   const [uploadDocName, setUploadDocName] = useState('');
   const [uploadDocCategory, setUploadDocCategory] = useState('PAN Card');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [activeDocForFeedback, setActiveDocForFeedback] = useState<DocumentItem | null>(documents[3] || documents[0]);
+  const [activeDocForFeedback, setActiveDocForFeedback] = useState<DocumentItem | null>(documents[0] || null);
 
   const categories = [
     'ALL',
@@ -60,18 +60,18 @@ export const DocumentCentrePage: React.FC = () => {
   return (
     <div className="space-y-6">
       
-      {/* Header Banner - Light Blue Sky Gradient */}
-      <div className="bg-gradient-to-r from-sky-100/80 via-blue-50/60 to-white p-6 rounded-2xl border border-sky-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Header Banner - Consistent Maharashtra Gov Forest Green Theme */}
+      <div className="bg-[#F8FCF9] dark:bg-[#16261C] p-6 rounded-2xl border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-extrabold text-slate-900">Document Centre & AI Verification</h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-blue-600 text-white text-xs font-extrabold shadow-xs flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-amber-300" />
+            <h1 className="text-xl font-extrabold text-[#192A1E] dark:text-[#E8F7ED]">Document Centre & AI Verification</h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-[#2E6F40] text-white text-xs font-extrabold shadow-xs flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-[#CFFFDC]" />
               OCR AI Scanner Active
             </span>
           </div>
-          <p className="text-xs text-slate-600 mt-1 font-medium">
-            Upload & validate documents for <strong className="text-slate-900 font-extrabold">{activeProject.businessName}</strong>. AI pre-screens for expiry & name mismatches.
+          <p className="text-xs text-[#4A6B53] dark:text-[#A3D4B3] mt-1 font-medium">
+            Upload & validate documents for <strong className="text-slate-900 dark:text-white font-extrabold">{activeProject.businessName}</strong>. AI pre-screens for expiry & name mismatches.
           </p>
         </div>
       </div>
@@ -79,20 +79,20 @@ export const DocumentCentrePage: React.FC = () => {
       {/* Grid: Upload Box + AI Validation Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Upload Box (1 Col) - Soft Indigo Card */}
-        <div className="bg-gradient-to-b from-indigo-50/60 to-white p-5 rounded-2xl border border-indigo-200/90 shadow-xs space-y-4">
-          <h3 className="font-extrabold text-sm text-indigo-950 flex items-center gap-2">
-            <UploadCloud className="w-4 h-4 text-amber-600" />
+        {/* Upload Box (1 Col) */}
+        <div className="bg-[#F8FCF9] dark:bg-[#16261C] p-5 rounded-2xl border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs space-y-4">
+          <h3 className="font-extrabold text-sm text-[#192A1E] dark:text-[#E8F7ED] flex items-center gap-2">
+            <UploadCloud className="w-4 h-4 text-[#2E6F40] dark:text-[#68BA7F]" />
             Upload New Document
           </h3>
 
           <form onSubmit={handleUploadSubmit} className="space-y-3 text-xs">
             <div>
-              <label className="block text-slate-700 font-semibold mb-1">Document Category</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Document Category</label>
               <select
                 value={uploadDocCategory}
                 onChange={(e) => setUploadDocCategory(e.target.value)}
-                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-amber-500 shadow-xs"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40] shadow-xs"
               >
                 {categories.filter(c => c !== 'ALL').map(c => (
                   <option key={c} value={c}>{c}</option>
@@ -101,32 +101,33 @@ export const DocumentCentrePage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-slate-700 font-semibold mb-1">Document Title</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Document Title</label>
               <input
                 type="text"
                 required
                 value={uploadDocName}
                 onChange={(e) => setUploadDocName(e.target.value)}
                 placeholder="e.g. Fire Hydrant Pressure Audit 2026"
-                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-amber-500 shadow-xs"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40] shadow-xs"
               />
             </div>
 
             <div>
-              <label className="block text-slate-700 font-semibold mb-1">File Upload (PDF, JPG, PNG, DWG)</label>
-              <div className="border-2 border-dashed border-amber-300 rounded-xl p-4 text-center hover:border-amber-500 transition-colors bg-amber-50/50 cursor-pointer shadow-xs">
-                <UploadCloud className="w-6 h-6 text-amber-600 mx-auto mb-1" />
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Upload File (PDF / Image)</label>
+              <div className="border border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-3 text-center bg-white dark:bg-slate-900 hover:border-[#2E6F40] transition-colors cursor-pointer relative">
                 <input
                   type="file"
-                  accept=".pdf,.png,.jpg,.jpeg,.dwg,.doc,.docx"
+                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
                   onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
+                    if (e.target.files && e.target.files.length > 0) {
                       const file = e.target.files[0];
                       setSelectedFile(file);
-                      if (!uploadDocName) setUploadDocName(file.name);
+                      if (!uploadDocName) {
+                        setUploadDocName(file.name.replace(/\.[^/.]+$/, ''));
+                      }
                     }
                   }}
-                  className="text-[11px] text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-900 file:text-white cursor-pointer"
+                  className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#CFFFDC] file:text-[#2E6F40] hover:file:bg-[#A3D4B3]"
                 />
                 {selectedFile ? (
                   <div className="mt-2 p-1.5 rounded-lg bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-300 flex items-center justify-center gap-1">
@@ -144,22 +145,22 @@ export const DocumentCentrePage: React.FC = () => {
               disabled={!uploadDocName && !selectedFile}
               className={`w-full py-2.5 rounded-xl text-white font-bold text-xs transition-all shadow-xs flex items-center justify-center gap-1.5 ${
                 !uploadDocName && !selectedFile
-                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                  : 'bg-slate-900 hover:bg-slate-800 cursor-pointer'
+                  ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed'
+                  : 'bg-[#2E6F40] hover:bg-[#235833] cursor-pointer'
               }`}
             >
-              <Sparkles className="w-4 h-4 text-amber-400" />
+              <Sparkles className="w-4 h-4 text-[#CFFFDC]" />
               <span>Upload & Run AI Scan</span>
             </button>
           </form>
         </div>
 
         {/* AI Validation Feedback Panel (2 Cols - Clean Light Theme) */}
-        <div className="lg:col-span-2 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="lg:col-span-2 bg-white dark:bg-[#16261C] p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-[#253D2C] shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-600" />
-              <h3 className="font-extrabold text-sm text-slate-900">AI OCR Document Analysis Report</h3>
+              <Sparkles className="w-5 h-5 text-[#2E6F40] dark:text-[#68BA7F]" />
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">AI OCR Document Analysis Report</h3>
             </div>
             {activeDocForFeedback && (
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadge(activeDocForFeedback.status)}`}>

@@ -32,13 +32,10 @@ export const ComplianceExpiryAlertModal: React.FC<ComplianceExpiryAlertModalProp
 
   if (!isOpen) return null;
 
-  // Get compliance tasks for active project, fallback to default compliance tasks so 2+ alerts always show
-  let displayTasks = complianceTasks.filter(
-    t => !t.projectId || t.projectId === activeProject?.id
+  // Get compliance tasks strictly for active project
+  const displayTasks = complianceTasks.filter(
+    t => activeProject?.id && t.projectId === activeProject.id
   );
-  if (displayTasks.length === 0) {
-    displayTasks = complianceTasks;
-  }
 
   // Ensure top 2 active alert tasks are highlighted
   const overdueTasks = displayTasks.filter(t => t.daysLeft < 0 || t.status === 'OVERDUE');
@@ -59,70 +56,71 @@ export const ComplianceExpiryAlertModal: React.FC<ComplianceExpiryAlertModalProp
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-3xl border border-amber-300 shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F1B13]/70 backdrop-blur-xs animate-fadeIn">
+      <div className="bg-white dark:bg-[#16261C] rounded-2xl border border-[#D4EEDC] dark:border-[#2A4736] shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
         
-        {/* Modal Header */}
-        <div className="bg-gradient-to-r from-amber-500 via-amber-600 to-indigo-700 text-white p-6 relative">
+        {/* Modal Header - Plain Solid Forest Green */}
+        <div className="bg-[#2E6F40] text-white p-5 sm:p-6 relative">
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+            className="absolute top-4 right-4 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-amber-200 border border-white/30 shrink-0 shadow-inner">
-              <ShieldAlert className="w-7 h-7 text-amber-300 animate-pulse" />
+          <div className="flex items-start gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-md flex items-center justify-center text-[#CFFFDC] border border-white/20 shrink-0">
+              <Clock className="w-6 h-6 text-[#CFFFDC]" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-950/40 text-amber-200 text-[11px] font-extrabold border border-amber-300/40 mb-1.5">
-                <Bell className="w-3 h-3 text-amber-400" />
-                <span>Entrepreneur Statutory Renewal Alert</span>
+              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/15 text-[#CFFFDC] text-xs font-semibold mb-1">
+                <Bell className="w-3 h-3 text-[#CFFFDC]" />
+                <span>Renewal Reminder</span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">
-                Certificate & Licence Expiry Notice
+              <h2 className="text-xl font-bold tracking-tight text-white">
+                Upcoming License & Permit Renewals
               </h2>
-              <p className="text-xs sm:text-sm text-amber-100 mt-1 font-medium">
-                Mandatory compliance reviews due for <strong className="text-white font-extrabold">{activeProject?.businessName || 'Your Business Entity'}</strong>
+              <p className="text-xs sm:text-sm text-[#CFFFDC]/90 mt-0.5">
+                Attention needed for <span className="font-semibold text-white">{activeProject?.businessName || 'your business'}</span>
               </p>
             </div>
           </div>
         </div>
 
         {/* Summary Stat Bar */}
-        <div className="bg-amber-50/90 border-b border-amber-200 px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-3">
-            <span className="font-extrabold text-slate-800">Expiry Risk Breakdown:</span>
+        <div className="bg-[#F0FAF3] dark:bg-[#1E3326] border-b border-[#D4EEDC] dark:border-[#2A4736] px-5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-medium text-[#253D2C] dark:text-[#E8F7ED]">Summary:</span>
             {overdueTasks.length > 0 && (
-              <span className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white font-extrabold text-[11px] flex items-center gap-1 shadow-xs">
-                <AlertTriangle className="w-3 h-3" />
+              <span className="px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-200 font-semibold text-[11px] flex items-center gap-1 border border-rose-200 dark:border-rose-800">
+                <AlertTriangle className="w-3 h-3 text-rose-600" />
                 {overdueTasks.length} Overdue
               </span>
             )}
-            <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-white font-extrabold text-[11px] flex items-center gap-1 shadow-xs">
-              <Clock className="w-3 h-3" />
-              {criticalTasks.length > 0 ? criticalTasks.length : 2} Expiring Soon (&lt; 30 Days)
+            <span className="px-2 py-0.5 rounded-md bg-[#CFFFDC]/60 dark:bg-[#253D2C] text-[#253D2C] dark:text-[#CFFFDC] font-semibold text-[11px] flex items-center gap-1 border border-[#68BA7F]/40 dark:border-[#68BA7F]">
+              <Clock className="w-3 h-3 text-[#2E6F40] dark:text-[#68BA7F]" />
+              {criticalTasks.length > 0 ? criticalTasks.length : 2} Expiring Soon
             </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-indigo-600 text-white font-extrabold text-[11px] flex items-center gap-1 shadow-xs">
-              <Calendar className="w-3 h-3" />
-              {upcomingTasks.length > 0 ? upcomingTasks.length : 1} Renewal Window Open
+            <span className="px-2 py-0.5 rounded-md bg-[#DCF5E4] dark:bg-[#192A1E] text-[#2E6F40] dark:text-[#9CE0B2] font-semibold text-[11px] flex items-center gap-1 border border-[#9CE0B2] dark:border-[#2E6F40]">
+              <Calendar className="w-3 h-3 text-[#2E6F40] dark:text-[#68BA7F]" />
+              {upcomingTasks.length > 0 ? upcomingTasks.length : 1} Upcoming
             </span>
           </div>
 
           <button
             onClick={handleGoToComplianceCalendar}
-            className="text-indigo-900 hover:text-indigo-950 font-extrabold text-xs flex items-center gap-1 underline cursor-pointer"
+            className="text-[#2E6F40] dark:text-[#68BA7F] hover:underline font-semibold text-xs flex items-center gap-1 cursor-pointer"
           >
-            <span>View Full Compliance Calendar</span>
+            <span>View Calendar</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {/* Scrollable Tasks List */}
-        <div className="p-6 overflow-y-auto space-y-4 max-h-[50vh] text-xs">
-          <p className="text-slate-700 font-extrabold text-xs">
-            Review 2 mandatory statutory certificate & licence renewals due for your unit:
+        <div className="p-5 overflow-y-auto space-y-3 max-h-[50vh] text-xs">
+          <p className="text-[#60826A] dark:text-[#A3D4B3] font-medium text-xs">
+            The following items require action soon:
           </p>
 
           {displayTasks.slice(0, 3).map((task) => {
@@ -133,66 +131,66 @@ export const ComplianceExpiryAlertModal: React.FC<ComplianceExpiryAlertModalProp
             return (
               <div 
                 key={task.id}
-                className={`p-4 rounded-2xl border transition-all ${
+                className={`p-3.5 rounded-xl border transition-all ${
                   isAcknowledged
-                    ? 'bg-emerald-50/60 border-emerald-300'
+                    ? 'bg-[#CFFFDC]/30 dark:bg-[#1E3326] border-[#68BA7F]'
                     : isOverdue
-                    ? 'bg-rose-50/70 border-rose-300 shadow-xs'
+                    ? 'bg-rose-50/60 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900'
                     : isCritical
-                    ? 'bg-amber-50/80 border-amber-300 shadow-xs'
-                    : 'bg-indigo-50/50 border-indigo-200'
+                    ? 'bg-[#F0FAF3] dark:bg-[#1E3326]/60 border-[#D4EEDC] dark:border-[#2A4736]'
+                    : 'bg-slate-50 dark:bg-[#1A2C21] border-slate-200 dark:border-[#253D2C]'
                 }`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/60">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#D4EEDC]/80 dark:border-[#2A4736]">
                   <div className="flex items-start gap-2.5">
-                    <div className={`p-2 rounded-xl text-white font-bold shrink-0 mt-0.5 ${
-                      isOverdue ? 'bg-rose-600' : isCritical ? 'bg-amber-500' : 'bg-indigo-600'
+                    <div className={`p-2 rounded-lg text-white font-bold shrink-0 mt-0.5 ${
+                      isOverdue ? 'bg-rose-600' : isCritical ? 'bg-[#2E6F40]' : 'bg-[#68BA7F]'
                     }`}>
-                      {isOverdue ? <AlertTriangle className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+                      {isOverdue ? <AlertTriangle className="w-4 h-4" /> : <Clock className="w-4 h-4 text-white" />}
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-extrabold text-slate-900 text-sm">{task.title}</h4>
+                        <h4 className="font-bold text-[#253D2C] dark:text-[#E8F7ED] text-sm">{task.title}</h4>
                         {isOverdue && (
-                          <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white font-extrabold text-[10px]">
-                            ⚠️ OVERDUE BY {Math.abs(task.daysLeft)} DAYS
+                          <span className="px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-200 font-semibold text-[10px] border border-rose-200 dark:border-rose-800">
+                            Overdue by {Math.abs(task.daysLeft)} days
                           </span>
                         )}
                         {isCritical && (
-                          <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white font-extrabold text-[10px]">
-                            ⚡ EXPIRING IN {task.daysLeft} DAYS
+                          <span className="px-2 py-0.5 rounded-md bg-[#CFFFDC]/70 dark:bg-[#253D2C] text-[#253D2C] dark:text-[#CFFFDC] font-semibold text-[10px] border border-[#68BA7F]/40 dark:border-[#68BA7F]">
+                            Expires in {task.daysLeft} days
                           </span>
                         )}
                         {!isOverdue && !isCritical && (
-                          <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white font-extrabold text-[10px]">
-                            📅 DUE IN {task.daysLeft} DAYS
+                          <span className="px-2 py-0.5 rounded-md bg-[#DCF5E4] dark:bg-[#192A1E] text-[#2E6F40] dark:text-[#9CE0B2] font-semibold text-[10px] border border-[#9CE0B2] dark:border-[#2E6F40]">
+                            Due in {task.daysLeft} days
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-slate-600 font-semibold mt-0.5 flex items-center gap-2">
+                      <div className="text-[11px] text-[#60826A] dark:text-[#A3D4B3] font-medium mt-1 flex items-center gap-2 flex-wrap">
                         <span>{task.department}</span>
                         <span>•</span>
-                        <span>Fee: <strong className="text-slate-900">{task.renewalFee}</strong></span>
+                        <span>Fee: <strong className="text-[#253D2C] dark:text-[#E8F7ED]">{task.renewalFee}</strong></span>
                         <span>•</span>
-                        <span>Period: <strong>{task.renewalPeriodMonths} Months</strong></span>
+                        <span>Valid: <strong className="text-[#253D2C] dark:text-[#E8F7ED]">{task.renewalPeriodMonths} months</strong></span>
                       </div>
                     </div>
                   </div>
 
                   <div className="shrink-0 flex items-center gap-2">
                     {isAcknowledged ? (
-                      <span className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-extrabold text-xs flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        Renewal Initiated
+                      <span className="px-3 py-1.5 rounded-lg bg-[#CFFFDC] text-[#253D2C] border border-[#68BA7F] font-semibold text-xs flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#2E6F40]" />
+                        Started
                       </span>
                     ) : (
                       <button
                         onClick={() => handleInitiateRenewal(task)}
                         disabled={renewingId === task.id}
-                        className={`px-4 py-2 rounded-xl text-white font-extrabold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer transition-all ${
+                        className={`px-3.5 py-1.5 rounded-lg text-white font-semibold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer transition-all ${
                           isOverdue 
                             ? 'bg-rose-600 hover:bg-rose-700' 
-                            : 'bg-amber-500 hover:bg-amber-600'
+                            : 'bg-[#2E6F40] hover:bg-[#253D2C]'
                         }`}
                       >
                         {renewingId === task.id ? (
@@ -202,8 +200,8 @@ export const ComplianceExpiryAlertModal: React.FC<ComplianceExpiryAlertModalProp
                           </>
                         ) : (
                           <>
-                            <Zap className="w-3.5 h-3.5 text-amber-200" />
-                            <span>Initiate Renewal</span>
+                            <Zap className="w-3.5 h-3.5 text-[#CFFFDC]" />
+                            <span>Renew Now</span>
                           </>
                         )}
                       </button>
@@ -211,10 +209,10 @@ export const ComplianceExpiryAlertModal: React.FC<ComplianceExpiryAlertModalProp
                   </div>
                 </div>
 
-                <div className="mt-2 text-xs text-slate-700 bg-white/80 p-2.5 rounded-xl border border-slate-200/80 flex items-start gap-2">
-                  <FileText className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
+                <div className="mt-2 text-xs text-[#4A6B53] dark:text-[#A3D4B3] bg-white dark:bg-[#1B2D23] p-2 rounded-lg border border-[#D4EEDC] dark:border-[#2A4736] flex items-start gap-2">
+                  <FileText className="w-3.5 h-3.5 text-[#68BA7F] shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-slate-900">Required Action: </span>
+                    <span className="font-semibold text-[#253D2C] dark:text-[#E8F7ED]">Next Step: </span>
                     <span>{task.actionRequired}</span>
                   </div>
                 </div>
@@ -224,26 +222,24 @@ export const ComplianceExpiryAlertModal: React.FC<ComplianceExpiryAlertModalProp
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-slate-50 border-t border-slate-200 p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <label className="flex items-center gap-2 text-xs text-slate-600 font-semibold cursor-pointer">
+        <div className="bg-[#F0FAF3] dark:bg-[#1E3326] border-t border-[#D4EEDC] dark:border-[#2A4736] px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <label className="flex items-center gap-2 text-xs text-[#60826A] dark:text-[#A3D4B3] cursor-pointer">
             <input
               type="checkbox"
               checked={rememberDismiss}
               onChange={(e) => setRememberDismiss(e.target.checked)}
-              className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500"
+              className="w-4 h-4 text-[#2E6F40] rounded border-[#68BA7F] focus:ring-[#2E6F40]"
             />
-            <span>Do not display this expiry alert pop-up again for this session</span>
+            <span>Don't show this reminder again today</span>
           </label>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onClose}
-              className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow-sm flex items-center gap-2 cursor-pointer"
-            >
-              <span>Proceed to Portal Dashboard</span>
-              <ArrowRight className="w-4 h-4 text-amber-400" />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="w-full sm:w-auto px-5 py-2 rounded-lg bg-[#253D2C] hover:bg-[#192A1E] text-[#CFFFDC] font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+          >
+            <span>Go to Dashboard</span>
+            <ArrowRight className="w-4 h-4 text-[#CFFFDC]" />
+          </button>
         </div>
 
       </div>

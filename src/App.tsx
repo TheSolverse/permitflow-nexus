@@ -35,24 +35,17 @@ import { ComplianceExpiryAlertModal } from './components/entrepreneur/Compliance
 
 export const MainContent: React.FC = () => {
   const { activeTab, currentUser } = useApp();
-  const [showExpiryModal, setShowExpiryModal] = React.useState<boolean>(true);
-
-  // Auto-show expiry pop-up whenever an Entrepreneur logs in or switches to entrepreneur portal
-  React.useEffect(() => {
-    if (currentUser.role === 'ENTREPRENEUR') {
-      setShowExpiryModal(true);
-    }
-  }, [currentUser.role, currentUser.id]);
+  const [showExpiryModal, setShowExpiryModal] = React.useState<boolean>(false);
 
   if (activeTab === 'landing') return <LandingPage />;
   if (activeTab === 'login') return <LoginPage />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50/70 to-slate-100 text-slate-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-white dark:bg-[#0F1B13] text-[#192A1E] dark:text-[#E8F7ED] flex flex-col font-sans transition-colors duration-200">
       <Navbar />
 
-      {/* Entrepreneur Statutory Certificate & Expiry Alert Modal */}
-      {currentUser.role === 'ENTREPRENEUR' && (
+      {/* Entrepreneur Statutory Certificate & Expiry Alert Modal (Only if opened explicitly) */}
+      {currentUser.role === 'ENTREPRENEUR' && showExpiryModal && (
         <ComplianceExpiryAlertModal 
           isOpen={showExpiryModal}
           onClose={() => setShowExpiryModal(false)}
@@ -96,4 +89,56 @@ export const MainContent: React.FC = () => {
   );
 };
 
-export default MainContent;
+// Robust React Error Boundary to catch subcomponent errors
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error('[React ErrorBoundary caught error]:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-6">
+          <div className="max-w-md w-full bg-slate-800 rounded-2xl border border-slate-700 p-6 space-y-4 shadow-2xl text-center">
+            <div className="w-12 h-12 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto text-xl font-bold">
+              ⚠️
+            </div>
+            <h2 className="text-lg font-bold text-white">Something went wrong</h2>
+            <p className="text-xs text-slate-400">
+              {this.state.error?.message || 'A render issue occurred while loading this view.'}
+            </p>
+            <button
+              onClick={() => {
+                this.setState({ hasError: false, error: null });
+                window.location.reload();
+              }}
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl text-xs transition-colors"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export const App: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <MainContent />
+    </ErrorBoundary>
+  );
+};
+
+export default App;

@@ -36,15 +36,15 @@ export const RiskScorePage: React.FC = () => {
   return (
     <div className="space-y-6">
       
-      {/* Header Banner - Rich Light Gradient */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-indigo-50/50 to-white p-6 rounded-2xl border border-amber-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Header Banner - Consistent Maharashtra Gov Forest Green Theme */}
+      <div className="bg-[#F8FCF9] dark:bg-[#16261C] p-6 rounded-2xl border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <ShieldAlert className="w-6 h-6 text-amber-600" />
-            <h1 className="text-xl font-extrabold text-slate-900">Approval Risk Score Engine</h1>
+            <ShieldAlert className="w-6 h-6 text-[#2E6F40] dark:text-[#68BA7F]" />
+            <h1 className="text-xl font-extrabold text-[#192A1E] dark:text-[#E8F7ED]">Approval Risk Score Engine</h1>
           </div>
-          <p className="text-xs text-slate-600 mt-1 font-medium">
-            Transparent risk evaluation & root-cause diagnostic breakdown for <strong className="text-slate-900 font-extrabold">{activeProject.businessName}</strong>.
+          <p className="text-xs text-[#4A6B53] dark:text-[#A3D4B3] mt-1 font-medium">
+            Transparent risk evaluation & root-cause diagnostic breakdown for <strong className="text-slate-900 dark:text-white font-extrabold">{activeProject.businessName}</strong>.
           </p>
         </div>
 
@@ -52,24 +52,24 @@ export const RiskScorePage: React.FC = () => {
           onClick={() => setIsSimulated(!isSimulated)}
           className={`px-4 py-2.5 rounded-xl font-extrabold text-xs shadow-sm flex items-center gap-2 cursor-pointer transition-all ${
             isSimulated
-              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-              : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+              ? 'bg-[#2E6F40] hover:bg-[#235833] text-white'
+              : 'bg-slate-900 hover:bg-slate-800 text-white'
           }`}
         >
-          <Zap className="w-4 h-4 text-amber-300" />
+          <Zap className="w-4 h-4 text-[#CFFFDC]" />
           <span>{isSimulated ? 'Reset to Actual Risk Score' : 'Simulate Risk Mitigation Fixes (-50 Pts)'}</span>
         </button>
       </div>
 
       {/* Main Score & Gauge Banner */}
-      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xs grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+      <div className="bg-white dark:bg-[#16261C] p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-[#253D2C] shadow-xs grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
         
         {/* Left score dial */}
-        <div className="text-center md:text-left space-y-2 border-b md:border-b-0 md:border-r border-slate-100 pb-4 md:pb-0 md:pr-6">
+        <div className="text-center md:text-left space-y-2 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800 pb-4 md:pb-0 md:pr-6">
           <div className="text-xs uppercase font-extrabold tracking-wider text-slate-400">Project Risk Index</div>
           <div className="flex items-baseline justify-center md:justify-start gap-2">
             <span className={`text-5xl font-extrabold ${
-              currentScore > 60 ? 'text-rose-600' : currentScore > 30 ? 'text-amber-600' : 'text-emerald-600'
+              currentScore > 60 ? 'text-rose-600' : currentScore > 30 ? 'text-amber-600' : 'text-[#2E6F40]'
             }`}>
               {currentScore}
             </span>
@@ -80,7 +80,7 @@ export const RiskScorePage: React.FC = () => {
               ? 'bg-rose-100 text-rose-900 border-rose-300' 
               : currentScore > 30 
               ? 'bg-amber-100 text-amber-900 border-amber-300' 
-              : 'bg-emerald-100 text-emerald-900 border-emerald-300'
+              : 'bg-[#CFFFDC]/60 text-[#2E6F40] border-[#68BA7F]'
           }`}>
             {currentLabel} Status
           </div>
@@ -89,37 +89,37 @@ export const RiskScorePage: React.FC = () => {
         {/* Center Gauge Meter */}
         <div className="space-y-3 md:col-span-2">
           <div className="flex justify-between text-xs font-bold">
-            <span className="text-emerald-700">0 - 30: Low Risk</span>
+            <span className="text-[#2E6F40]">0 - 30: Low Risk</span>
             <span className="text-amber-700">31 - 60: Medium Risk</span>
             <span className="text-rose-700">61 - 100: High Risk</span>
           </div>
 
-          <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200 relative">
+          <div className="w-full h-4 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-200 dark:border-slate-700 relative">
             <div
               className={`h-full rounded-full transition-all duration-1000 ${
-                currentScore > 60 ? 'bg-rose-600' : currentScore > 30 ? 'bg-amber-500' : 'bg-emerald-600'
+                currentScore > 60 ? 'bg-rose-600' : currentScore > 30 ? 'bg-amber-500' : 'bg-[#2E6F40]'
               }`}
               style={{ width: `${currentScore}%` }}
             />
           </div>
 
-          <p className="text-xs text-slate-600 leading-relaxed font-medium">
+          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
             Formula Weightage: <strong>30% Sector Risk</strong> + <strong>20% Location Risk</strong> + <strong>25% Compliance History Risk</strong> + <strong>25% Document Quality Risk</strong>.
           </p>
         </div>
 
       </div>
 
-      {/* NEW FEATURE: WHY IS YOUR RISK SCORE HIGH/LOW DIAGNOSTIC PANEL */}
-      <div className="bg-gradient-to-r from-amber-50/90 via-indigo-50/60 to-white p-6 rounded-2xl border border-amber-300 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-amber-200/80 pb-3">
+      {/* DIAGNOSTIC PANEL */}
+      <div className="bg-[#F8FCF9] dark:bg-[#16261C] p-6 rounded-2xl border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-[#D4EEDC] dark:border-[#253D2C] pb-3">
           <div className="flex items-center gap-2">
-            <HelpCircle className="w-5 h-5 text-amber-700" />
-            <h2 className="font-extrabold text-sm text-slate-900">
+            <HelpCircle className="w-5 h-5 text-[#2E6F40] dark:text-[#68BA7F]" />
+            <h2 className="font-extrabold text-sm text-[#192A1E] dark:text-[#E8F7ED]">
               Why is Your Risk Score Currently {currentScore}/100 ({currentLabel.toUpperCase()})?
             </h2>
           </div>
-          <span className="px-2.5 py-1 rounded-full bg-amber-500 text-white font-extrabold text-[10px] uppercase">
+          <span className="px-2.5 py-1 rounded-full bg-[#2E6F40] text-white font-extrabold text-[10px] uppercase">
             AI Root Cause Analysis
           </span>
         </div>
