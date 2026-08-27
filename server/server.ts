@@ -24,6 +24,8 @@ import {
 import { generateSmartChecklist } from '../src/utils/rulesEngine';
 import { calculateRiskScore } from '../src/utils/riskCalculator';
 import { DocumentItem, InspectionItem } from '../src/types';
+import { analyzeDocumentOCR } from './ai/ocrEngine';
+import { queryRegulatoryRAG } from './ai/regulatoryKnowledge';
 
 // Load Environment Configuration
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -787,6 +789,35 @@ app.post('/api/joint-inspections', async (req, res) => {
     }
 
     res.status(201).json(newJoint);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ================= AI OCR & RAG STATUTORY REGULATORY ENDPOINTS =================
+app.post('/api/ai/ocr-analyze', async (req, res) => {
+  try {
+    const { docName, category, fileUrl, projectProfile } = req.body;
+    if (!docName) {
+      return res.status(400).json({ error: 'docName is required for OCR analysis' });
+    }
+
+    const result = analyzeDocumentOCR(docName, category || 'General', fileUrl, projectProfile);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/ai/rag-query', async (req, res) => {
+  try {
+    const { query, projectContext, language } = req.body;
+    if (!query) {
+      return res.status(400).json({ error: 'query is required' });
+    }
+
+    const ragResult = queryRegulatoryRAG(query, projectContext, language || 'en');
+    res.json(ragResult);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

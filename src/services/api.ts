@@ -242,3 +242,41 @@ export async function createRuleApi(ruleData: any) {
     body: JSON.stringify(ruleData)
   });
 }
+
+// AI OCR & RAG
+export async function apiAnalyzeDocumentOCR(docData: {
+  docName: string;
+  category: string;
+  fileUrl?: string;
+  projectProfile?: any;
+}) {
+  return apiRequest<{
+    confidence: number;
+    extractedName?: string;
+    extractedRegNo?: string;
+    extractedExpiry?: string;
+    extractedAddress?: string;
+    status: 'Valid' | 'Expired' | 'Name Mismatch' | 'Blurry / Unreadable' | 'Pending Review';
+    issues: string[];
+    recommendations: string[];
+  }>('/ai/ocr-analyze', {
+    method: 'POST',
+    body: JSON.stringify(docData)
+  });
+}
+
+export async function apiQueryRegulatoryRAG(params: {
+  query: string;
+  projectContext?: any;
+  language?: string;
+}) {
+  return apiRequest<{
+    matches: any[];
+    answer: string;
+    statutoryCitations: string[];
+  }>('/ai/rag-query', {
+    method: 'POST',
+    body: JSON.stringify(params)
+  });
+}
+
