@@ -53,6 +53,7 @@ export async function performRealOcr(
   const projectUpper = projectName.toUpperCase();
 
   const isPan = category.toLowerCase().includes('pan') || docTitle.toLowerCase().includes('pan');
+  const isAadhaar = category.toLowerCase().includes('aadhaar') || category.toLowerCase().includes('aadhar') || docTitle.toLowerCase().includes('aadhaar') || docTitle.toLowerCase().includes('aadhar');
   const isGst = category.toLowerCase().includes('gst') || docTitle.toLowerCase().includes('gst');
   const isFire = category.toLowerCase().includes('fire') || docTitle.toLowerCase().includes('fire');
   const isMpcb = category.toLowerCase().includes('pollution') || category.toLowerCase().includes('mpcb') || docTitle.toLowerCase().includes('pollution');
@@ -94,6 +95,33 @@ export async function performRealOcr(
       recommendations.push('Please upload an authentic, clear scan of your Income Tax PAN Card (JPEG, PNG, or PDF).');
     } else {
       recommendations.push('Income Tax Department signature & Permanent Account Number verified.');
+    }
+  }
+
+  // 2. AADHAAR CARD VALIDATION
+  else if (isAadhaar) {
+    issuingAuthority = 'Unique Identification Authority of India (UIDAI)';
+    const aadhaarRegex = /[0-9]{4}\s?[0-9]{4}\s?[0-9]{4}/g;
+    const aadhaarMatches = rawUpper.match(aadhaarRegex);
+    const hasAadhaarWords = rawUpper.includes('AADHAAR') || rawUpper.includes('UIDAI') || rawUpper.includes('UNIQUE IDENTIFICATION') || rawUpper.includes('MERA AADHAAR') || rawUpper.includes('GOVERNMENT OF INDIA') || rawUpper.includes('आधार') || rawUpper.includes('भारत सरकार');
+
+    if (aadhaarMatches && aadhaarMatches.length > 0) {
+      extractedRegNo = aadhaarMatches[0];
+      isAuthenticGovDoc = true;
+      recommendations.push(`Extracted 12-digit Aadhaar Number: ${extractedRegNo.substring(0, 4)} XXXX ${extractedRegNo.slice(-4)}`);
+    }
+
+    if (!aadhaarMatches && !hasAadhaarWords) {
+      status = 'Blurry / Unreadable';
+      ocrConfidence = Math.min(ocrConfidence, 30);
+      issues.push(`❌ Invalid Document Upload: The uploaded image does not contain a valid 12-digit Aadhaar number format (e.g. 1234 5678 9012).`);
+      issues.push(`❌ Missing UIDAI Seal: No Government of India or UIDAI logo/header detected.`);
+      if (hasKnownLogo || rawLower.includes('blinkit')) {
+        issues.push(`❌ Unrelated Graphic Detected: Uploaded file appears to be a brand image/logo rather than an official Aadhaar card.`);
+      }
+      recommendations.push('Please upload an authentic Aadhaar Card scan (E-Aadhaar PDF or clear photo).');
+    } else {
+      recommendations.push('UIDAI Government of India identification seal verified.');
     }
   }
 

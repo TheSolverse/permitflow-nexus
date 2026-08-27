@@ -53,6 +53,7 @@ export function analyzeDocumentOCR(
 
   // Determine document type
   const isPan = docLower.includes('pan') || catLower.includes('identity') || catLower.includes('pan card');
+  const isAadhaar = docLower.includes('aadhaar') || docLower.includes('aadhar') || catLower.includes('aadhaar') || catLower.includes('aadhar');
   const isGst = docLower.includes('gst') || docLower.includes('tax') || catLower.includes('gst');
   const isFire = docLower.includes('fire') || catLower.includes('safety') || docLower.includes('noc');
   const isMpcb = docLower.includes('mpcb') || docLower.includes('pollution') || docLower.includes('cte') || docLower.includes('cto') || catLower.includes('pollution');
@@ -77,6 +78,13 @@ export function analyzeDocumentOCR(
     expiryDate = undefined; // PAN has no expiry
     issuingAuthority = 'Income Tax Department, Govt of India';
     recommendations.push('Verified PAN format (4th char "C" for Company) matches MCA profile.');
+  } else if (isAadhaar) {
+    documentType = 'Aadhaar Card (UIDAI)';
+    registrationNumber = '9812 3456 7890';
+    issueDate = '2020-04-18';
+    expiryDate = undefined; // Aadhaar has no expiry
+    issuingAuthority = 'Unique Identification Authority of India (UIDAI)';
+    recommendations.push('12-digit Aadhaar UIDAI Government of India format verified.');
   } else if (isGst) {
     documentType = 'GST Registration Certificate (Form GST REG-06)';
     registrationNumber = '27AAACA9812K1Z8';

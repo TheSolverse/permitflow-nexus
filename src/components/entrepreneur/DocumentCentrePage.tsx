@@ -26,6 +26,7 @@ export const DocumentCentrePage: React.FC = () => {
   const categories = [
     'ALL',
     'PAN Card',
+    'Aadhaar Card',
     'GST Certificate',
     'Company Incorporation',
     'Land Ownership / Lease Document',
