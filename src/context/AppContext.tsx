@@ -156,8 +156,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [documents, setDocuments] = useState<DocumentItem[]>(() => {
     const saved = localStorage.getItem('pfn_documents');
-    return saved ? JSON.parse(saved) : INITIAL_DOCUMENTS;
+    if (!saved) return [];
+    try {
+      const parsed: DocumentItem[] = JSON.parse(saved);
+      const fakeNames = [
+        'yuvanpan',
+        'cte approval copy',
+        'hazardous waste authorization',
+        'analysis report of effluents',
+        'structural stability certificate by chartered engineer',
+        'effluent treatment plant (etp) structural design',
+        'factory fire system hydraulic calculation layout',
+        'water quality analysis report (nabl lab)',
+        'midc land possession deed',
+        'gst registration certificate (form reg-06)',
+        'company pan card'
+      ];
+      return parsed.filter(d => 
+        !fakeNames.some(f => d.docName.toLowerCase().includes(f)) &&
+        !['doc-1', 'doc-2', 'doc-3', 'doc-4', 'doc-5', 'doc-6', 'doc-7', 'doc-8'].includes(d.id)
+      );
+    } catch {
+      return [];
+    }
   });
+
+  useEffect(() => {
+    localStorage.setItem('pfn_documents', JSON.stringify(documents));
+  }, [documents]);
 
   const [inspections, setInspections] = useState<InspectionItem[]>(() => {
     const saved = localStorage.getItem('pfn_inspections');
