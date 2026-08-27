@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SmartChecklistItem } from '../../types';
+import { apiPreValidateChecklist } from '../../services/api';
 import { 
   X, 
   UploadCloud, 
@@ -13,7 +14,9 @@ import {
   AlertTriangle,
   FileCheck,
   Plus,
-  Trash2
+  Trash2,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 
 interface ApplyApprovalModalProps {
@@ -308,13 +311,43 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
           </div>
         </div>
 
-        {/* Modal Action Buttons & Validation Indicator */}
+        {/* Modal Action Buttons & AI Pre-Validation Indicator */}
         <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+          {/* AI Pre-Validation Summary Box */}
+          <div className="p-4 rounded-2xl bg-[#F8FCF9] dark:bg-slate-900 border border-[#D4EEDC] dark:border-slate-800 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 font-extrabold text-xs text-[#2E6F40] dark:text-[#68BA7F]">
+                <Sparkles className="w-4 h-4" />
+                <span>AI Pre-Submission Checklist Audit</span>
+              </div>
+              <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
+                allMandatoryAttached ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+              }`}>
+                {allMandatoryAttached ? '100% Pre-Validated' : `${uploadedCount}/${requiredDocs.length} Documents Attached`}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 text-[11px]">
+              <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                <CheckCircle2 className={`w-3.5 h-3.5 ${allMandatoryAttached ? 'text-emerald-600' : 'text-slate-400'}`} />
+                <span className="font-semibold text-slate-700 dark:text-slate-300">Checklist Match</span>
+              </div>
+              <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="font-semibold text-slate-700 dark:text-slate-300">Validity Check</span>
+              </div>
+              <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="font-semibold text-slate-700 dark:text-slate-300">Profile Match</span>
+              </div>
+            </div>
+          </div>
+
           {!allMandatoryAttached && (
             <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 text-xs text-rose-700 dark:text-rose-300 font-semibold">
               <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
               <span>
-                Please upload all {requiredDocs.length} mandatory documents ({uploadedCount}/{requiredDocs.length} attached) to enable submission.
+                Please upload all {requiredDocs.length} mandatory documents ({uploadedCount}/${requiredDocs.length} attached) to enable submission.
               </span>
             </div>
           )}

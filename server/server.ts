@@ -23,9 +23,8 @@ import {
 } from './db/queries';
 import { generateSmartChecklist } from '../src/utils/rulesEngine';
 import { calculateRiskScore } from '../src/utils/riskCalculator';
-import { DocumentItem, InspectionItem } from '../src/types';
-import { analyzeDocumentOCR } from './ai/ocrEngine';
-import { queryRegulatoryRAG } from './ai/regulatoryKnowledge';
+import { analyzeDocumentOCR, preValidateApplicationBundle } from './ai/ocrEngine';
+import { queryRegulatoryRAG, explainOfficerQuery } from './ai/regulatoryKnowledge';
 
 // Load Environment Configuration
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -797,13 +796,32 @@ app.post('/api/joint-inspections', async (req, res) => {
 // ================= AI OCR & RAG STATUTORY REGULATORY ENDPOINTS =================
 app.post('/api/ai/ocr-analyze', async (req, res) => {
   try {
-    const { docName, category, fileUrl, projectProfile } = req.body;
+    const { docName, category, fileUrl, projectProfile, requiredChecklist } = req.body;
     if (!docName) {
       return res.status(400).json({ error: 'docName is required for OCR analysis' });
     }
 
-    const result = analyzeDocumentOCR(docName, category || 'General', fileUrl, projectProfile);
+    const result = analyzeDocumentOCR(docName, category || 'General', fileUrl, projectProfile, requiredChecklist);
     res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/ai/pre-validate-checklist', async (req, res) => {
+  try {
+    const { approvalName, requiredDocs, uploadedDocs, businessName } = req.body;
+    if (!approvalName || !requiredDocs) {
+      return res.status(400).json({ error: 'approvalName and requiredDocs are required' });
+    }
+
+    const validation = preValidateApplicationBundle(
+      approvalName,
+      requiredDocs || [],
+      uploadedDocs || [],
+      businessName || 'My Business'
+    );
+    res.json(validation);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -818,6 +836,20 @@ app.post('/api/ai/rag-query', async (req, res) => {
 
     const ragResult = queryRegulatoryRAG(query, projectContext, language || 'en');
     res.json(ragResult);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/ai/explain-query', async (req, res) => {
+  try {
+    const { queryText, approvalName } = req.body;
+    if (!queryText) {
+      return res.status(400).json({ error: 'queryText is required' });
+    }
+
+    const explanation = explainOfficerQuery(queryText, approvalName || 'Application');
+    res.json(explanation);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

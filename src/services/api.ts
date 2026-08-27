@@ -249,9 +249,23 @@ export async function apiAnalyzeDocumentOCR(docData: {
   category: string;
   fileUrl?: string;
   projectProfile?: any;
+  requiredChecklist?: string[];
 }) {
   return apiRequest<{
     confidence: number;
+    extractedFields?: {
+      applicantName: string;
+      businessName: string;
+      registrationNumber: string;
+      issueDate: string;
+      expiryDate?: string;
+      issuingAuthority: string;
+      documentType: string;
+      isExpired: boolean;
+      isNameMismatch: boolean;
+      isUnreadable: boolean;
+      qualityScore: number;
+    };
     extractedName?: string;
     extractedRegNo?: string;
     extractedExpiry?: string;
@@ -259,9 +273,33 @@ export async function apiAnalyzeDocumentOCR(docData: {
     status: 'Valid' | 'Expired' | 'Name Mismatch' | 'Blurry / Unreadable' | 'Pending Review';
     issues: string[];
     recommendations: string[];
+    checklistValidation?: {
+      isComplete: boolean;
+      missingDocuments: string[];
+      providedDocuments: string[];
+    };
   }>('/ai/ocr-analyze', {
     method: 'POST',
     body: JSON.stringify(docData)
+  });
+}
+
+export async function apiPreValidateChecklist(params: {
+  approvalName: string;
+  requiredDocs: string[];
+  uploadedDocs: Array<{ docName: string; category: string; expiryDate?: string; status?: string }>;
+  businessName: string;
+}) {
+  return apiRequest<{
+    isValidForSubmission: boolean;
+    missingDocuments: string[];
+    expiredDocuments: string[];
+    nameMismatchedDocuments: string[];
+    warnings: string[];
+    readinessScore: number;
+  }>('/ai/pre-validate-checklist', {
+    method: 'POST',
+    body: JSON.stringify(params)
   });
 }
 
@@ -274,9 +312,25 @@ export async function apiQueryRegulatoryRAG(params: {
     matches: any[];
     answer: string;
     statutoryCitations: string[];
+    topic?: string;
   }>('/ai/rag-query', {
     method: 'POST',
     body: JSON.stringify(params)
   });
 }
+
+export async function apiExplainOfficerQuery(params: {
+  queryText: string;
+  approvalName: string;
+}) {
+  return apiRequest<{
+    originalQuery: string;
+    plainExplanation: string;
+    actionSteps: string[];
+  }>('/ai/explain-query', {
+    method: 'POST',
+    body: JSON.stringify(params)
+  });
+}
+
 
