@@ -12,7 +12,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { ApplicationReviewModal } from './ApplicationReviewModal';
 
 export const OfficerDashboard: React.FC = () => {
-  const { applications, currentUser } = useApp();
+  const { applications, currentUser, setActiveTab } = useApp();
   const [selectedAppForReview, setSelectedAppForReview] = useState<Application | null>(null);
 
   // Department metrics mock
@@ -47,9 +47,19 @@ export const OfficerDashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-right text-xs">
-          <div className="text-slate-400 font-semibold uppercase text-[10px]">Assigned District Queue</div>
-          <div className="font-bold text-slate-900 text-sm">Pune & Chakan MIDC Zone</div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setActiveTab('officer-nocs')}
+            className="px-4 py-2.5 rounded-xl bg-purple-900 hover:bg-purple-800 text-white font-extrabold text-xs shadow-md flex items-center gap-2 cursor-pointer transition-all"
+          >
+            <UserCheck className="w-4 h-4 text-amber-400" />
+            <span>NOC & Joint Inspection Hub</span>
+          </button>
+          
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-right text-xs">
+            <div className="text-slate-400 font-semibold uppercase text-[10px]">Assigned District Queue</div>
+            <div className="font-bold text-slate-900 text-sm">Pune & Chakan MIDC Zone</div>
+          </div>
         </div>
       </div>
 

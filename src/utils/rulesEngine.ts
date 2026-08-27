@@ -1,10 +1,10 @@
 import { BusinessProject, ApprovalType, SmartChecklistItem, ApprovalStatus } from '../types';
 import { INITIAL_APPROVAL_TYPES } from '../data/mockData';
+import { MASTER_SECTOR_DATA } from '../data/sectorData';
 
 export function generateSmartChecklist(project: BusinessProject, currentApplications: { approvalId: string; status: ApprovalStatus; id: string }[] = []): SmartChecklistItem[] {
   const selectedApprovals: ApprovalType[] = [];
 
-  // Universal base approvals
   const addAppr = (id: string) => {
     const appr = INITIAL_APPROVAL_TYPES.find(a => a.id === id);
     if (appr && !selectedApprovals.some(a => a.id === id)) {
@@ -12,37 +12,23 @@ export function generateSmartChecklist(project: BusinessProject, currentApplicat
     }
   };
 
-  addAppr('appr-1'); // Company Registration
-  addAppr('appr-2'); // GST
-  addAppr('appr-3'); // Udyam MSME
-  addAppr('appr-11'); // Professional Tax
+  // Universal base business setup approvals
+  addAppr('appr-1'); // Company Registration (MCA)
+  addAppr('appr-2'); // GST Registration
+  addAppr('appr-3'); // Udyam MSME Registration
+  addAppr('appr-11'); // Professional Tax Registration
 
-  // Construction required
-  if (project.hasConstruction || project.projectStage === 'Construction' || project.projectStage === 'Planning' || project.projectStage === 'Site Acquisition') {
-    addAppr('appr-5'); // Building Plan
-    addAppr('appr-6'); // Fire NOC
-  }
-
-  // Employee count >= 10
-  if (project.employeeCount >= 10) {
-    addAppr('appr-7'); // Factory Licence DISH
-    addAppr('appr-4'); // Shops & Est / Gumasta
-  }
-
-  // Sector based rules
-  const industrialSectors = ['Manufacturing', 'Food Processing', 'Textile', 'Pharmaceutical', 'Chemical', 'Renewable Energy'];
-  if (industrialSectors.includes(project.sector)) {
-    addAppr('appr-8'); // MPCB CTE
-    addAppr('appr-9'); // MPCB CTO
-    addAppr('appr-10'); // Electricity Connection
-  }
-
-  if (project.sector === 'Food Processing') {
-    addAppr('appr-12'); // FSSAI
-  }
-
-  if (project.sector === 'Chemical' || project.sector === 'Pharmaceutical' || project.hasHazardousMaterials) {
-    addAppr('appr-13'); // Environmental Clearance EC
+  // 1. Ingest Focused Sector & Sub-Sector Specific Approvals
+  const sectorConfig = MASTER_SECTOR_DATA.find(s => s.id === project.sector || s.name === project.sector);
+  if (sectorConfig) {
+    let subConfig = sectorConfig.subSectors.find(sub => sub.name === project.subSector || sub.id === project.subSector);
+    // Fallback to first sub-sector if not specified
+    if (!subConfig && sectorConfig.subSectors.length > 0) {
+      subConfig = sectorConfig.subSectors[0];
+    }
+    if (subConfig) {
+      subConfig.requiredApprovalIds.forEach(id => addAppr(id));
+    }
   }
 
   // Build checklist items with status & dependency readiness
@@ -65,6 +51,10 @@ export function generateSmartChecklist(project: BusinessProject, currentApplicat
         status = 'Inspection Scheduled';
       } else if (appr.id === 'appr-12') {
         status = 'Documents Needed';
+      } else if (appr.id === 'appr-14') {
+        status = 'Approved';
+      } else if (appr.id === 'appr-15') {
+        status = 'Inspection Scheduled';
       } else {
         status = 'Not Started';
       }
@@ -73,10 +63,8 @@ export function generateSmartChecklist(project: BusinessProject, currentApplicat
     // Determine dependency readiness
     let canApply = true;
     if (appr.dependencies && appr.dependencies.length > 0) {
-      // Check if all prerequisite approvals are approved
       for (const depId of appr.dependencies) {
         const depMatch = currentApplications.find(app => app.approvalId === depId);
-        // If dependency is appr-1, appr-2, appr-5, we consider them approved in demo unless explicitly failing
         if (depId !== 'appr-1' && depId !== 'appr-2' && depId !== 'appr-5') {
           if (!depMatch || depMatch.status !== 'Approved') {
             canApply = false;
@@ -86,13 +74,27 @@ export function generateSmartChecklist(project: BusinessProject, currentApplicat
       }
     }
 
+    // Compute prerequisite badge text
+    let prerequisiteBadge: string | undefined = undefined;
+    if (appr.id === 'appr-6') {
+      prerequisiteBadge = 'Prerequisite for Building Plan & Factory Licence';
+    } else if (appr.id === 'appr-8') {
+      prerequisiteBadge = 'Prerequisite for Factory Construction';
+    } else if (appr.id === 'appr-14') {
+      prerequisiteBadge = 'MIDC Water Quota Integration';
+    } else if (appr.id === 'appr-15') {
+      prerequisiteBadge = 'High Voltage Grid Safety Sanction';
+    }
+
     return {
       ...appr,
       status,
       applicationId,
-      canApply
+      canApply,
+      prerequisiteBadge
     };
   });
 
   return checklist;
 }
+

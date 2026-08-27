@@ -11,22 +11,51 @@ import {
   ArrowRight, 
   Layers, 
   ChevronRight,
-  GitMerge
+  GitMerge,
+  ShieldCheck,
+  Flame,
+  Sparkles
 } from 'lucide-react';
-import { ApprovalStatus } from '../../types';
+import { MASTER_SECTOR_DATA } from '../../data/sectorData';
+import { Sector, ApprovalStatus, NocType } from '../../types';
+import { NocApplicationWizardModal } from './NocApplicationWizardModal';
 
 export const SmartChecklistPage: React.FC = () => {
   const { activeProject, applications, applyForApproval, setActiveTab, setSelectedAppDetail } = useApp();
   const [viewMode, setViewMode] = useState<'table' | 'cards' | 'dependency'>('table');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
 
-  const checklist = generateSmartChecklist(activeProject, applications);
+  // Sector & Sub-Sector Live Preview State
+  const [selectedSector, setSelectedSector] = useState<Sector>(activeProject.sector || 'Manufacturing');
+  const [selectedSubSector, setSelectedSubSector] = useState<string>(
+    activeProject.subSector || 'Textiles (spinning, weaving, garment manufacturing)'
+  );
+
+  // NOC Wizard Modal State
+  const [isNocWizardOpen, setIsNocWizardOpen] = useState<boolean>(false);
+  const [wizardNocType, setWizardNocType] = useState<NocType>('FIRE_SAFETY');
+
+  // Dynamically generate smart checklist for selected sector & subsector
+  const previewProject = {
+    ...activeProject,
+    sector: selectedSector,
+    subSector: selectedSubSector
+  };
+  const checklist = generateSmartChecklist(previewProject, applications);
+
+  const currentSectorConfig = MASTER_SECTOR_DATA.find(s => s.id === selectedSector);
+  const subSectorOptions = currentSectorConfig ? currentSectorConfig.subSectors : [];
 
   const categories = ['ALL', 'Registration', 'Clearance', 'Safety', 'Environmental', 'Utility'];
 
   const filteredChecklist = categoryFilter === 'ALL'
     ? checklist
     : checklist.filter(item => item.category === categoryFilter);
+
+  const openNocWizardForType = (type?: NocType) => {
+    if (type) setWizardNocType(type);
+    setIsNocWizardOpen(true);
+  };
 
   const getStatusBadge = (status: ApprovalStatus) => {
     switch (status) {
@@ -62,59 +91,145 @@ export const SmartChecklistPage: React.FC = () => {
     <div className="space-y-6">
       
       {/* Header Banner */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-extrabold text-slate-900">Smart Approval Checklist</h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300">
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="space-y-1 max-w-2xl">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-tight">
+              Smart Approval Checklist
+            </h1>
+            <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 text-[11px] font-extrabold border border-amber-300 shrink-0">
               Rules Engine Generated
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Personalized for <strong className="text-slate-800">{activeProject.businessName}</strong> ({activeProject.sector} • {activeProject.investmentRange})
+          <p className="text-xs text-slate-500 font-medium leading-normal">
+            Personalized for <strong className="text-slate-900 font-extrabold">{activeProject.businessName}</strong> ({activeProject.sector}{activeProject.subSector ? ` • ${activeProject.subSector}` : ''} • {activeProject.investmentRange})
           </p>
         </div>
 
-        {/* View Mode Switcher */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
           <button
-            onClick={() => setViewMode('table')}
-            className={`px-3 py-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600'}`}
+            onClick={() => openNocWizardForType('FIRE_SAFETY')}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-900 to-mh-navy hover:from-purple-800 hover:to-slate-800 text-white font-extrabold text-xs shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-all"
           >
-            Table View
+            <ShieldCheck className="w-4 h-4 text-amber-400" />
+            <span>Apply for Departmental NOC</span>
           </button>
-          <button
-            onClick={() => setViewMode('cards')}
-            className={`px-3 py-1.5 rounded-lg transition-colors ${viewMode === 'cards' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600'}`}
-          >
-            Grid Cards
-          </button>
-          <button
-            onClick={() => setViewMode('dependency')}
-            className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 ${viewMode === 'dependency' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600'}`}
-          >
-            <GitMerge className="w-3.5 h-3.5" />
-            <span>Dependency Flow</span>
-          </button>
+
+          {/* View Mode Switcher */}
+          <div className="flex items-center justify-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-3 py-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              Table View
+            </button>
+            <button
+              onClick={() => setViewMode('cards')}
+              className={`px-3 py-1.5 rounded-lg transition-colors ${viewMode === 'cards' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              Grid Cards
+            </button>
+            <button
+              onClick={() => setViewMode('dependency')}
+              className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 ${viewMode === 'dependency' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              <GitMerge className="w-3.5 h-3.5" />
+              <span>Dependency Flow</span>
+            </button>
+          </div>
         </div>
+      </div>
+
+      {/* Live Sector & Sub-Sector Switcher Card - Rich Professional Colors */}
+      <div className="bg-gradient-to-r from-indigo-50/70 via-amber-50/40 to-white p-6 rounded-2xl border border-indigo-200/90 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-indigo-100 pb-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-white font-extrabold text-[10px] uppercase shadow-xs">
+                Industry Selector & Rules Engine
+              </span>
+              <h2 className="font-extrabold text-sm text-slate-900">Select Sector & Sub-Sector to Generate Approval Checklist</h2>
+            </div>
+            <p className="text-xs text-slate-600 mt-1 font-medium">
+              Select any Maharashtra industry sector below (e.g., <strong className="text-indigo-900 font-extrabold">Manufacturing → Textiles</strong> or <strong className="text-amber-700 font-extrabold">Food Processing → Edible Oil & Spices</strong>) to view exact statutory permissions & required licences.
+            </p>
+          </div>
+
+          <div className="px-3.5 py-1.5 bg-white rounded-xl border border-amber-300 text-amber-900 font-extrabold text-xs shrink-0 shadow-xs">
+            {checklist.length} Required Clearances
+          </div>
+        </div>
+
+        {/* 6 Sector Buttons */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
+          {MASTER_SECTOR_DATA.map((sec) => {
+            const isSelected = selectedSector === sec.id;
+            return (
+              <button
+                key={sec.id}
+                type="button"
+                onClick={() => {
+                  setSelectedSector(sec.id);
+                  if (sec.subSectors.length > 0) {
+                    setSelectedSubSector(sec.subSectors[0].name);
+                  }
+                }}
+                className={`p-3 rounded-xl border text-center transition-all text-xs font-extrabold cursor-pointer ${
+                  isSelected
+                    ? 'bg-amber-500 text-white border-amber-500 shadow-md scale-[1.02] ring-2 ring-amber-300'
+                    : 'bg-white text-indigo-950 border-indigo-200/90 hover:bg-indigo-100/60 hover:border-amber-400 shadow-xs'
+                }`}
+              >
+                <div>{sec.name}</div>
+                <div className={`text-[10px] font-semibold mt-0.5 ${isSelected ? 'text-amber-100' : 'text-indigo-600'}`}>
+                  {sec.subSectors.length} Sub-Sectors
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Sub-Sector Dropdown Selector */}
+        {subSectorOptions.length > 0 && (
+          <div className="p-3.5 bg-amber-50/90 rounded-xl border border-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xs">
+            <div className="flex items-center gap-2 text-amber-950 shrink-0">
+              <span className="font-extrabold uppercase text-[10px] text-amber-800">Sub-Sector ({selectedSector}):</span>
+            </div>
+            
+            <select
+              value={selectedSubSector}
+              onChange={(e) => setSelectedSubSector(e.target.value)}
+              className="w-full sm:w-auto flex-1 bg-white text-slate-900 font-extrabold border border-amber-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-amber-500 outline-none text-xs shadow-xs"
+            >
+              {subSectorOptions.map((sub) => (
+                <option key={sub.id} value={sub.name}>
+                  {sub.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Category Filter Pills */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-        <span className="text-slate-400 font-semibold uppercase text-[10px] mr-1">Category Filter:</span>
-        {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setCategoryFilter(cat)}
-            className={`px-3 py-1.5 rounded-xl border font-semibold transition-all ${
-              categoryFilter === cat
-                ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
+        <span className="text-slate-500 font-bold uppercase text-[10px] mr-1">Category Filter:</span>
+        {categories.map(cat => {
+          const isActive = categoryFilter === cat;
+          return (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`px-3 py-1.5 rounded-xl border font-bold whitespace-nowrap transition-all cursor-pointer ${
+                isActive
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                  : 'bg-indigo-50/60 text-indigo-900 border-indigo-200/80 hover:bg-indigo-100'
+              }`}
+            >
+              {cat}
+            </button>
+          );
+        })}
       </div>
 
       {/* VIEW MODE 1: DEPENDENCY GRAPH (Light Theme) */}
@@ -299,6 +414,13 @@ export const SmartChecklistPage: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* NOC Application Wizard Modal */}
+      <NocApplicationWizardModal
+        isOpen={isNocWizardOpen}
+        onClose={() => setIsNocWizardOpen(false)}
+        initialNocType={wizardNocType}
+      />
 
     </div>
   );

@@ -19,7 +19,8 @@ import {
   BarChart3, 
   Layers,
   ChevronRight,
-  Building2
+  Building2,
+  ShieldCheck
 } from 'lucide-react';
 import { t } from '../../utils/translations';
 
@@ -41,6 +42,7 @@ export const Sidebar: React.FC = () => {
 
   const officerNav = [
     { id: 'officer-dashboard', label: t('officerDashboard', language), icon: LayoutDashboard },
+    { id: 'officer-nocs', label: 'NOC & Joint Inspections', icon: ShieldCheck },
     { id: 'officer-app-review', label: t('appReview', language), icon: ClipboardCheck },
     { id: 'officer-queries', label: t('queryMgmt', language), icon: MessageSquareText },
     { id: 'officer-inspections', label: t('inspectionMgmt', language), icon: Calendar },

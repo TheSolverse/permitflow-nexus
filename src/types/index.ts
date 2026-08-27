@@ -15,13 +15,14 @@ export interface User {
 
 export type Sector = 
   | 'Manufacturing'
-  | 'Food Processing'
-  | 'Textile'
-  | 'IT Services'
-  | 'Pharmaceutical'
   | 'Chemical'
-  | 'Warehouse / Logistics'
-  | 'Renewable Energy';
+  | 'Pharmaceutical'
+  | 'Textile'
+  | 'Packaging'
+  | 'Services'
+  | 'Food Processing'
+  | 'Retail'
+  | 'IT / IT-enabled Services';
 
 export type ProjectType = 'New Setup' | 'Expansion' | 'Renewal';
 export type EntityType = 'Proprietorship' | 'Partnership' | 'LLP' | 'Private Limited';
@@ -36,6 +37,7 @@ export interface BusinessProject {
   projectType: ProjectType;
   entityType: EntityType;
   sector: Sector;
+  subSector?: string;
   investmentRange: string; // e.g. "₹1 Cr - ₹5 Cr"
   employeeCount: number;
   businessActivity: string;
@@ -74,12 +76,16 @@ export interface ApprovalType {
   estimatedFee: string;
   dependencies: string[]; // Prerequisite Approval IDs
   riskImpact: number; // 0-100 weight
+  isNoc?: boolean;
+  nocType?: NocType;
+  prerequisiteFor?: string;
 }
 
 export interface SmartChecklistItem extends ApprovalType {
   status: ApprovalStatus;
   applicationId?: string;
   canApply: boolean; // Computed based on dependencies
+  prerequisiteBadge?: string;
 }
 
 export type DocumentValidationStatus = 
@@ -196,13 +202,20 @@ export interface ComplianceTask {
 export interface IncentiveScheme {
   id: string;
   schemeName: string;
+  name?: string;
   department: string;
   shortDesc: string;
-  eligibilityStatus: 'ELIGIBLE' | 'POSSIBLY_ELIGIBLE' | 'NOT_ELIGIBLE';
+  description?: string;
+  eligibilityStatus: 'ELIGIBLE' | 'POSSIBLY_ELIGIBLE' | 'NOT_ELIGIBLE' | 'Eligible' | 'Possibly Eligible' | 'Not Eligible';
   estimatedBenefit: string;
+  benefit?: string;
   eligibilityReason: string;
   nextAction: string;
+  requiredNextStep?: string;
   tags: string[];
+  officialUrl: string;
+  officialApplyUrl?: string;
+  officialInfoUrl?: string;
 }
 
 export interface RiskScoreDetails {
@@ -255,3 +268,102 @@ export interface ApprovalRule {
   dependencies: string[];
   riskCategory: 'High' | 'Medium' | 'Low';
 }
+
+// ----------------------------------------------------
+// NO-OBJECTION CERTIFICATE (NOC) & JOINT INSPECTION TYPES
+// ----------------------------------------------------
+
+export type NocType = 
+  | 'FIRE_SAFETY'
+  | 'MPCB_CTE'
+  | 'WATER_SUPPLY'
+  | 'ELECTRICAL_SAFETY';
+
+export type NocStatus = 
+  | 'DRAFT'
+  | 'SUBMITTED'
+  | 'UNDER_REVIEW'
+  | 'QUERY_RAISED'
+  | 'INSPECTION_SCHEDULED'
+  | 'PROVISIONAL_ISSUED'
+  | 'FINAL_GRANTED'
+  | 'REJECTED';
+
+export interface NocTechnicalParameters {
+  builtUpAreaSqM: number;
+  plotAreaSqM: number;
+  fireMitigation?: {
+    sprinklersCount: number;
+    hydrantsCount: number;
+    smokeAlarmsCount: number;
+    hasFirePumps: boolean;
+  };
+  waterRequirementKlpd?: number;
+  effluentGenerationKlpd?: number;
+  electricalLoadKw?: number;
+  voltageLevel?: string;
+  hazardousSubstanceDetails?: string;
+}
+
+export interface NocDocument {
+  docId: string;
+  docName: string;
+  category: string;
+  fileUrl?: string;
+  uploadDate: string;
+  aiValidationStatus: 'VALIDATED' | 'WARNING' | 'PENDING' | 'ANALYZING...';
+  aiNotes: string;
+}
+
+export interface NocQuery {
+  id: string;
+  raisedBy: string;
+  date: string;
+  question: string;
+  response?: string;
+  responseDocName?: string;
+  status: 'OPEN' | 'RESOLVED';
+}
+
+export interface NocApplication {
+  id: string;
+  projectId: string;
+  businessName: string;
+  nocType: NocType;
+  nocName: string;
+  department: string;
+  appliedDate: string;
+  status: NocStatus;
+  urgency: 'NORMAL' | 'HIGH' | 'URGENT';
+  slaDaysLeft: number;
+  technicalParameters: NocTechnicalParameters;
+  documents: NocDocument[];
+  queries: NocQuery[];
+  provisionalCertUrl?: string;
+  finalCertUrl?: string;
+  qrCodeData?: string;
+  issuedDate?: string;
+  certificateId?: string;
+}
+
+export interface JointInspectionRubricItem {
+  criterion: string;
+  compliant: boolean | null;
+  notes: string;
+}
+
+export interface JointInspection {
+  id: string;
+  nocApplicationId: string;
+  projectId: string;
+  businessName: string;
+  scheduledDate: string; // YYYY-MM-DD
+  scheduledTime: string; // e.g. 10:30 AM
+  attendingDepartments: string[];
+  officerNames: string[];
+  inspectionLocation: string;
+  rubricChecklist: JointInspectionRubricItem[];
+  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  outcomeSummary?: string;
+}
+

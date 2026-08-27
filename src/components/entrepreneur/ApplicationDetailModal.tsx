@@ -129,20 +129,29 @@ export const ApplicationDetailModal: React.FC<Props> = ({ app, onClose }) => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Upload Clarification Document Name</label>
+                    <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Attach Clarification File</label>
                     <input
-                      type="text"
-                      value={responseDocName}
-                      onChange={(e) => setResponseDocName(e.target.value)}
-                      placeholder="e.g. Revised_ETP_Calculation_Report.pdf"
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white"
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg,.dwg,.doc,.docx"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          const file = e.target.files[0];
+                          setResponseDocName(file.name);
+                        }
+                      }}
+                      className="w-full text-xs text-slate-500 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-2 py-1.5 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-600 file:text-white cursor-pointer"
                     />
+                    {responseDocName && (
+                      <span className="text-[10px] text-amber-700 dark:text-amber-300 font-bold block mt-1">
+                        ✓ Selected: {responseDocName}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-end">
                     <button
                       type="submit"
-                      className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold transition-all shadow-md flex items-center justify-center gap-1.5"
+                      className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <Send className="w-4 h-4" />
                       <span>Submit Query Response to Officer</span>

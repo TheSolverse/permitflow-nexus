@@ -45,14 +45,26 @@ export const OfficerInspectionPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-2 flex justify-end gap-2">
-              <button
-                onClick={() => alert('Field report upload portal opened for officer.')}
-                className="px-4 py-2 rounded-xl bg-mh-navy text-white font-bold hover:bg-slate-800 flex items-center gap-1.5"
-              >
-                <UploadCloud className="w-4 h-4" />
+            <div className="pt-2 flex flex-col sm:flex-row items-end sm:items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-700/60">
+              <span className="text-[11px] text-slate-500 font-medium">
+                Upload signed field audit checklist, water quality reports, or site photographs.
+              </span>
+
+              <label className="px-4 py-2 rounded-xl bg-mh-navy hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs">
+                <UploadCloud className="w-4 h-4 text-amber-400" />
                 <span>Upload Field Visit Report</span>
-              </button>
+                <input
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      const file = e.target.files[0];
+                      alert(`Field report '${file.name}' (${(file.size / 1024).toFixed(1)} KB) successfully uploaded & logged to audit trial!`);
+                    }
+                  }}
+                  className="hidden"
+                />
+              </label>
             </div>
           </div>
         ))}

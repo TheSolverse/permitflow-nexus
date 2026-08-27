@@ -13,7 +13,10 @@ import {
   NotificationItem, 
   ApprovalRule,
   SmartChecklistItem,
-  ApprovalStatus
+  ApprovalStatus,
+  NocApplication,
+  JointInspection,
+  NocQuery
 } from '../types';
 import { 
   INITIAL_USERS, 
@@ -25,7 +28,9 @@ import {
   INITIAL_INCENTIVE_SCHEMES, 
   INITIAL_AUDIT_LOGS, 
   INITIAL_NOTIFICATIONS, 
-  INITIAL_RULES 
+  INITIAL_RULES,
+  INITIAL_NOC_APPLICATIONS,
+  INITIAL_JOINT_INSPECTIONS
 } from '../data/mockData';
 import { generateSmartChecklist } from '../utils/rulesEngine';
 import { calculateRiskScore } from '../utils/riskCalculator';
@@ -52,6 +57,8 @@ interface AppContextType {
   auditLogs: AuditLogItem[];
   notifications: NotificationItem[];
   rules: ApprovalRule[];
+  nocApplications: NocApplication[];
+  jointInspections: JointInspection[];
 
   // Dynamic state helpers
   addProject: (projData: Omit<BusinessProject, 'id' | 'createdAt' | 'userId'>) => BusinessProject;
@@ -63,6 +70,14 @@ interface AppContextType {
   scheduleInspection: (inspData: Omit<InspectionItem, 'id'>) => void;
   markNotificationRead: (id: string) => void;
   addRule: (ruleData: Omit<ApprovalRule, 'id'>) => void;
+  updateIncentiveUrl: (id: string, officialUrl: string, officialApplyUrl?: string, officialInfoUrl?: string) => void;
+  
+  // NOC helpers
+  submitNocApplication: (data: Partial<NocApplication> & { nocType: NocApplication['nocType']; nocName: string; department: string }) => NocApplication;
+  scheduleJointInspection: (data: Omit<JointInspection, 'id' | 'status'>) => JointInspection;
+  raiseNocQuery: (nocId: string, question: string) => void;
+  respondToNocQuery: (nocId: string, queryId: string, responseText: string, responseDocName?: string) => void;
+  issueNocCertificate: (nocId: string, certType: 'PROVISIONAL' | 'FINAL') => void;
 
   // View state
   activeTab: string;
@@ -110,7 +125,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : INITIAL_COMPLIANCE_TASKS;
   });
 
-  const [incentiveSchemes, setIncentiveSchemes] = useState<IncentiveScheme[]>(INITIAL_INCENTIVE_SCHEMES);
+  const [incentiveSchemes, setIncentiveSchemes] = useState<IncentiveScheme[]>(() => {
+    const saved = localStorage.getItem('pfn_incentive_schemes');
+    return saved ? JSON.parse(saved) : INITIAL_INCENTIVE_SCHEMES;
+  });
+
+  const [nocApplications, setNocApplications] = useState<NocApplication[]>(() => {
+    const saved = localStorage.getItem('pfn_noc_applications');
+    return saved ? JSON.parse(saved) : INITIAL_NOC_APPLICATIONS;
+  });
+
+  const [jointInspections, setJointInspections] = useState<JointInspection[]>(() => {
+    const saved = localStorage.getItem('pfn_joint_inspections');
+    return saved ? JSON.parse(saved) : INITIAL_JOINT_INSPECTIONS;
+  });
+
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>(INITIAL_AUDIT_LOGS);
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
   const [rules, setRules] = useState<ApprovalRule[]>(INITIAL_RULES);
@@ -134,6 +163,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     localStorage.setItem('pfn_documents', JSON.stringify(documents));
   }, [documents]);
+
+  useEffect(() => {
+    localStorage.setItem('pfn_incentive_schemes', JSON.stringify(incentiveSchemes));
+  }, [incentiveSchemes]);
+
+  useEffect(() => {
+    localStorage.setItem('pfn_noc_applications', JSON.stringify(nocApplications));
+  }, [nocApplications]);
+
+  useEffect(() => {
+    localStorage.setItem('pfn_joint_inspections', JSON.stringify(jointInspections));
+  }, [jointInspections]);
 
   const activeProject = projects.find(p => p.id === activeProjectId) || projects[0];
 
@@ -444,6 +485,147 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRules([newRule, ...rules]);
   };
 
+  const updateIncentiveUrl = (id: string, officialUrl: string, officialApplyUrl?: string, officialInfoUrl?: string) => {
+    setIncentiveSchemes(prev =>
+      prev.map(scheme => {
+        if (scheme.id === id) {
+          return {
+            ...scheme,
+            officialUrl,
+            officialApplyUrl: officialApplyUrl || officialUrl,
+            officialInfoUrl: officialInfoUrl || scheme.officialInfoUrl || officialUrl
+          };
+        }
+        return scheme;
+      })
+    );
+  };
+
+  const submitNocApplication = (data: Partial<NocApplication> & { nocType: NocApplication['nocType']; nocName: string; department: string }): NocApplication => {
+    const newNoc: NocApplication = {
+      id: `noc-app-${Date.now()}`,
+      projectId: activeProject.id,
+      businessName: activeProject.businessName,
+      nocType: data.nocType,
+      nocName: data.nocName,
+      department: data.department,
+      appliedDate: new Date().toISOString().split('T')[0],
+      status: 'SUBMITTED',
+      urgency: data.urgency || 'HIGH',
+      slaDaysLeft: data.nocType === 'FIRE_SAFETY' ? 14 : data.nocType === 'MPCB_CTE' ? 30 : 15,
+      technicalParameters: data.technicalParameters || { builtUpAreaSqM: 1250, plotAreaSqM: 4500 },
+      documents: data.documents || [],
+      queries: []
+    };
+
+    setNocApplications(prev => [newNoc, ...prev]);
+
+    // Also push audit log
+    const newLog: AuditLogItem = {
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      user: currentUser.name,
+      role: currentUser.role,
+      action: 'Submitted NOC Application',
+      applicationId: newNoc.id,
+      ipAddress: '127.0.0.1',
+      details: `Filed NOC Application for ${newNoc.nocName} under ${newNoc.department}.`
+    };
+    setAuditLogs(prev => [newLog, ...prev]);
+
+    return newNoc;
+  };
+
+  const scheduleJointInspection = (data: Omit<JointInspection, 'id' | 'status'>): JointInspection => {
+    const newInsp: JointInspection = {
+      ...data,
+      id: `joint-insp-${Date.now()}`,
+      status: 'SCHEDULED'
+    };
+
+    setJointInspections(prev => [newInsp, ...prev]);
+
+    // Update NOC application status
+    if (data.nocApplicationId) {
+      setNocApplications(prev =>
+        prev.map(app => app.id === data.nocApplicationId ? { ...app, status: 'INSPECTION_SCHEDULED' } : app)
+      );
+    }
+
+    return newInsp;
+  };
+
+  const raiseNocQuery = (nocId: string, question: string) => {
+    setNocApplications(prev =>
+      prev.map(app => {
+        if (app.id === nocId) {
+          const newQuery: NocQuery = {
+            id: `q-noc-${Date.now()}`,
+            raisedBy: currentUser.name,
+            date: new Date().toISOString().split('T')[0],
+            question,
+            status: 'OPEN'
+          };
+          return {
+            ...app,
+            status: 'QUERY_RAISED',
+            queries: [...(app.queries || []), newQuery]
+          };
+        }
+        return app;
+      })
+    );
+  };
+
+  const respondToNocQuery = (nocId: string, queryId: string, responseText: string, responseDocName?: string) => {
+    setNocApplications(prev =>
+      prev.map(app => {
+        if (app.id === nocId) {
+          const updatedQueries = (app.queries || []).map(q => {
+            if (q.id === queryId) {
+              return {
+                ...q,
+                response: responseText,
+                responseDocName,
+                status: 'RESOLVED' as const
+              };
+            }
+            return q;
+          });
+          return {
+            ...app,
+            status: 'UNDER_REVIEW',
+            queries: updatedQueries
+          };
+        }
+        return app;
+      })
+    );
+  };
+
+  const issueNocCertificate = (nocId: string, certType: 'PROVISIONAL' | 'FINAL') => {
+    const certId = `PFN-NOC-${certType.substring(0, 4)}-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const today = new Date().toISOString().split('T')[0];
+    const qrData = `PFN-VERIFIED-NOC-${certType}-${nocId}-${certId}`;
+
+    setNocApplications(prev =>
+      prev.map(app => {
+        if (app.id === nocId) {
+          return {
+            ...app,
+            status: certType === 'PROVISIONAL' ? 'PROVISIONAL_ISSUED' : 'FINAL_GRANTED',
+            issuedDate: today,
+            certificateId: certId,
+            qrCodeData: qrData,
+            provisionalCertUrl: certType === 'PROVISIONAL' ? `https://permitflownexus.gov.in/certs/${certId}.pdf` : app.provisionalCertUrl,
+            finalCertUrl: certType === 'FINAL' ? `https://permitflownexus.gov.in/certs/${certId}.pdf` : app.finalCertUrl
+          };
+        }
+        return app;
+      })
+    );
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -465,6 +647,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         auditLogs,
         notifications,
         rules,
+        nocApplications,
+        jointInspections,
         addProject,
         applyForApproval,
         uploadDocument,
@@ -474,6 +658,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         scheduleInspection,
         markNotificationRead,
         addRule,
+        updateIncentiveUrl,
+        submitNocApplication,
+        scheduleJointInspection,
+        raiseNocQuery,
+        respondToNocQuery,
+        issueNocCertificate,
         activeTab,
         setActiveTab,
         selectedAppDetail,

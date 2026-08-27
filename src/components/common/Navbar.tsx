@@ -43,27 +43,27 @@ export const Navbar: React.FC = () => {
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between min-h-[64px] py-2">
           
           {/* Brand Logo & Official Badge */}
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setActiveTab(currentUser.role === 'ENTREPRENEUR' ? 'dashboard' : currentUser.role === 'OFFICER' ? 'officer-dashboard' : 'admin-dashboard')}
-              className="flex items-center gap-2.5 text-left group"
+              className="flex items-center gap-3 text-left group cursor-pointer"
             >
-              <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-sm border border-slate-800">
+              <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-sm border border-slate-800 shrink-0">
                 <ShieldCheck className="w-6 h-6 text-amber-500" />
               </div>
-              <div>
+              <div className="flex flex-col justify-center">
                 <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-lg tracking-tight text-slate-900">
-                    Permit<span className="text-amber-600">Flow</span> <span className="text-slate-700">Nexus</span>
+                  <span className="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 leading-tight">
+                    Permit<span className="text-amber-600">Flow</span> <span className="text-slate-800">Nexus</span>
                   </span>
-                  <span className="hidden md:inline-block px-2 py-0.5 text-[10px] font-bold tracking-wider text-slate-800 bg-slate-100 rounded border border-slate-300">
+                  <span className="hidden md:inline-block px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-slate-800 bg-slate-100 rounded-md border border-slate-300">
                     MAHARASHTRA
                   </span>
                 </div>
-                <p className="hidden sm:block text-[11px] text-slate-500 font-medium">
+                <p className="hidden sm:block text-[11px] text-slate-500 font-medium leading-tight mt-0.5">
                   {t('tagline', language)}
                 </p>
               </div>

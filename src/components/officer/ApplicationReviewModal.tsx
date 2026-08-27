@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Application, ApprovalStatus } from '../../types';
+import { Application, ApprovalStatus, DocumentItem } from '../../types';
 import { 
   X, 
   CheckCircle2, 
@@ -14,8 +14,10 @@ import {
   Clock, 
   User, 
   Building2,
-  Lock
+  Lock,
+  Eye
 } from 'lucide-react';
+import { OfficerDocumentViewerModal } from './OfficerDocumentViewerModal';
 
 interface Props {
   app: Application;
@@ -26,6 +28,7 @@ export const ApplicationReviewModal: React.FC<Props> = ({ app, onClose }) => {
   const { updateApplicationStatus, raiseOfficerQuery, scheduleInspection, currentUser, documents } = useApp();
 
   const [activeSubTab, setActiveSubTab] = useState<'details' | 'docs' | 'query' | 'inspect'>('details');
+  const [selectedPreviewDoc, setSelectedPreviewDoc] = useState<DocumentItem | null>(null);
 
   // Form states
   const [remarks, setRemarks] = useState('');
@@ -189,27 +192,35 @@ export const ApplicationReviewModal: React.FC<Props> = ({ app, onClose }) => {
           {/* TAB 2: DOCUMENTS & AI OCR */}
           {activeSubTab === 'docs' && (
             <div className="space-y-4">
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white">Submitted Documents & AI Pre-Screening Findings</h3>
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Submitted Documents & AI Pre-Screening Findings</h3>
               
               <div className="space-y-3">
                 {documents.slice(0, 4).map((d) => (
-                  <div key={d.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-700 flex items-start justify-between gap-4">
+                  <div key={d.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
                     <div>
-                      <div className="font-bold text-slate-900 dark:text-white">{d.docName}</div>
-                      <div className="text-[11px] text-slate-500">{d.category} • Uploaded {d.uploadDate}</div>
+                      <div className="font-extrabold text-slate-900 dark:text-white text-sm">{d.docName}</div>
+                      <div className="text-[11px] text-slate-500 font-semibold">{d.category} • Uploaded {d.uploadDate}</div>
                       
                       {d.aiValidationResult?.issues && d.aiValidationResult.issues.length > 0 && (
-                        <div className="mt-2 p-2 rounded bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-[11px]">
+                        <div className="mt-2 p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 text-[11px] font-semibold border border-rose-200">
                           <strong>AI Flag:</strong> {d.aiValidationResult.issues[0]}
                         </div>
                       )}
                     </div>
 
-                    <div className="flex gap-2 shrink-0">
-                      <button className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-700">
+                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                      <button 
+                        onClick={() => setSelectedPreviewDoc(d)}
+                        className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer transition-all"
+                      >
+                        <Eye className="w-4 h-4 text-amber-300" />
+                        <span>View Document</span>
+                      </button>
+
+                      <button className="px-3 py-2 rounded-xl bg-emerald-600 text-white font-extrabold text-xs hover:bg-emerald-700 shadow-xs cursor-pointer">
                         Approve Doc
                       </button>
-                      <button className="px-3 py-1.5 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700">
+                      <button className="px-3 py-2 rounded-xl bg-rose-600 text-white font-extrabold text-xs hover:bg-rose-700 shadow-xs cursor-pointer">
                         Reject Doc
                       </button>
                     </div>
@@ -217,6 +228,20 @@ export const ApplicationReviewModal: React.FC<Props> = ({ app, onClose }) => {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Officer Document Inspection & Preview Modal Popup */}
+          {selectedPreviewDoc && (
+            <OfficerDocumentViewerModal 
+              document={selectedPreviewDoc}
+              onClose={() => setSelectedPreviewDoc(null)}
+              onApprove={(docId) => {
+                // Approved state
+              }}
+              onReject={(docId) => {
+                // Rejected state
+              }}
+            />
           )}
 
           {/* TAB 3: RAISE QUERY */}

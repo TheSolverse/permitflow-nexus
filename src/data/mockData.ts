@@ -9,7 +9,9 @@ import {
   IncentiveScheme, 
   AuditLogItem, 
   NotificationItem,
-  ApprovalRule
+  ApprovalRule,
+  NocApplication,
+  JointInspection
 } from '../types';
 
 export const INITIAL_USERS: User[] = [
@@ -159,7 +161,10 @@ export const INITIAL_APPROVAL_TYPES: ApprovalType[] = [
     estimatedTimelineDays: 14,
     estimatedFee: '₹5,000',
     dependencies: ['appr-5'],
-    riskImpact: 35
+    riskImpact: 35,
+    isNoc: true,
+    nocType: 'FIRE_SAFETY',
+    prerequisiteFor: 'Building Plan Approval & Factory Construction'
   },
   {
     id: 'appr-7',
@@ -183,7 +188,10 @@ export const INITIAL_APPROVAL_TYPES: ApprovalType[] = [
     estimatedTimelineDays: 30,
     estimatedFee: '₹15,000',
     dependencies: ['appr-1', 'appr-5'],
-    riskImpact: 40
+    riskImpact: 40,
+    isNoc: true,
+    nocType: 'MPCB_CTE',
+    prerequisiteFor: 'Factory Construction & CTO Clearance'
   },
   {
     id: 'appr-9',
@@ -244,6 +252,240 @@ export const INITIAL_APPROVAL_TYPES: ApprovalType[] = [
     estimatedFee: '₹50,000',
     dependencies: ['appr-8'],
     riskImpact: 50
+  },
+  {
+    id: 'appr-14',
+    name: 'MIDC Water Supply & Sewerage Connection NOC',
+    department: 'MIDC Infrastructure & Water Works',
+    whyRequired: 'NOC for industrial water quota allocation and effluent discharge connection into MIDC sewerage.',
+    category: 'Utility',
+    requiredDocs: ['MIDC Allotment Letter', 'Water Consumption Estimation Sheet', 'ETP Flow Scheme', 'Plumbing Layout'],
+    estimatedTimelineDays: 10,
+    estimatedFee: '₹3,500',
+    dependencies: ['appr-5'],
+    riskImpact: 25,
+    isNoc: true,
+    nocType: 'WATER_SUPPLY',
+    prerequisiteFor: 'Factory Water Supply Energization'
+  },
+  {
+    id: 'appr-15',
+    name: 'Electrical Safety Inspectorate NOC',
+    department: 'Electrical Inspectorate / MSEDCL',
+    whyRequired: 'Safety inspection & NOC for high voltage industrial transformer & substation installation.',
+    category: 'Safety',
+    requiredDocs: ['Single Line Diagram (SLD)', 'Transformer Test Certificate', 'Earthing Pit Resistance Test', 'Electrical Contractor License'],
+    estimatedTimelineDays: 12,
+    estimatedFee: '₹6,000',
+    dependencies: ['appr-10'],
+    riskImpact: 30,
+    isNoc: true,
+    nocType: 'ELECTRICAL_SAFETY',
+    prerequisiteFor: 'HT Grid Load Energization'
+  },
+  {
+    id: 'appr-trade',
+    name: 'Municipal Trade Licence',
+    department: 'Local Municipal Corporation / Council',
+    whyRequired: 'Mandatory municipal licence for operating commercial and industrial establishments in Maharashtra.',
+    category: 'Registration',
+    requiredDocs: ['Property Tax Receipt / Lease Deed', 'Gumasta Licence', 'Fire NOC', 'ID Proof'],
+    estimatedTimelineDays: 7,
+    estimatedFee: '₹2,000',
+    dependencies: ['appr-4'],
+    riskImpact: 15
+  },
+  {
+    id: 'appr-legal-metrology',
+    name: 'Legal Metrology (Packaged Commodities) Registration',
+    department: 'Legal Metrology Department Maharashtra',
+    whyRequired: 'Mandatory for manufacturing, packing, or importing pre-packaged goods to ensure accurate weight & label declarations.',
+    category: 'Registration',
+    requiredDocs: ['Label Sample Declaration', 'GST Certificate', 'Premises Lease', 'Partner/Director IDs'],
+    estimatedTimelineDays: 10,
+    estimatedFee: '₹1,500',
+    dependencies: ['appr-2'],
+    riskImpact: 20
+  },
+  {
+    id: 'appr-labour-epfo-esic',
+    name: 'Labour Statutory Registrations (EPFO, ESIC & Contract Labour)',
+    department: 'Labour Commissionerate / EPFO / ESIC Maharashtra',
+    whyRequired: 'Statutory social security and welfare registrations for textile & manufacturing workers.',
+    category: 'Registration',
+    requiredDocs: ['Factory License Copy', 'Employee Muster Roll', 'Bank Account Proof', 'PAN & Aadhaar of Directors'],
+    estimatedTimelineDays: 7,
+    estimatedFee: '₹0',
+    dependencies: ['appr-7'],
+    riskImpact: 25
+  },
+  {
+    id: 'appr-hazardous-waste',
+    name: 'Hazardous Waste Authorization (Rule 6)',
+    department: 'Maharashtra Pollution Control Board (MPCB)',
+    whyRequired: 'Mandatory authorization for units handling, generating, or storing chemical & industrial toxic waste.',
+    category: 'Environmental',
+    requiredDocs: ['CTE/CTO Copy', 'Hazardous Waste Disposal Agreement with CHWTSDF', 'ETP Flow Sheet'],
+    estimatedTimelineDays: 30,
+    estimatedFee: '₹10,000',
+    dependencies: ['appr-8'],
+    riskImpact: 45
+  },
+  {
+    id: 'appr-peso',
+    name: 'Petroleum & Explosives Safety Approval (PESO)',
+    department: 'Petroleum and Explosives Safety Organisation (PESO)',
+    whyRequired: 'Safety sanction for storing flammable solvents, compressed gas cylinders, or chemical tanks.',
+    category: 'Safety',
+    requiredDocs: ['Site Plan CAD Approved by District Magistrate', 'Storage Tank Technical Specs', 'Pressure Vessel Test Certificate'],
+    estimatedTimelineDays: 45,
+    estimatedFee: '₹20,000',
+    dependencies: ['appr-6', 'appr-8'],
+    riskImpact: 50
+  },
+  {
+    id: 'appr-ewaste',
+    name: 'E-Waste Handling & Management Authorization',
+    department: 'Maharashtra Pollution Control Board (MPCB)',
+    whyRequired: 'Authorization for electronics assemblers, PCB manufacturers, and refurbishers under E-Waste Rules.',
+    category: 'Environmental',
+    requiredDocs: ['Extended Producer Responsibility (EPR) Plan', 'Recycler Agreement', 'CTO Copy'],
+    estimatedTimelineDays: 20,
+    estimatedFee: '₹5,000',
+    dependencies: ['appr-8'],
+    riskImpact: 30
+  },
+  {
+    id: 'appr-fssai-packaging',
+    name: 'FSSAI Food-Contact Packaging Authorization',
+    department: 'FSSAI Food Safety Maharashtra',
+    whyRequired: 'Specialized food safety license for food contact containers, pouches, and bottle manufacturers.',
+    category: 'Clearance',
+    requiredDocs: ['Overall Migration Test Report for Packaging Materials', 'Factory Hygiene Audit', 'Water Analysis'],
+    estimatedTimelineDays: 15,
+    estimatedFee: '₹5,000',
+    dependencies: ['appr-8'],
+    riskImpact: 35
+  },
+  {
+    id: 'appr-solvents-auth',
+    name: 'Printing Inks & Solvents Emission Authorization',
+    department: 'Maharashtra Pollution Control Board (MPCB)',
+    whyRequired: 'Pollution control sanction for VOC emissions from flexographic & rotogravure printing inks.',
+    category: 'Environmental',
+    requiredDocs: ['Solvent Recovery System Layout', 'Air Emission Stack Height Certificate', 'Safety Data Sheets (MSDS)'],
+    estimatedTimelineDays: 21,
+    estimatedFee: '₹8,000',
+    dependencies: ['appr-8'],
+    riskImpact: 30
+  },
+  {
+    id: 'appr-lab-mpcb-auth',
+    name: 'MPCB Testing Lab & Calibration Authorization',
+    department: 'Maharashtra Pollution Control Board (MPCB)',
+    whyRequired: 'Clearance for industrial testing labs handling chemical reagents & calibration effluents.',
+    category: 'Environmental',
+    requiredDocs: ['NABL Accreditation Copy', 'Chemical Reagent Disposal Plan', 'Lab Premises Layout'],
+    estimatedTimelineDays: 14,
+    estimatedFee: '₹4,000',
+    dependencies: ['appr-1'],
+    riskImpact: 20
+  },
+  {
+    id: 'appr-warehouse-hazardous',
+    name: 'Hazardous Cargo Warehousing Storage Approval',
+    department: 'Maharashtra Pollution Control Board (MPCB)',
+    whyRequired: 'Specialized clearance for storing chemical drums, battery hazardous cargo, or flammable goods.',
+    category: 'Safety',
+    requiredDocs: ['Spill Containment Layout Plan', 'Fire Tender Perimeter Plan', 'Insurance Policy'],
+    estimatedTimelineDays: 25,
+    estimatedFee: '₹12,000',
+    dependencies: ['appr-6'],
+    riskImpact: 35
+  },
+  {
+    id: 'appr-agmark',
+    name: 'AGMARK Quality Grading Registration',
+    department: 'Directorate of Marketing & Inspection (DMI)',
+    whyRequired: 'Quality grading certification for edible oils, ghee, ground spices, and agricultural produce.',
+    category: 'Clearance',
+    requiredDocs: ['Testing Chemist Authorization', 'Lab Equipment List', 'FSSAI License Copy'],
+    estimatedTimelineDays: 30,
+    estimatedFee: '₹6,000',
+    dependencies: ['appr-12'],
+    riskImpact: 25
+  },
+  {
+    id: 'appr-dairy-dept',
+    name: 'Dairy Processing & Animal Husbandry Department Registration',
+    whyRequired: 'Statutory registration for milk processing, chilling centers, and pasteurization plants.',
+    department: 'Department of Animal Husbandry & Dairy Maharashtra',
+    category: 'Registration',
+    requiredDocs: ['Milk Procurement Sourcing Plan', 'Pasteurization Plant Specs', 'FSSAI License'],
+    estimatedTimelineDays: 14,
+    estimatedFee: '₹3,000',
+    dependencies: ['appr-12'],
+    riskImpact: 30
+  },
+  {
+    id: 'appr-signage-permit',
+    name: 'Commercial Signage & Hoarding Permission',
+    department: 'Local Municipal Corporation / Council',
+    whyRequired: 'Municipal sanction for displaying commercial brand signage & shop hoardings.',
+    category: 'Registration',
+    requiredDocs: ['Signage Dimensions & Design Blueprint', 'Property Ownership Proof', 'Structural Safety Certificate'],
+    estimatedTimelineDays: 5,
+    estimatedFee: '₹1,000',
+    dependencies: ['appr-4'],
+    riskImpact: 10
+  },
+  {
+    id: 'appr-health-license',
+    name: 'Municipal Commercial Health Department License',
+    department: 'Local Municipal Health Department',
+    whyRequired: 'Mandatory health & hygiene license for running restaurants, cafes, cloud kitchens & food stalls.',
+    category: 'Safety',
+    requiredDocs: ['Kitchen Hygiene Audit', 'Water Quality Test', 'Pest Control AMC', 'Employee Medical Fitness'],
+    estimatedTimelineDays: 10,
+    estimatedFee: '₹2,500',
+    dependencies: ['appr-12'],
+    riskImpact: 30
+  },
+  {
+    id: 'appr-kitchen-ventilation',
+    name: 'Commercial Kitchen Exhaust & Ventilation Clearance',
+    department: 'Maharashtra Fire Services / Municipal Health',
+    whyRequired: 'Fire safety & air quality sanction for commercial kitchen chimneys, ducting & grease traps.',
+    category: 'Safety',
+    requiredDocs: ['Kitchen Exhaust Ducting CAD Drawing', 'Fire Suppression System Specs', 'Grease Trap Scheme'],
+    estimatedTimelineDays: 7,
+    estimatedFee: '₹3,000',
+    dependencies: ['appr-6'],
+    riskImpact: 25
+  },
+  {
+    id: 'appr-liquor-license',
+    name: 'Maharashtra State Excise Liquor License (FL-III)',
+    department: 'State Excise Department Maharashtra',
+    whyRequired: 'Conditional statutory permit for serving alcoholic beverages in high-end restaurants & hotels.',
+    category: 'Clearance',
+    requiredDocs: ['Police Character Verification', 'Municipal Health License', 'Fire NOC', 'Premises Title Deed'],
+    estimatedTimelineDays: 45,
+    estimatedFee: '₹1,50,000',
+    dependencies: ['appr-health-license', 'appr-6'],
+    riskImpact: 40
+  },
+  {
+    id: 'appr-stpi',
+    name: 'Software Technology Parks of India (STPI) Export Registration',
+    department: 'Software Technology Parks of India (STPI)',
+    whyRequired: 'Optional registration for IT startups & software exporters to claim duty exemptions & IT park benefits.',
+    category: 'Registration',
+    requiredDocs: ['Project Report for IT Export', 'Incorporation Certificate', 'IEC Code'],
+    estimatedTimelineDays: 14,
+    estimatedFee: '₹5,000',
+    dependencies: ['appr-1'],
+    riskImpact: 15
   }
 ];
 
@@ -256,6 +498,7 @@ export const INITIAL_PROJECTS: BusinessProject[] = [
     projectType: 'New Setup',
     entityType: 'Private Limited',
     sector: 'Food Processing',
+    subSector: 'Edible oil and spices (processing, refining, packaging)',
     investmentRange: '₹5 Cr - ₹15 Cr',
     employeeCount: 48,
     businessActivity: 'Automated spice processing, freezing, and export packaging',
@@ -277,7 +520,8 @@ export const INITIAL_PROJECTS: BusinessProject[] = [
     businessType: 'Sustainable Yarn Dyeing & Weaving Unit',
     projectType: 'Expansion',
     entityType: 'LLP',
-    sector: 'Textile',
+    sector: 'Manufacturing',
+    subSector: 'Textiles (spinning, weaving, garment manufacturing)',
     investmentRange: '₹15 Cr - ₹30 Cr',
     employeeCount: 110,
     businessActivity: 'Zero Liquid Discharge organic cotton weaving & textile processing',
@@ -711,6 +955,36 @@ export const INITIAL_COMPLIANCE_TASKS: ComplianceTask[] = [
     renewalFee: '₹0',
     reminderSentDates: ['2026-08-10'],
     actionRequired: 'Filed successfully on 2026-08-18 (ARN #AA27082601928).'
+  },
+  {
+    id: 'comp-5',
+    projectId: 'proj-1',
+    businessName: 'Apex Agro Processing Hub',
+    title: 'FSSAI Food Business Manufacturing License Audit & Renewal',
+    department: 'FSSAI Food Safety Maharashtra',
+    approvalName: 'FSSAI State Manufacturing Licence',
+    dueDate: '2026-09-14',
+    daysLeft: 18,
+    status: 'DUE_SOON',
+    renewalPeriodMonths: 12,
+    renewalFee: '₹7,500',
+    reminderSentDates: ['2026-08-01 (45 Days)', '2026-08-15 (30 Days)'],
+    actionRequired: 'Submit annual production return Form D1 and schedule hygiene audit inspection.'
+  },
+  {
+    id: 'comp-6',
+    projectId: 'proj-1',
+    businessName: 'Apex Agro Processing Hub',
+    title: 'Legal Metrology Pre-Packaged Commodities Certificate Renewal',
+    department: 'Department of Legal Metrology Maharashtra',
+    approvalName: 'Legal Metrology Registration',
+    dueDate: '2026-09-20',
+    daysLeft: 24,
+    status: 'DUE_SOON',
+    renewalPeriodMonths: 24,
+    renewalFee: '₹4,000',
+    reminderSentDates: ['2026-08-10 (40 Days)'],
+    actionRequired: 'Upload calibrated weight & measure verification certificate issued by Inspector of Weights.'
   }
 ];
 
@@ -718,68 +992,110 @@ export const INITIAL_INCENTIVE_SCHEMES: IncentiveScheme[] = [
   {
     id: 'inc-1',
     schemeName: 'Maharashtra Package Scheme of Incentives (PSI 2019 / 2024)',
+    name: 'Maharashtra Package Scheme of Incentives (PSI 2019 / 2024)',
     department: 'Directorate of Industries, Maharashtra',
     shortDesc: 'Up to 60-80% Capital Subsidy & SGST Reimbursement for MSME setup in Zone C/D MIDC areas like Chakan & Tarapur.',
+    description: 'Up to 60-80% Capital Subsidy & SGST Reimbursement for MSME setup in Zone C/D MIDC areas like Chakan & Tarapur.',
     eligibilityStatus: 'ELIGIBLE',
     estimatedBenefit: '₹45,00,000 Capital Subsidy + 100% SGST Refund',
+    benefit: '₹45,00,000 Capital Subsidy + 100% SGST Refund',
     eligibilityReason: 'Your project "Apex Agro Processing Hub" is an MSME in Food Processing located in MIDC Chakan (Zone C classification).',
     nextAction: 'File Eligibility Certificate Application under PSI 2019 within 180 days of commercial production.',
-    tags: ['MSME Support Scheme', 'Capital Subsidy', 'Food Processing Special']
+    requiredNextStep: 'File Eligibility Certificate Application under PSI 2019 within 180 days of commercial production.',
+    tags: ['MSME Support Scheme', 'Capital Subsidy', 'Food Processing Special'],
+    officialUrl: 'https://maitri.mahaonline.gov.in/',
+    officialApplyUrl: 'https://maitri.mahaonline.gov.in/',
+    officialInfoUrl: 'https://di.maharashtra.gov.in'
   },
   {
     id: 'inc-2',
     schemeName: '100% Electricity Duty Exemption Scheme',
+    name: '100% Electricity Duty Exemption Scheme',
     department: 'Energy Department, Govt of Maharashtra',
     shortDesc: 'Complete 100% exemption from paying Electricity Duty on HT/LT power consumption for 7 years.',
+    description: 'Complete 100% exemption from paying Electricity Duty on HT/LT power consumption for 7 years.',
     eligibilityStatus: 'ELIGIBLE',
     estimatedBenefit: 'Est. Savings ₹3,20,000 / year (₹22.4 Lakhs over 7 yrs)',
+    benefit: 'Est. Savings ₹3,20,000 / year (₹22.4 Lakhs over 7 yrs)',
     eligibilityReason: 'New industrial manufacturing unit established in MIDC industrial park.',
     nextAction: 'Submit Form ED-Exemption along with MSEDCL Load Sanction copy.',
-    tags: ['Electricity Duty Exemption', 'Operational Savings']
+    requiredNextStep: 'Submit Form ED-Exemption along with MSEDCL Load Sanction copy.',
+    tags: ['Electricity Duty Exemption', 'Operational Savings'],
+    officialUrl: 'https://maitri.mahaonline.gov.in/',
+    officialApplyUrl: 'https://maitri.mahaonline.gov.in/',
+    officialInfoUrl: 'https://ene.maharashtra.gov.in'
   },
   {
     id: 'inc-3',
     schemeName: 'Chief Minister Employment Generation Programme (CMEGP)',
+    name: 'Chief Minister Employment Generation Programme (CMEGP)',
     department: 'KVIB & Directorate of Industries',
     shortDesc: 'Margin money subsidy up to 25-35% for food processing & agro-manufacturing projects.',
+    description: 'Margin money subsidy up to 25-35% for food processing & agro-manufacturing projects.',
     eligibilityStatus: 'ELIGIBLE',
     estimatedBenefit: '₹25,00,000 Direct Bank Margin Subsidy',
+    benefit: '₹25,00,000 Direct Bank Margin Subsidy',
     eligibilityReason: 'Agro processing unit employing over 25 local Maharashtrian workers.',
     nextAction: 'Upload Project Appraisal Report from Bank for CMEGP portal validation.',
-    tags: ['CMEGP', 'Employment Subsidy', 'Agro-Business']
+    requiredNextStep: 'Upload Project Appraisal Report from Bank for CMEGP portal validation.',
+    tags: ['CMEGP', 'Employment Subsidy', 'Agro-Business'],
+    officialUrl: 'https://maha-cmegp.gov.in',
+    officialApplyUrl: 'https://maha-cmegp.gov.in',
+    officialInfoUrl: 'https://di.maharashtra.gov.in'
   },
   {
     id: 'inc-4',
     schemeName: 'Special Capital Subsidy for Women Entrepreneurs',
+    name: 'Special Capital Subsidy for Women Entrepreneurs',
     department: 'Mahila Arthik Vikas Mahamandal (MAVIM) & DIC',
     shortDesc: 'Additional 10% Capital Subsidy + 5% Interest Subvention for units owned >=51% by women entrepreneurs.',
+    description: 'Additional 10% Capital Subsidy + 5% Interest Subvention for units owned >=51% by women entrepreneurs.',
     eligibilityStatus: 'POSSIBLY_ELIGIBLE',
     estimatedBenefit: '₹15,00,000 Additional Capital Top-up',
+    benefit: '₹15,00,000 Additional Capital Top-up',
     eligibilityReason: 'Applicable if women partners/directors hold majority equity shareholding.',
     nextAction: 'Submit Shareholding Pattern Certificate signed by CA to unlock.',
-    tags: ['Women Entrepreneur Support', 'Capital Subsidy']
+    requiredNextStep: 'Submit Shareholding Pattern Certificate signed by CA to unlock.',
+    tags: ['Women Entrepreneur Support', 'Capital Subsidy'],
+    officialUrl: 'https://di.maharashtra.gov.in',
+    officialApplyUrl: 'https://di.maharashtra.gov.in',
+    officialInfoUrl: 'https://mavim.maharashtra.gov.in'
   },
   {
     id: 'inc-5',
     schemeName: 'Green & Renewable Energy Unit Capital Subsidy',
+    name: 'Green & Renewable Energy Unit Capital Subsidy',
     department: 'MEDA (Maharashtra Energy Development Agency)',
     shortDesc: '50% subsidy on setup of rooftop solar power plants & Effluent Zero Liquid Discharge (ZLD) plants.',
+    description: '50% subsidy on setup of rooftop solar power plants & Effluent Zero Liquid Discharge (ZLD) plants.',
     eligibilityStatus: 'POSSIBLY_ELIGIBLE',
     estimatedBenefit: '₹12,00,000 Solar & ZLD Reimbursement',
+    benefit: '₹12,00,000 Solar & ZLD Reimbursement',
     eligibilityReason: 'If Apex Agro installs a minimum 50 kW solar rooftop array on factory shed.',
     nextAction: 'Upload MEDA Technical Feasibility Approval Letter.',
-    tags: ['Green Unit Support', 'Solar Subsidy', 'ZLD Incentive']
+    requiredNextStep: 'Upload MEDA Technical Feasibility Approval Letter.',
+    tags: ['Green Unit Support', 'Solar Subsidy', 'ZLD Incentive'],
+    officialUrl: 'https://www.mahaurja.maharashtra.gov.in',
+    officialApplyUrl: 'https://www.mahaurja.maharashtra.gov.in',
+    officialInfoUrl: 'https://www.mahaurja.maharashtra.gov.in'
   },
   {
     id: 'inc-6',
     schemeName: 'Export Promotion & Quality Certification Subsidy',
+    name: 'Export Promotion & Quality Certification Subsidy',
     department: 'Maharashtra Small Scale Industries Development Corp (MSSIDC)',
     shortDesc: '100% reimbursement of ISO, HACCP, FSSAI, and international food safety certification expenses.',
+    description: '100% reimbursement of ISO, HACCP, FSSAI, and international food safety certification expenses.',
     eligibilityStatus: 'ELIGIBLE',
     estimatedBenefit: 'Up to ₹5,00,000 Reimbursement',
+    benefit: 'Up to ₹5,00,000 Reimbursement',
     eligibilityReason: 'Export oriented food processing unit seeking international food safety certification.',
     nextAction: 'Submit receipts of ISO 22000 / HACCP audit fee invoices.',
-    tags: ['Export Support', 'Quality Certification']
+    requiredNextStep: 'Submit receipts of ISO 22000 / HACCP audit fee invoices.',
+    tags: ['Export Support', 'Quality Certification'],
+    officialUrl: 'https://mssidc.maharashtra.gov.in',
+    officialApplyUrl: 'https://mssidc.maharashtra.gov.in',
+    officialInfoUrl: 'https://mssidc.maharashtra.gov.in'
   }
 ];
 
@@ -949,3 +1265,179 @@ export const INITIAL_RULES: ApprovalRule[] = [
     riskCategory: 'High'
   }
 ];
+
+export const INITIAL_NOC_APPLICATIONS: NocApplication[] = [
+  {
+    id: 'noc-app-1',
+    projectId: 'proj-1',
+    businessName: 'Apex Agro Processing Hub',
+    nocType: 'FIRE_SAFETY',
+    nocName: 'Fire Safety Provisional NOC',
+    department: 'Maharashtra Fire Services',
+    appliedDate: '2026-08-15',
+    status: 'UNDER_REVIEW',
+    urgency: 'HIGH',
+    slaDaysLeft: 6,
+    technicalParameters: {
+      builtUpAreaSqM: 1250,
+      plotAreaSqM: 4500,
+      fireMitigation: {
+        sprinklersCount: 48,
+        hydrantsCount: 6,
+        smokeAlarmsCount: 32,
+        hasFirePumps: true
+      }
+    },
+    documents: [
+      {
+        docId: 'doc-1',
+        docName: 'MIDC Land Allotment Letter',
+        category: 'Land Ownership',
+        uploadDate: '2026-08-12',
+        aiValidationStatus: 'VALIDATED',
+        aiNotes: 'Verified plot allotment match with MIDC Chakan Phase 2 registry.'
+      },
+      {
+        docId: 'doc-2',
+        docName: 'Architectural Building Layout Plan',
+        category: 'Building Sanction',
+        uploadDate: '2026-08-14',
+        aiValidationStatus: 'VALIDATED',
+        aiNotes: '6m perimeter fire tender access road clear in drawing.'
+      }
+    ],
+    queries: []
+  },
+  {
+    id: 'noc-app-2',
+    projectId: 'proj-1',
+    businessName: 'Apex Agro Processing Hub',
+    nocType: 'MPCB_CTE',
+    nocName: 'MPCB Consent to Establish (CTE NOC)',
+    department: 'Maharashtra Pollution Control Board (MPCB)',
+    appliedDate: '2026-08-10',
+    status: 'QUERY_RAISED',
+    urgency: 'HIGH',
+    slaDaysLeft: 4,
+    technicalParameters: {
+      builtUpAreaSqM: 1250,
+      plotAreaSqM: 4500,
+      waterRequirementKlpd: 35,
+      effluentGenerationKlpd: 22,
+      hazardousSubstanceDetails: 'Organic food effluent, zero toxic chemicals'
+    },
+    documents: [
+      {
+        docId: 'doc-3',
+        docName: 'Effluent Treatment Plant (ETP) Proposal',
+        category: 'Environmental',
+        uploadDate: '2026-08-10',
+        aiValidationStatus: 'WARNING',
+        aiNotes: 'Peak monsoon flow rate missing in calculation annexure.'
+      }
+    ],
+    queries: [
+      {
+        id: 'q-noc-1',
+        raisedBy: 'Dr. V. K. Patil (MPCB Officer)',
+        date: '2026-08-20',
+        question: 'Please submit peak monsoon discharge calculation for Effluent Treatment Plant (ETP) along with flow meter specifications.',
+        status: 'OPEN'
+      }
+    ]
+  },
+  {
+    id: 'noc-app-3',
+    projectId: 'proj-1',
+    businessName: 'Apex Agro Processing Hub',
+    nocType: 'WATER_SUPPLY',
+    nocName: 'MIDC Industrial Water Supply & Sewerage NOC',
+    department: 'MIDC Infrastructure & Water Works',
+    appliedDate: '2026-08-01',
+    status: 'PROVISIONAL_ISSUED',
+    urgency: 'NORMAL',
+    slaDaysLeft: 0,
+    technicalParameters: {
+      builtUpAreaSqM: 1250,
+      plotAreaSqM: 4500,
+      waterRequirementKlpd: 35,
+      effluentGenerationKlpd: 22
+    },
+    documents: [
+      {
+        docId: 'doc-4',
+        docName: 'Water Requirement Estimation Sheet',
+        category: 'Utility',
+        uploadDate: '2026-08-01',
+        aiValidationStatus: 'VALIDATED',
+        aiNotes: 'Water balance calculation verified by MIDC engineer.'
+      }
+    ],
+    queries: [],
+    provisionalCertUrl: 'https://permitflownexus.gov.in/certs/NOC-WATER-2026-0941.pdf',
+    issuedDate: '2026-08-18',
+    certificateId: 'PFN-NOC-WTR-2026-0891',
+    qrCodeData: 'PFN-VERIFIED-NOC-WATER-APEXAGRO-2026-0891'
+  },
+  {
+    id: 'noc-app-4',
+    projectId: 'proj-1',
+    businessName: 'Apex Agro Processing Hub',
+    nocType: 'ELECTRICAL_SAFETY',
+    nocName: 'High Voltage Electrical Grid Safety NOC',
+    department: 'Electrical Inspectorate / MSEDCL',
+    appliedDate: '2026-08-22',
+    status: 'INSPECTION_SCHEDULED',
+    urgency: 'URGENT',
+    slaDaysLeft: 8,
+    technicalParameters: {
+      builtUpAreaSqM: 1250,
+      plotAreaSqM: 4500,
+      electricalLoadKw: 250,
+      voltageLevel: '11kV HT Connection'
+    },
+    documents: [
+      {
+        docId: 'doc-5',
+        docName: 'Single Line Diagram (SLD) Substation Drawing',
+        category: 'Utility',
+        uploadDate: '2026-08-22',
+        aiValidationStatus: 'VALIDATED',
+        aiNotes: '11kV HT line clearance meets statutory 3.7m safety distance.'
+      }
+    ],
+    queries: []
+  }
+];
+
+export const INITIAL_JOINT_INSPECTIONS: JointInspection[] = [
+  {
+    id: 'joint-insp-1',
+    nocApplicationId: 'noc-app-4',
+    projectId: 'proj-1',
+    businessName: 'Apex Agro Processing Hub',
+    scheduledDate: '2026-09-02',
+    scheduledTime: '11:00 AM',
+    attendingDepartments: [
+      'Maharashtra Fire Services',
+      'Maharashtra Pollution Control Board (MPCB)',
+      'MIDC Infrastructure',
+      'Electrical Inspectorate / MSEDCL'
+    ],
+    officerNames: [
+      'Officer Sunita Rane (Fire)',
+      'Dr. V. K. Patil (MPCB)',
+      'Er. Suresh Shinde (MIDC)',
+      'Inspector A. B. Kadam (DISH)'
+    ],
+    inspectionLocation: 'Plot No. C-42, MIDC Chakan Phase 2, Pune Industrial Zone',
+    status: 'SCHEDULED',
+    rubricChecklist: [
+      { criterion: '6m Clear Perimeter Fire Tender Access Road', compliant: true, notes: 'Roadway clear during preliminary civil survey' },
+      { criterion: 'Emergency Exit & Ring Main Fire Hydrant Network', compliant: true, notes: 'Dual ring main pressure gauges installed' },
+      { criterion: 'Effluent Treatment Plant (ETP) Flow Meter & Zero Liquid Discharge', compliant: null, notes: 'To be verified during joint site visit' },
+      { criterion: '11kV Substation Transformer Earth Pit Resistance (<1 Ohm)', compliant: null, notes: 'To be measured by MSEDCL Inspector' }
+    ]
+  }
+];
+

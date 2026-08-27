@@ -10,7 +10,9 @@ import {
   INITIAL_INCENTIVE_SCHEMES, 
   INITIAL_AUDIT_LOGS, 
   INITIAL_NOTIFICATIONS, 
-  INITIAL_RULES 
+  INITIAL_RULES,
+  INITIAL_NOC_APPLICATIONS,
+  INITIAL_JOINT_INSPECTIONS
 } from '../src/data/mockData';
 import { generateSmartChecklist } from '../src/utils/rulesEngine';
 import { calculateRiskScore } from '../src/utils/riskCalculator';
@@ -32,6 +34,8 @@ let incentiveSchemes = [...INITIAL_INCENTIVE_SCHEMES];
 let auditLogs = [...INITIAL_AUDIT_LOGS];
 let notifications = [...INITIAL_NOTIFICATIONS];
 let rules = [...INITIAL_RULES];
+let nocApplications = [...INITIAL_NOC_APPLICATIONS];
+let jointInspections = [...INITIAL_JOINT_INSPECTIONS];
 
 // Healthcheck
 app.get('/api/health', (req, res) => {
@@ -307,6 +311,125 @@ app.get('/api/notifications', (req, res) => {
 // RULES ENGINE
 app.get('/api/rules', (req, res) => {
   res.json(rules);
+});
+
+/*
+ * PostgreSQL / Supabase Database Schema Definitions:
+ *
+ * CREATE TABLE noc_applications (
+ *   id VARCHAR(64) PRIMARY KEY,
+ *   project_id VARCHAR(64) REFERENCES business_projects(id),
+ *   business_name VARCHAR(255) NOT NULL,
+ *   noc_type VARCHAR(64) NOT NULL,
+ *   noc_name VARCHAR(255) NOT NULL,
+ *   department VARCHAR(255) NOT NULL,
+ *   applied_date DATE NOT NULL,
+ *   status VARCHAR(64) NOT NULL,
+ *   urgency VARCHAR(32) DEFAULT 'NORMAL',
+ *   sla_days_left INT DEFAULT 15,
+ *   technical_parameters JSONB NOT NULL,
+ *   documents JSONB DEFAULT '[]'::jsonb,
+ *   queries JSONB DEFAULT '[]'::jsonb,
+ *   provisional_cert_url VARCHAR(512),
+ *   final_cert_url VARCHAR(512),
+ *   qr_code_data TEXT,
+ *   issued_date DATE,
+ *   certificate_id VARCHAR(128)
+ * );
+ *
+ * CREATE TABLE joint_inspections (
+ *   id VARCHAR(64) PRIMARY KEY,
+ *   noc_application_id VARCHAR(64) REFERENCES noc_applications(id),
+ *   project_id VARCHAR(64) REFERENCES business_projects(id),
+ *   business_name VARCHAR(255) NOT NULL,
+ *   scheduled_date DATE NOT NULL,
+ *   scheduled_time VARCHAR(32) NOT NULL,
+ *   attending_departments JSONB NOT NULL,
+ *   officer_names JSONB NOT NULL,
+ *   inspection_location VARCHAR(512) NOT NULL,
+ *   rubric_checklist JSONB NOT NULL,
+ *   status VARCHAR(32) DEFAULT 'SCHEDULED',
+ *   outcome_summary TEXT
+ * );
+ */
+
+// NOC APPLICATIONS
+app.get('/api/noc-applications', (req, res) => {
+  const { projectId, status, nocType } = req.query;
+  let filtered = [...nocApplications];
+  if (projectId) filtered = filtered.filter(n => n.projectId === projectId);
+  if (status) filtered = filtered.filter(n => n.status === status);
+  if (nocType) filtered = filtered.filter(n => n.nocType === nocType);
+  res.json(filtered);
+});
+
+app.post('/api/noc-applications', (req, res) => {
+  const newNoc = {
+    id: `noc-app-${Date.now()}`,
+    appliedDate: new Date().toISOString().split('T')[0],
+    status: 'SUBMITTED',
+    queries: [],
+    ...req.body
+  };
+  nocApplications.unshift(newNoc);
+  res.status(201).json(newNoc);
+});
+
+app.post('/api/noc-applications/:id/query', (req, res) => {
+  const { id } = req.params;
+  const { question, raisedBy } = req.body;
+  const noc = nocApplications.find(n => n.id === id);
+  if (!noc) return res.status(404).json({ error: 'NOC Application not found' });
+  
+  const queryItem = {
+    id: `q-noc-${Date.now()}`,
+    raisedBy: raisedBy || 'Government Officer',
+    date: new Date().toISOString().split('T')[0],
+    question,
+    status: 'OPEN'
+  };
+  noc.queries = noc.queries || [];
+  noc.queries.push(queryItem as any);
+  noc.status = 'QUERY_RAISED';
+  res.json(noc);
+});
+
+app.post('/api/noc-applications/:id/issue-certificate', (req, res) => {
+  const { id } = req.params;
+  const { certType } = req.body; // 'PROVISIONAL' | 'FINAL'
+  const noc = nocApplications.find(n => n.id === id);
+  if (!noc) return res.status(404).json({ error: 'NOC Application not found' });
+
+  const certId = `PFN-NOC-${certType.substring(0, 4)}-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+  noc.status = certType === 'PROVISIONAL' ? 'PROVISIONAL_ISSUED' : 'FINAL_GRANTED';
+  noc.certificateId = certId;
+  noc.issuedDate = new Date().toISOString().split('T')[0];
+  noc.qrCodeData = `PFN-VERIFIED-NOC-${certType}-${noc.id}-${certId}`;
+  noc.provisionalCertUrl = certType === 'PROVISIONAL' ? `https://permitflownexus.gov.in/certs/${certId}.pdf` : noc.provisionalCertUrl;
+  noc.finalCertUrl = certType === 'FINAL' ? `https://permitflownexus.gov.in/certs/${certId}.pdf` : noc.finalCertUrl;
+
+  res.json(noc);
+});
+
+// JOINT INSPECTIONS
+app.get('/api/joint-inspections', (req, res) => {
+  res.json(jointInspections);
+});
+
+app.post('/api/joint-inspections', (req, res) => {
+  const newJoint = {
+    id: `joint-insp-${Date.now()}`,
+    status: 'SCHEDULED',
+    ...req.body
+  };
+  jointInspections.unshift(newJoint);
+
+  if (newJoint.nocApplicationId) {
+    const noc = nocApplications.find(n => n.id === newJoint.nocApplicationId);
+    if (noc) noc.status = 'INSPECTION_SCHEDULED';
+  }
+
+  res.status(201).json(newJoint);
 });
 
 app.listen(PORT, () => {

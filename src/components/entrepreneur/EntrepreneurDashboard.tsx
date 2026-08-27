@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { t } from '../../utils/translations';
 import { 
@@ -13,10 +13,13 @@ import {
   Sparkles,
   Building2,
   FileText,
-  HelpCircle
+  HelpCircle,
+  ShieldAlert
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { generateSmartChecklist } from '../../utils/rulesEngine';
+
+import { ComplianceExpiryAlertModal } from './ComplianceExpiryAlertModal';
 
 export const EntrepreneurDashboard: React.FC = () => {
   const { 
@@ -27,6 +30,8 @@ export const EntrepreneurDashboard: React.FC = () => {
     setActiveTab, 
     language 
   } = useApp();
+
+  const [isExpiryAlertOpen, setIsExpiryAlertOpen] = useState(false);
 
   const checklist = generateSmartChecklist(activeProject, applications);
   const totalApprovals = checklist.length;
@@ -49,86 +54,99 @@ export const EntrepreneurDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       
-      {/* Clean White Enterprise Welcome Banner */}
-      <div className="bg-white rounded-2xl p-6 text-slate-900 border border-slate-200/90 shadow-xs relative overflow-hidden">
+      {/* Expiry Alert Pop-up Modal */}
+      <ComplianceExpiryAlertModal 
+        isOpen={isExpiryAlertOpen} 
+        onClose={() => setIsExpiryAlertOpen(false)} 
+      />
+      
+      {/* Rich Enterprise Welcome Banner - Amber & Indigo Gradient */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-indigo-50/50 to-white rounded-2xl p-6 text-slate-900 border border-amber-200/80 shadow-xs relative overflow-hidden">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-xs font-bold mb-2 border border-slate-200">
-              <Building2 className="w-3.5 h-3.5 text-amber-600" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 text-amber-900 text-xs font-extrabold mb-2 border border-amber-300/80">
+              <Building2 className="w-3.5 h-3.5 text-amber-700" />
               <span>Maharashtra Business Approval Hub</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
               {t('welcomeBack', language)}, {currentUser.name}!
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 mt-1 font-medium">
-              Active Project: <strong className="text-slate-900 font-bold">{activeProject.businessName}</strong> ({activeProject.sector} • {activeProject.midcArea})
+              Active Project: <strong className="text-slate-900 font-extrabold">{activeProject.businessName}</strong> ({activeProject.sector}{activeProject.subSector ? ` • ${activeProject.subSector}` : ''} • {activeProject.midcArea})
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
             <button
+              onClick={() => setIsExpiryAlertOpen(true)}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white text-xs font-extrabold shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer animate-pulse"
+            >
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-200" />
+              <span>Expiry Alert Pop-up</span>
+            </button>
+            <button
               onClick={() => setActiveTab('new-project')}
-              className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5"
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <PlusCircle className="w-3.5 h-3.5" />
               <span>{t('addProject', language)}</span>
             </button>
             <button
               onClick={() => setActiveTab('ai-assistant')}
-              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-semibold transition-all flex items-center gap-1.5"
+              className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-950 border border-indigo-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <HelpCircle className="w-3.5 h-3.5 text-slate-600" />
+              <HelpCircle className="w-3.5 h-3.5 text-indigo-700" />
               <span>Approval Helpdesk</span>
             </button>
           </div>
         </div>
 
         {/* Approval Journey Progress Meter */}
-        <div className="mt-6 pt-5 border-t border-slate-100">
+        <div className="mt-6 pt-5 border-t border-amber-200/50">
           <div className="flex items-center justify-between text-xs mb-1.5">
             <span className="font-bold text-slate-700">{t('journeyCompletion', language)}</span>
-            <span className="font-extrabold text-slate-900">{completionPercentage}% Complete</span>
+            <span className="font-extrabold text-amber-700">{completionPercentage}% Complete</span>
           </div>
-          <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200">
+          <div className="w-full h-3 bg-white rounded-full overflow-hidden p-0.5 border border-amber-300/80 shadow-xs">
             <div
-              className="h-full bg-slate-900 rounded-full transition-all duration-1000 shadow-xs"
+              className="h-full bg-gradient-to-r from-amber-500 to-indigo-600 rounded-full transition-all duration-1000"
               style={{ width: `${completionPercentage}%` }}
             />
           </div>
         </div>
       </div>
 
-      {/* 5 Key Metric Cards */}
+      {/* 5 Key Metric Cards - Distinct Professional Light Colors */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{t('totalApprovals', language)}</div>
+        <div className="bg-gradient-to-br from-indigo-50/80 to-white p-4 rounded-2xl border border-indigo-200/90 shadow-xs">
+          <div className="text-[11px] font-extrabold text-indigo-900 uppercase tracking-wider">{t('totalApprovals', language)}</div>
           <div className="text-2xl font-extrabold text-slate-900 mt-1">{totalApprovals}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Required for setup</div>
+          <div className="text-[10px] text-indigo-700 mt-1 font-semibold">Required for setup</div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-          <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">{t('approved', language)}</div>
-          <div className="text-2xl font-extrabold text-emerald-700 mt-1">{approvedCount}</div>
-          <div className="text-[10px] text-emerald-600 mt-1">{Math.round((approvedCount/totalApprovals)*100)}% cleared</div>
+        <div className="bg-gradient-to-br from-blue-50/80 to-white p-4 rounded-2xl border border-blue-200/90 shadow-xs">
+          <div className="text-[11px] font-extrabold text-blue-900 uppercase tracking-wider">{t('approved', language)}</div>
+          <div className="text-2xl font-extrabold text-blue-900 mt-1">{approvedCount}</div>
+          <div className="text-[10px] text-blue-700 mt-1 font-semibold">{Math.round((approvedCount/totalApprovals)*100)}% cleared</div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-          <div className="text-[11px] font-bold text-blue-700 uppercase tracking-wider">{t('underReview', language)}</div>
-          <div className="text-2xl font-extrabold text-blue-700 mt-1">{underReviewCount}</div>
-          <div className="text-[10px] text-blue-600 mt-1">Processing with depts</div>
+        <div className="bg-gradient-to-br from-amber-50/80 to-white p-4 rounded-2xl border border-amber-200/90 shadow-xs">
+          <div className="text-[11px] font-extrabold text-amber-900 uppercase tracking-wider">{t('underReview', language)}</div>
+          <div className="text-2xl font-extrabold text-amber-900 mt-1">{underReviewCount}</div>
+          <div className="text-[10px] text-amber-700 mt-1 font-semibold">Processing with depts</div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-          <div className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">{t('actionRequired', language)}</div>
-          <div className="text-2xl font-extrabold text-amber-700 mt-1">{actionRequiredCount}</div>
-          <div className="text-[10px] text-amber-600 mt-1">Queries / missing docs</div>
+        <div className="bg-gradient-to-br from-rose-50/80 to-white p-4 rounded-2xl border border-rose-200/90 shadow-xs">
+          <div className="text-[11px] font-extrabold text-rose-900 uppercase tracking-wider">{t('actionRequired', language)}</div>
+          <div className="text-2xl font-extrabold text-rose-900 mt-1">{actionRequiredCount}</div>
+          <div className="text-[10px] text-rose-700 mt-1 font-semibold">Queries / missing docs</div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs col-span-2 sm:col-span-1">
-          <div className="text-[11px] font-bold text-purple-700 uppercase tracking-wider">{t('upcomingRenewals', language)}</div>
-          <div className="text-2xl font-extrabold text-purple-700 mt-1">{upcomingRenewalsCount}</div>
-          <div className="text-[10px] text-purple-600 mt-1">Factory Licence in 30d</div>
+        <div className="bg-gradient-to-br from-purple-50/80 to-white p-4 rounded-2xl border border-purple-200/90 shadow-xs col-span-2 sm:col-span-1">
+          <div className="text-[11px] font-extrabold text-purple-900 uppercase tracking-wider">{t('upcomingRenewals', language)}</div>
+          <div className="text-2xl font-extrabold text-purple-900 mt-1">{upcomingRenewalsCount}</div>
+          <div className="text-[10px] text-purple-700 mt-1 font-semibold">Factory Licence in 30d</div>
         </div>
 
       </div>

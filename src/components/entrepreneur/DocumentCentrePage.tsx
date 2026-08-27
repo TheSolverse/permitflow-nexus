@@ -60,18 +60,18 @@ export const DocumentCentrePage: React.FC = () => {
   return (
     <div className="space-y-6">
       
-      {/* Header Banner */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Header Banner - Rich Light Gradient */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-indigo-50/50 to-white p-6 rounded-2xl border border-amber-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-extrabold text-slate-900">Document Centre & AI Verification</h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-bold border border-blue-300 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-blue-600" />
+            <span className="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-900 text-xs font-extrabold border border-indigo-300 flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-indigo-700" />
               OCR AI Scanner Active
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Upload & validate documents for <strong className="text-slate-800">{activeProject.businessName}</strong>. AI pre-screens for expiry & name mismatches.
+          <p className="text-xs text-slate-600 mt-1 font-medium">
+            Upload & validate documents for <strong className="text-slate-900 font-extrabold">{activeProject.businessName}</strong>. AI pre-screens for expiry & name mismatches.
           </p>
         </div>
       </div>
@@ -79,9 +79,9 @@ export const DocumentCentrePage: React.FC = () => {
       {/* Grid: Upload Box + AI Validation Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Upload Box (1 Col) */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+        {/* Upload Box (1 Col) - Soft Indigo Card */}
+        <div className="bg-gradient-to-b from-indigo-50/60 to-white p-5 rounded-2xl border border-indigo-200/90 shadow-xs space-y-4">
+          <h3 className="font-extrabold text-sm text-indigo-950 flex items-center gap-2">
             <UploadCloud className="w-4 h-4 text-amber-600" />
             Upload New Document
           </h3>
@@ -92,7 +92,7 @@ export const DocumentCentrePage: React.FC = () => {
               <select
                 value={uploadDocCategory}
                 onChange={(e) => setUploadDocCategory(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-amber-500"
+                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-amber-500 shadow-xs"
               >
                 {categories.filter(c => c !== 'ALL').map(c => (
                   <option key={c} value={c}>{c}</option>
@@ -108,26 +108,45 @@ export const DocumentCentrePage: React.FC = () => {
                 value={uploadDocName}
                 onChange={(e) => setUploadDocName(e.target.value)}
                 placeholder="e.g. Fire Hydrant Pressure Audit 2026"
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-amber-500"
+                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-amber-500 shadow-xs"
               />
             </div>
 
             <div>
-              <label className="block text-slate-700 font-semibold mb-1">File Upload (PDF, JPG, PNG)</label>
-              <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-amber-500 transition-colors bg-slate-50/50 cursor-pointer">
-                <UploadCloud className="w-6 h-6 text-slate-400 mx-auto mb-1" />
+              <label className="block text-slate-700 font-semibold mb-1">File Upload (PDF, JPG, PNG, DWG)</label>
+              <div className="border-2 border-dashed border-amber-300 rounded-xl p-4 text-center hover:border-amber-500 transition-colors bg-amber-50/50 cursor-pointer shadow-xs">
+                <UploadCloud className="w-6 h-6 text-amber-600 mx-auto mb-1" />
                 <input
                   type="file"
-                  onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)}
-                  className="text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-900 file:text-white"
+                  accept=".pdf,.png,.jpg,.jpeg,.dwg,.doc,.docx"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      const file = e.target.files[0];
+                      setSelectedFile(file);
+                      if (!uploadDocName) setUploadDocName(file.name);
+                    }
+                  }}
+                  className="text-[11px] text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-900 file:text-white cursor-pointer"
                 />
-                <p className="text-[10px] text-slate-400 mt-1">Supports files up to 10 MB</p>
+                {selectedFile ? (
+                  <div className="mt-2 p-1.5 rounded-lg bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-300 flex items-center justify-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Attached: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-slate-400 mt-1">Supports files up to 10 MB</p>
+                )}
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-all shadow-xs flex items-center justify-center gap-1.5"
+              disabled={!uploadDocName && !selectedFile}
+              className={`w-full py-2.5 rounded-xl text-white font-bold text-xs transition-all shadow-xs flex items-center justify-center gap-1.5 ${
+                !uploadDocName && !selectedFile
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  : 'bg-slate-900 hover:bg-slate-800 cursor-pointer'
+              }`}
             >
               <Sparkles className="w-4 h-4 text-amber-400" />
               <span>Upload & Run AI Scan</span>

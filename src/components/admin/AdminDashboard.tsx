@@ -51,7 +51,7 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Admin Quick Control Shortcuts */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         <button
           onClick={() => setActiveTab('admin-rules')}
@@ -76,14 +76,14 @@ export const AdminDashboard: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('admin-audit')}
+          onClick={() => setActiveTab('incentives')}
           className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-slate-400 transition-all text-left space-y-2 group"
         >
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center font-bold border border-amber-200">
-            <Activity className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center font-bold border border-emerald-200">
+            <Gift className="w-5 h-5" />
           </div>
-          <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-amber-800">Audit Log Trail</h3>
-          <p className="text-xs text-slate-500">Inspect tamper-proof user activity, application status transitions & IP logs.</p>
+          <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-emerald-800">Incentive URLs Manager</h3>
+          <p className="text-xs text-slate-500">Configure verified official government portal URLs, apply links & eligibility rules.</p>
         </button>
 
       </div>

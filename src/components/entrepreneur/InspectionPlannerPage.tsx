@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { Calendar, Clock, MapPin, User, CheckCircle2, AlertTriangle, Layers, Phone, FileText } from 'lucide-react';
 
 export const InspectionPlannerPage: React.FC = () => {
-  const { inspections, activeProject } = useApp();
+  const { inspections, jointInspections, activeProject } = useApp();
   const [confirmedIds, setConfirmedIds] = useState<string[]>([]);
   const [rescheduleModalId, setRescheduleModalId] = useState<string | null>(null);
   const [requestedDate, setRequestedDate] = useState('');
@@ -34,7 +34,76 @@ export const InspectionPlannerPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Inspections Cards List */}
+      {/* JOINT INSPECTIONS CARDS SECTION */}
+      {jointInspections.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-sm font-extrabold text-purple-950 dark:text-purple-300 uppercase tracking-wider flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-purple-700" />
+            Scheduled Multi-Agency Joint Site Inspections ({jointInspections.length})
+          </h2>
+
+          {jointInspections.map(j => (
+            <div
+              key={j.id}
+              className="bg-purple-900 text-white p-6 rounded-2xl border border-purple-700 shadow-lg space-y-4 text-xs"
+            >
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-purple-700/80 pb-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-900 font-extrabold text-[10px] uppercase tracking-wider">
+                      ★ Joint Site Inspection
+                    </span>
+                    <h3 className="font-extrabold text-sm text-white">{j.businessName}</h3>
+                  </div>
+                  <p className="text-xs text-purple-200 mt-0.5 flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span>{j.inspectionLocation}</span>
+                  </p>
+                </div>
+
+                <div className="px-3 py-1.5 rounded-xl bg-purple-800/80 border border-purple-600 font-extrabold text-amber-400 text-xs flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4" />
+                  <span>{j.scheduledDate} ({j.scheduledTime})</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-3.5 rounded-xl bg-purple-950/60 border border-purple-800 space-y-2">
+                  <span className="font-extrabold text-purple-200 text-[10px] uppercase tracking-wider">
+                    Participating Departmental Inspectors:
+                  </span>
+                  <div className="space-y-1 text-[11px] text-purple-100">
+                    {j.officerNames.map((off, idx) => (
+                      <div key={idx} className="flex items-center gap-1.5 font-medium">
+                        <User className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span>{off}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-purple-950/60 border border-purple-800 space-y-2">
+                  <span className="font-extrabold text-purple-200 text-[10px] uppercase tracking-wider">
+                    Joint Inspection Statutory Rubric:
+                  </span>
+                  <div className="space-y-1.5 text-[11px]">
+                    {j.rubricChecklist.map((rubric, idx) => (
+                      <div key={idx} className="flex items-start justify-between gap-2">
+                        <span className="text-purple-100 font-medium">• {rubric.criterion}</span>
+                        <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${rubric.compliant ? 'bg-emerald-500/30 text-emerald-300' : 'bg-amber-500/30 text-amber-300'}`}>
+                          {rubric.compliant === true ? 'Verified' : 'Pending Visit'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Standard Individual Inspections Cards List */}
       <div className="space-y-4">
         {inspections.map((insp) => {
           const isConfirmed = confirmedIds.includes(insp.id);

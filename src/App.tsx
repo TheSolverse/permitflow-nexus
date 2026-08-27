@@ -23,6 +23,7 @@ import { OfficerDashboard } from './components/officer/OfficerDashboard';
 import { OfficerQueryPage } from './components/officer/OfficerQueryPage';
 import { OfficerInspectionPage } from './components/officer/OfficerInspectionPage';
 import { SlaAnalyticsPage } from './components/officer/SlaAnalyticsPage';
+import { OfficerNocManagementPage } from './components/officer/OfficerNocManagementPage';
 
 // Admin Components
 import { AdminDashboard } from './components/admin/AdminDashboard';
@@ -30,15 +31,33 @@ import { RulesEngineManager } from './components/admin/RulesEngineManager';
 import { NotificationCentrePage } from './components/admin/NotificationCentrePage';
 import { AuditLogsPage } from './components/admin/AuditLogsPage';
 
+import { ComplianceExpiryAlertModal } from './components/entrepreneur/ComplianceExpiryAlertModal';
+
 export const MainContent: React.FC = () => {
   const { activeTab, currentUser } = useApp();
+  const [showExpiryModal, setShowExpiryModal] = React.useState<boolean>(true);
+
+  // Auto-show expiry pop-up whenever an Entrepreneur logs in or switches to entrepreneur portal
+  React.useEffect(() => {
+    if (currentUser.role === 'ENTREPRENEUR') {
+      setShowExpiryModal(true);
+    }
+  }, [currentUser.role, currentUser.id]);
 
   if (activeTab === 'landing') return <LandingPage />;
   if (activeTab === 'login') return <LoginPage />;
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans">
       <Navbar />
+
+      {/* Entrepreneur Statutory Certificate & Expiry Alert Modal */}
+      {currentUser.role === 'ENTREPRENEUR' && (
+        <ComplianceExpiryAlertModal 
+          isOpen={showExpiryModal}
+          onClose={() => setShowExpiryModal(false)}
+        />
+      )}
 
       <div className="flex-1 flex max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 gap-6">
         <Sidebar />
@@ -62,6 +81,7 @@ export const MainContent: React.FC = () => {
           {activeTab === 'officer-queries' && <OfficerQueryPage />}
           {activeTab === 'officer-inspections' && <OfficerInspectionPage />}
           {activeTab === 'officer-analytics' && <SlaAnalyticsPage />}
+          {activeTab === 'officer-nocs' && <OfficerNocManagementPage />}
 
           {/* Admin View Tabs */}
           {activeTab === 'admin-dashboard' && <AdminDashboard />}
