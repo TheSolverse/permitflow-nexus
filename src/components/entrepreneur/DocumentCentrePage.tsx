@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { DocumentValidationStatus, DocumentItem } from '../../types';
 import { apiAnalyzeDocumentOCR } from '../../services/api';
+import { performRealOcr } from '../../utils/realOcrAnalyzer';
 import { 
   FileText, 
   UploadCloud, 
@@ -40,22 +41,47 @@ export const DocumentCentrePage: React.FC = () => {
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uploadDocName) return;
+    if (!uploadDocName && !selectedFile) return;
+    const finalDocName = uploadDocName.trim() || (selectedFile ? selectedFile.name.replace(/\.[^/.]+$/, "") : 'Uploaded Document');
     setIsScanning(true);
 
     try {
-      const ocrRes = await apiAnalyzeDocumentOCR({
-        docName: uploadDocName,
-        category: uploadDocCategory,
-        projectProfile: {
-          businessName: activeProject.businessName,
-          sector: activeProject.sector,
-          district: activeProject.district,
-          entityType: activeProject.entityType
-        }
-      });
+      let ocrRes;
 
-      const newDoc = uploadDocument(uploadDocName, uploadDocCategory, selectedFile);
+      if (selectedFile) {
+        // Run Real OCR with Tesseract on the uploaded file
+        ocrRes = await performRealOcr(selectedFile, uploadDocCategory, finalDocName, {
+          businessName: activeProject.businessName,
+          district: activeProject.district
+        });
+      } else {
+        // Fallback to backend analysis
+        const serverOcr = await apiAnalyzeDocumentOCR({
+          docName: finalDocName,
+          category: uploadDocCategory,
+          projectProfile: {
+            businessName: activeProject.businessName,
+            sector: activeProject.sector,
+            district: activeProject.district,
+            entityType: activeProject.entityType
+          }
+        });
+        if (serverOcr) {
+          ocrRes = {
+            confidence: serverOcr.confidence,
+            issues: serverOcr.issues,
+            recommendations: serverOcr.recommendations,
+            extractedName: serverOcr.extractedName,
+            extractedRegNo: serverOcr.extractedRegNo,
+            extractedExpiry: serverOcr.extractedExpiry,
+            status: serverOcr.status,
+            extractedRawText: '',
+            isAuthenticGovDoc: serverOcr.status === 'Valid'
+          };
+        }
+      }
+
+      const newDoc = uploadDocument(finalDocName, uploadDocCategory, selectedFile);
       if (ocrRes) {
         newDoc.aiValidationResult = {
           confidence: ocrRes.confidence,
@@ -69,7 +95,7 @@ export const DocumentCentrePage: React.FC = () => {
       }
       setActiveDocForFeedback(newDoc);
     } catch (err) {
-      const fallbackDoc = uploadDocument(uploadDocName, uploadDocCategory, selectedFile);
+      const fallbackDoc = uploadDocument(finalDocName, uploadDocCategory, selectedFile);
       setActiveDocForFeedback(fallbackDoc);
     } finally {
       setIsScanning(false);
