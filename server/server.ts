@@ -13,6 +13,8 @@ import {
   getApplications,
   createApplication,
   getDocuments,
+  createDocument,
+  deleteDocument,
   getNocApplications,
   getJointInspections,
   getAuditLogs,
@@ -393,6 +395,16 @@ app.post('/api/documents', async (req, res) => {
     }
 
     res.status(201).json(newDoc);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/documents/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await deleteDocument(id);
+    res.json({ success: true, message: 'Document permanently deleted from database and storage' });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

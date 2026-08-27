@@ -16,11 +16,12 @@ import {
   Eye,
   Building2,
   Calendar,
-  Layers
+  Layers,
+  Trash2
 } from 'lucide-react';
 
 export const DocumentCentrePage: React.FC = () => {
-  const { documents, uploadDocument, activeProject, currentUser } = useApp();
+  const { documents, uploadDocument, deleteDocument, activeProject, currentUser } = useApp();
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [uploadDocName, setUploadDocName] = useState('');
   const [uploadDocCategory, setUploadDocCategory] = useState('PAN Card');
@@ -379,18 +380,36 @@ export const DocumentCentrePage: React.FC = () => {
                   <td className="py-3.5 px-4 font-bold text-slate-900">
                     {doc.aiValidationResult?.confidence || 0}%
                   </td>
-                  <td className="py-3.5 px-4 text-right space-x-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveDocForFeedback(doc);
-                        setInspectingDoc(doc);
-                      }}
-                      className="px-3.5 py-1.5 rounded-xl bg-[#2E6F40] text-white font-bold hover:bg-[#235833] text-xs transition-all shadow-xs flex items-center gap-1.5 ml-auto cursor-pointer"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-[#CFFFDC]" />
-                      <span>Inspect AI Report</span>
-                    </button>
+                  <td className="py-3.5 px-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveDocForFeedback(doc);
+                          setInspectingDoc(doc);
+                        }}
+                        className="px-3.5 py-1.5 rounded-xl bg-[#2E6F40] text-white font-bold hover:bg-[#235833] text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-[#CFFFDC]" />
+                        <span>Inspect AI Report</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Are you sure you want to permanently delete "${doc.docName}" from all sources & database?`)) {
+                            deleteDocument(doc.id);
+                            if (activeDocForFeedback?.id === doc.id) {
+                              setActiveDocForFeedback(null);
+                            }
+                          }
+                        }}
+                        className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 transition-colors cursor-pointer"
+                        title="Permanently remove file from all sources"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -542,8 +561,26 @@ export const DocumentCentrePage: React.FC = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
               <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`Are you sure you want to permanently remove "${inspectingDoc.docName}" from all database records and storage?`)) {
+                    deleteDocument(inspectingDoc.id);
+                    if (activeDocForFeedback?.id === inspectingDoc.id) {
+                      setActiveDocForFeedback(null);
+                    }
+                    setInspectingDoc(null);
+                  }
+                }}
+                className="px-4 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete File Permanently</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setInspectingDoc(null)}
                 className="px-6 py-2.5 rounded-xl bg-[#2E6F40] hover:bg-[#235833] text-white font-bold text-xs transition-colors shadow-xs cursor-pointer"
               >

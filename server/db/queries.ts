@@ -343,11 +343,69 @@ export async function getDocuments(projectId?: string, userId?: string): Promise
       console.error('Error fetching documents from DB:', e);
     }
   }
-  if (projectId) return memoryDocuments.filter(d => d.projectId === projectId);
-  return memoryDocuments;
+export async function createDocument(data: Partial<DocumentItem>): Promise<DocumentItem> {
+  const newDoc: DocumentItem = {
+    id: data.id || `doc-${Date.now()}`,
+    projectId: data.projectId || memoryProjects[0]?.id || 'proj-1',
+    docName: data.docName || 'Document',
+    category: data.category || 'General',
+    fileUrl: data.fileUrl || '/mock_documents/sample.pdf',
+    fileSize: data.fileSize || '1.2 MB',
+    uploadDate: data.uploadDate || new Date().toISOString().split('T')[0],
+    status: data.status || 'Valid',
+    expiryDate: data.expiryDate,
+    aiValidationResult: data.aiValidationResult || {
+      confidence: 96,
+      issues: [],
+      recommendations: ['Document text verified cleanly.']
+    }
+  };
+
+  if (isDbConnected()) {
+    try {
+      await pool.query(
+        `INSERT INTO documents (
+          id, project_id, doc_name, category, file_url, file_size, upload_date, status, expiry_date, ai_validation_result
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ON CONFLICT (id) DO UPDATE SET
+          doc_name = EXCLUDED.doc_name,
+          category = EXCLUDED.category,
+          status = EXCLUDED.status,
+          ai_validation_result = EXCLUDED.ai_validation_result`,
+        [
+          newDoc.id, newDoc.projectId, newDoc.docName, newDoc.category,
+          newDoc.fileUrl, newDoc.fileSize, newDoc.uploadDate, newDoc.status,
+          newDoc.expiryDate || null, JSON.stringify(newDoc.aiValidationResult)
+        ]
+      );
+    } catch (e) {
+      console.error('Error inserting document into DB:', e);
+    }
+  }
+
+  const existingIdx = memoryDocuments.findIndex(d => d.id === newDoc.id);
+  if (existingIdx !== -1) {
+    memoryDocuments[existingIdx] = newDoc;
+  } else {
+    memoryDocuments.unshift(newDoc);
+  }
+  return newDoc;
 }
 
-// ================= NOC APPLICATIONS =================
+export async function deleteDocument(id: string): Promise<boolean> {
+  if (isDbConnected()) {
+    try {
+      await pool.query('DELETE FROM documents WHERE id = $1', [id]);
+    } catch (e) {
+      console.error('Error deleting document from DB:', e);
+    }
+  }
+  const idx = memoryDocuments.findIndex(d => d.id === id);
+  if (idx !== -1) {
+    memoryDocuments.splice(idx, 1);
+  }
+  return true;
+}
 export async function getNocApplications(filters?: { userId?: string; projectId?: string; status?: string; nocType?: string }): Promise<NocApplication[]> {
   if (isDbConnected()) {
     try {

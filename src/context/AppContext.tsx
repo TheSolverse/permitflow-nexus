@@ -49,6 +49,7 @@ import {
   issueNocCertificateApi,
   fetchDocuments,
   uploadDocumentApi,
+  deleteDocumentApi,
   fetchComplianceTasks,
   fetchJointInspections,
   createJointInspectionApi,
@@ -90,6 +91,7 @@ interface AppContextType {
   addProject: (projData: Omit<BusinessProject, 'id' | 'createdAt' | 'userId'>) => BusinessProject;
   applyForApproval: (approvalId: string, approvalName: string, department: string, documentIds?: string[], remarks?: string) => Application;
   uploadDocument: (docName: string, category: string, file: File | null) => DocumentItem;
+  deleteDocument: (docId: string) => void;
   respondToQuery: (queryId: string, responseText: string, responseDocName?: string) => void;
   updateApplicationStatus: (appId: string, status: ApprovalStatus, remarks?: string) => void;
   raiseOfficerQuery: (appId: string, queryCategory: string, queryText: string, dueDate: string) => void;
@@ -467,6 +469,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     uploadDocumentApi(newDoc).catch(err => console.warn('Could not save document to backend:', err));
 
     return newDoc;
+  };
+
+  const deleteDocument = (docId: string) => {
+    setDocuments(prev => prev.filter(d => d.id !== docId));
+    deleteDocumentApi(docId).catch(err => console.warn('Could not delete document from backend:', err));
   };
 
   const respondToQuery = (queryId: string, responseText: string, responseDocName?: string) => {
@@ -865,6 +872,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addProject,
         applyForApproval,
         uploadDocument,
+        deleteDocument,
         respondToQuery,
         updateApplicationStatus,
         raiseOfficerQuery,
