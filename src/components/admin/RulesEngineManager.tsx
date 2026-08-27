@@ -40,7 +40,7 @@ export const RulesEngineManager: React.FC = () => {
       
       <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">MAITRI Rules Engine Configurator</h1>
+          <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">PFN Rules Engine Configurator</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Define dynamic approval triggers, statutory SLAs, fees, and prerequisite dependency chains.
           </p>

@@ -471,7 +471,7 @@ export const OfficerDocumentViewerModal: React.FC<Props> = ({
                     <div className="flex items-center gap-3">
                       <Building2 className="w-8 h-8 text-amber-400" />
                       <div>
-                        <div className="text-xs font-black uppercase text-amber-300">MAHARASHTRA SINGLE-WINDOW PORTAL (MAITRI)</div>
+                        <div className="text-xs font-black uppercase text-amber-300">MAHARASHTRA SINGLE-WINDOW PORTAL (PFN)</div>
                         <div className="text-sm font-extrabold text-white">Statutory Clearances Verified Copy</div>
                       </div>
                     </div>

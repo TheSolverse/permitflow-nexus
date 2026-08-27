@@ -48,7 +48,7 @@ export const MainContent: React.FC = () => {
   if (activeTab === 'login') return <LoginPage />;
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50/70 to-slate-100 text-slate-900 flex flex-col font-sans">
       <Navbar />
 
       {/* Entrepreneur Statutory Certificate & Expiry Alert Modal */}

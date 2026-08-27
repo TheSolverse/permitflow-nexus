@@ -60,13 +60,13 @@ export const DocumentCentrePage: React.FC = () => {
   return (
     <div className="space-y-6">
       
-      {/* Header Banner - Rich Light Gradient */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-indigo-50/50 to-white p-6 rounded-2xl border border-amber-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Header Banner - Light Blue Sky Gradient */}
+      <div className="bg-gradient-to-r from-sky-100/80 via-blue-50/60 to-white p-6 rounded-2xl border border-sky-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-extrabold text-slate-900">Document Centre & AI Verification</h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-900 text-xs font-extrabold border border-indigo-300 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-indigo-700" />
+            <span className="px-2.5 py-0.5 rounded-full bg-blue-600 text-white text-xs font-extrabold shadow-xs flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-amber-300" />
               OCR AI Scanner Active
             </span>
           </div>

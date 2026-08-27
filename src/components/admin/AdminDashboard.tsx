@@ -9,12 +9,12 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       
-      {/* Admin Header (Clean Light Theme) */}
-      <div className="bg-white p-6 rounded-2xl text-slate-900 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Admin Header (Light Blue Sky Gradient) */}
+      <div className="bg-gradient-to-r from-sky-100/80 via-blue-50/60 to-white p-6 rounded-2xl text-slate-900 border border-sky-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-xs font-bold mb-2 border border-slate-200">
-            <ShieldCheck className="w-3.5 h-3.5 text-slate-900" />
-            <span>State Single Window Admin Console (MAITRI Core)</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-600/10 text-blue-900 text-xs font-bold mb-2 border border-blue-200">
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+            <span>State Single Window Admin Console (PFN Core)</span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900">Platform Administration</h1>
           <p className="text-xs text-slate-600 mt-1 font-medium">
@@ -46,7 +46,7 @@ export const AdminDashboard: React.FC = () => {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-slate-400 font-bold uppercase text-[10px]">Active Approval Rules</div>
           <div className="text-2xl font-extrabold text-purple-700 mt-1">{rules.length}</div>
-          <div className="text-purple-700 font-semibold text-[10px] mt-1">MAITRI Engine</div>
+          <div className="text-purple-700 font-semibold text-[10px] mt-1">PFN Engine</div>
         </div>
       </div>
 

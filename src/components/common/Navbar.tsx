@@ -41,7 +41,7 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs">
+    <header className="sticky top-0 z-40 bg-white border-b border-sky-200/80 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between min-h-[64px] py-2">
           
@@ -51,8 +51,8 @@ export const Navbar: React.FC = () => {
               onClick={() => setActiveTab(currentUser.role === 'ENTREPRENEUR' ? 'dashboard' : currentUser.role === 'OFFICER' ? 'officer-dashboard' : 'admin-dashboard')}
               className="flex items-center gap-3 text-left group cursor-pointer"
             >
-              <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-sm border border-slate-800 shrink-0">
-                <ShieldCheck className="w-6 h-6 text-amber-500" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-md border border-blue-500 shrink-0">
+                <ShieldCheck className="w-6 h-6 text-amber-300" />
               </div>
               <div className="flex flex-col justify-center">
                 <div className="flex items-center gap-2">
@@ -206,7 +206,7 @@ export const Navbar: React.FC = () => {
                       className="w-full text-left px-4 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium"
                     >
                       <Lock className="w-3.5 h-3.5 text-purple-600" />
-                      Platform Admin (MAITRI Admin)
+                      Platform Admin (PFN Admin)
                     </button>
                   </div>
 

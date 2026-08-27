@@ -34,11 +34,11 @@ export const OfficerDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       
-      {/* Officer Welcome Header (Clean Light Theme) */}
-      <div className="bg-white p-6 rounded-2xl text-slate-900 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Officer Welcome Header (Light Blue Sky Gradient) */}
+      <div className="bg-gradient-to-r from-sky-100/80 via-blue-50/60 to-white p-6 rounded-2xl text-slate-900 border border-sky-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-xs font-bold mb-2 border border-slate-200">
-            <UserCheck className="w-3.5 h-3.5 text-amber-600" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-600/10 text-blue-900 text-xs font-bold mb-2 border border-blue-200">
+            <UserCheck className="w-3.5 h-3.5 text-blue-600" />
             <span>Government Officer Workstation</span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900">{currentUser.name}</h1>

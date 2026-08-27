@@ -82,10 +82,10 @@ export const INITIAL_USERS: User[] = [
   },
   {
     id: 'usr-9',
-    name: 'MAITRI Admin Portal',
+    name: 'PFN Admin Portal',
     email: 'admin@permitflownexus.gov.in',
     role: 'ADMIN',
-    department: 'State Single Window System (MAITRI Core)',
+    department: 'State Single Window System (PFN Core)',
     phone: '+91 022 2202 5500',
   }
 ];
@@ -1139,7 +1139,7 @@ export const INITIAL_AUDIT_LOGS: AuditLogItem[] = [
   {
     id: 'log-4',
     timestamp: '2026-08-15 10:00:00',
-    user: 'MAITRI Admin Portal',
+    user: 'PFN Admin Portal',
     role: 'ADMIN',
     action: 'Updated Approval Rule Engine',
     previousStatus: 'N/A',

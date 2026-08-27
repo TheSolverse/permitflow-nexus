@@ -57,8 +57,8 @@ export const ApplicationTrackerPage: React.FC = () => {
   return (
     <div className="space-y-6">
       
-      {/* Header Banner - Rich Light Gradient */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-indigo-50/50 to-white p-6 rounded-2xl border border-amber-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Header Banner - Light Blue Sky Gradient */}
+      <div className="bg-gradient-to-r from-sky-100/80 via-blue-50/60 to-white p-6 rounded-2xl border border-sky-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-extrabold text-slate-900">Unified Application Tracker</h1>
           <p className="text-xs text-slate-600 mt-1 font-medium">

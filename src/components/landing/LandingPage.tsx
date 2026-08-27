@@ -197,7 +197,7 @@ export const LandingPage: React.FC = () => {
                 onClick={() => {
                   setCurrentUser({
                     id: 'usr-9',
-                    name: 'MAITRI Admin Portal',
+                    name: 'PFN Admin Portal',
                     email: 'admin@permitflownexus.gov.in',
                     role: 'ADMIN',
                     department: 'State Single Window System'

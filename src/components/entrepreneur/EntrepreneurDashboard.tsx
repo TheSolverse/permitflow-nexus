@@ -60,12 +60,12 @@ export const EntrepreneurDashboard: React.FC = () => {
         onClose={() => setIsExpiryAlertOpen(false)} 
       />
       
-      {/* Rich Enterprise Welcome Banner - Amber & Indigo Gradient */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-indigo-50/50 to-white rounded-2xl p-6 text-slate-900 border border-amber-200/80 shadow-xs relative overflow-hidden">
+      {/* Rich Enterprise Welcome Banner - Sky & Blue Gradient */}
+      <div className="bg-gradient-to-r from-sky-100/80 via-blue-50/70 to-white rounded-2xl p-6 text-slate-900 border border-sky-200 shadow-xs relative overflow-hidden">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 text-amber-900 text-xs font-extrabold mb-2 border border-amber-300/80">
-              <Building2 className="w-3.5 h-3.5 text-amber-700" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-600/10 text-blue-900 text-xs font-extrabold mb-2 border border-blue-200">
+              <Building2 className="w-3.5 h-3.5 text-blue-600" />
               <span>Maharashtra Business Approval Hub</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">

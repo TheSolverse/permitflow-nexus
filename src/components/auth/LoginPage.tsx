@@ -280,7 +280,7 @@ export const LoginPage: React.FC = () => {
               >
                 <div className="flex items-center gap-2">
                   <span className="w-6 h-6 rounded bg-purple-100 text-purple-900 flex items-center justify-center font-bold text-[11px]">A</span>
-                  <span>MAITRI Admin Console</span>
+                  <span>PFN Admin Console</span>
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-900" />
               </button>

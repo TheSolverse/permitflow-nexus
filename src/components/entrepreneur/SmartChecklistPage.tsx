@@ -90,18 +90,18 @@ export const SmartChecklistPage: React.FC = () => {
   return (
     <div className="space-y-6">
       
-      {/* Header Banner */}
-      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      {/* Header Banner - Light Blue Sky Gradient */}
+      <div className="bg-gradient-to-r from-sky-100/80 via-blue-50/60 to-white p-5 sm:p-6 rounded-2xl border border-sky-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1 max-w-2xl">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-tight">
               Smart Approval Checklist
             </h1>
-            <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 text-[11px] font-extrabold border border-amber-300 shrink-0">
+            <span className="px-2.5 py-1 rounded-full bg-blue-600 text-white text-[11px] font-extrabold shadow-xs shrink-0">
               Rules Engine Generated
             </span>
           </div>
-          <p className="text-xs text-slate-500 font-medium leading-normal">
+          <p className="text-xs text-slate-600 font-medium leading-normal">
             Personalized for <strong className="text-slate-900 font-extrabold">{activeProject.businessName}</strong> ({activeProject.sector}{activeProject.subSector ? ` • ${activeProject.subSector}` : ''} • {activeProject.investmentRange})
           </p>
         </div>

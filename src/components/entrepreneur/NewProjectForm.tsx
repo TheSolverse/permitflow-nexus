@@ -86,7 +86,7 @@ export const NewProjectForm: React.FC = () => {
           <div>
             <h1 className="text-xl font-extrabold text-slate-900">Register New Business Project</h1>
             <p className="text-xs text-slate-600 font-medium mt-0.5">
-              MAITRI Single-Window Wizard • Automatically configures your statutory Maharashtra permissions & licences
+              PFN Single-Window Wizard • Automatically configures your statutory Maharashtra permissions & licences
             </p>
           </div>
         </div>

@@ -354,7 +354,7 @@ export const NocApplicationWizardModal: React.FC<NocApplicationWizardModalProps>
                   Auto-Filled Applicant Identity & Project Details
                 </span>
                 <span className="text-[10px] text-emerald-700 font-extrabold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  ✓ Verified from MAITRI Master Profile
+                  ✓ Verified from PFN Master Profile
                 </span>
               </div>
 
