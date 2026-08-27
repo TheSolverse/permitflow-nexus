@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { apiQueryRegulatoryRAG } from '../../services/api';
+import { queryRegulatoryRAG } from '../../utils/regulatoryKnowledge';
 import { Send, AlertCircle, HelpCircle, Building2, BookOpen, Loader2 } from 'lucide-react';
 
 interface Message {
@@ -62,6 +63,9 @@ export const AiAssistantPage: React.FC = () => {
     setIsLoading(true);
 
     try {
+      let reply = '';
+      let citations: string[] = [];
+
       const ragRes = await apiQueryRegulatoryRAG({
         query: queryText,
         projectContext: {
@@ -75,14 +79,21 @@ export const AiAssistantPage: React.FC = () => {
         language
       });
 
-      let reply = '';
-      let citations: string[] = [];
-
       if (ragRes && ragRes.answer) {
         reply = ragRes.answer;
         citations = ragRes.statutoryCitations || [];
       } else {
-        reply = `For "${activeProject.businessName}" (${activeProject.sector} sector in ${activeProject.midcArea}), compliance is regulated under the Maharashtra Single Window Act.\n\n• Please verify your required submissions in the Smart Approval Checklist\n• Upload statutory blueprints in the Document Centre for OCR pre-screening.`;
+        // High-reliability local RAG fallback
+        const localRag = queryRegulatoryRAG(queryText, {
+          businessName: activeProject.businessName,
+          sector: activeProject.sector,
+          district: activeProject.district,
+          investmentRange: activeProject.investmentRange,
+          employeeCount: activeProject.employeeCount
+        }, language as any);
+
+        reply = localRag.answer;
+        citations = localRag.statutoryCitations;
       }
 
       const botMsg: Message = {
@@ -95,13 +106,22 @@ export const AiAssistantPage: React.FC = () => {
 
       setMessages(prev => [...prev, botMsg]);
     } catch (err) {
-      const errorBotMsg: Message = {
+      const localRag = queryRegulatoryRAG(queryText, {
+        businessName: activeProject.businessName,
+        sector: activeProject.sector,
+        district: activeProject.district,
+        investmentRange: activeProject.investmentRange,
+        employeeCount: activeProject.employeeCount
+      }, language as any);
+
+      const fallbackBotMsg: Message = {
         id: `m-${Date.now() + 1}`,
         sender: 'bot',
-        text: `Based on Maharashtra regulatory norms, your project in ${activeProject.midcArea} requires building plan sanctions and fire clearances. Please refer to your personalized Smart Checklist.`,
+        text: localRag.answer,
+        citations: localRag.statutoryCitations,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
-      setMessages(prev => [...prev, errorBotMsg]);
+      setMessages(prev => [...prev, fallbackBotMsg]);
     } finally {
       setIsLoading(false);
     }

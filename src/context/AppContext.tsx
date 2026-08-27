@@ -49,7 +49,6 @@ import {
   issueNocCertificateApi,
   fetchDocuments,
   uploadDocumentApi,
-  deleteDocumentApi,
   fetchComplianceTasks,
   fetchJointInspections,
   createJointInspectionApi,
@@ -91,7 +90,6 @@ interface AppContextType {
   addProject: (projData: Omit<BusinessProject, 'id' | 'createdAt' | 'userId'>) => BusinessProject;
   applyForApproval: (approvalId: string, approvalName: string, department: string, documentIds?: string[], remarks?: string) => Application;
   uploadDocument: (docName: string, category: string, file: File | null) => DocumentItem;
-  deleteDocument: (docId: string) => void;
   respondToQuery: (queryId: string, responseText: string, responseDocName?: string) => void;
   updateApplicationStatus: (appId: string, status: ApprovalStatus, remarks?: string) => void;
   raiseOfficerQuery: (appId: string, queryCategory: string, queryText: string, dueDate: string) => void;
@@ -156,34 +154,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [documents, setDocuments] = useState<DocumentItem[]>(() => {
     const saved = localStorage.getItem('pfn_documents');
-    if (!saved) return [];
-    try {
-      const parsed: DocumentItem[] = JSON.parse(saved);
-      const fakeNames = [
-        'yuvanpan',
-        'cte approval copy',
-        'hazardous waste authorization',
-        'analysis report of effluents',
-        'structural stability certificate by chartered engineer',
-        'effluent treatment plant (etp) structural design',
-        'factory fire system hydraulic calculation layout',
-        'water quality analysis report (nabl lab)',
-        'midc land possession deed',
-        'gst registration certificate (form reg-06)',
-        'company pan card'
-      ];
-      return parsed.filter(d => 
-        !fakeNames.some(f => d.docName.toLowerCase().includes(f)) &&
-        !['doc-1', 'doc-2', 'doc-3', 'doc-4', 'doc-5', 'doc-6', 'doc-7', 'doc-8'].includes(d.id)
-      );
-    } catch {
-      return [];
-    }
+    return saved ? JSON.parse(saved) : INITIAL_DOCUMENTS;
   });
-
-  useEffect(() => {
-    localStorage.setItem('pfn_documents', JSON.stringify(documents));
-  }, [documents]);
 
   const [inspections, setInspections] = useState<InspectionItem[]>(() => {
     const saved = localStorage.getItem('pfn_inspections');
@@ -495,11 +467,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     uploadDocumentApi(newDoc).catch(err => console.warn('Could not save document to backend:', err));
 
     return newDoc;
-  };
-
-  const deleteDocument = (docId: string) => {
-    setDocuments(prev => prev.filter(d => d.id !== docId));
-    deleteDocumentApi(docId).catch(err => console.warn('Could not delete document from backend:', err));
   };
 
   const respondToQuery = (queryId: string, responseText: string, responseDocName?: string) => {
@@ -898,7 +865,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addProject,
         applyForApproval,
         uploadDocument,
-        deleteDocument,
         respondToQuery,
         updateApplicationStatus,
         raiseOfficerQuery,
