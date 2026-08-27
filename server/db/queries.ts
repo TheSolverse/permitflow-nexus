@@ -343,6 +343,11 @@ export async function getDocuments(projectId?: string, userId?: string): Promise
       console.error('Error fetching documents from DB:', e);
     }
   }
+
+  if (projectId) return memoryDocuments.filter(d => d.projectId === projectId);
+  return memoryDocuments;
+}
+
 export async function createDocument(data: Partial<DocumentItem>): Promise<DocumentItem> {
   const newDoc: DocumentItem = {
     id: data.id || `doc-${Date.now()}`,
