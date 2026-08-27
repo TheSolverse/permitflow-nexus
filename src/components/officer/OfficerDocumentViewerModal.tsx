@@ -155,7 +155,7 @@ export const OfficerDocumentViewerModal: React.FC<Props> = ({
               )}
 
               {/* TEMPLATE 1: COMPANY PAN CARD */}
-              {isPan && !doc.fileUrl.startsWith('blob:') && !doc.fileUrl.startsWith('data:image') && (
+              {isPan && (!doc.fileUrl || (!doc.fileUrl.startsWith('blob:') && !doc.fileUrl.startsWith('data:image'))) && (
                 <div className="space-y-6">
                   <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-4 rounded-xl flex items-center justify-between border-b-4 border-amber-500">
                     <div className="flex items-center gap-3">

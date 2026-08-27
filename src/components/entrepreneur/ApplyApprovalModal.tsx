@@ -262,7 +262,7 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
                             type="button"
                             onClick={() => {
                               const doc = matchingExistingDocs[0];
-                              handleSelectExistingDoc(docName, doc.id, doc.docName, doc.fileSize);
+                              handleSelectExistingDoc(docName, doc.id, doc.docName, doc.fileSize || '1.2 MB');
                             }}
                             className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer"
                             title="Attach matching document from your Document Vault"

@@ -69,9 +69,7 @@ export const EntrepreneurDashboard: React.FC = () => {
 
   // Real matching incentive scheme for the business sector
   const matchingScheme = (incentiveSchemes || []).find(s => 
-    Array.isArray(s.applicableSectors) && (
-      s.applicableSectors.includes(activeProject?.sector) || s.applicableSectors.includes('ALL')
-    )
+    (s.tags && s.tags.includes(activeProject?.sector)) || s.eligibilityStatus === 'ELIGIBLE'
   );
 
   return (
@@ -280,7 +278,7 @@ export const EntrepreneurDashboard: React.FC = () => {
                   <div key={item.query.id} className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 flex items-start justify-between gap-3">
                     <div>
                       <span className="font-bold text-amber-950">Department Query Raised - {item.app.approvalName}</span>
-                      <p className="text-amber-900 mt-0.5">{item.query.queryText || item.query.question}</p>
+                      <p className="text-amber-900 mt-0.5">{item.query.queryText}</p>
                       {item.query.dueDate && (
                         <span className="text-[10px] font-semibold text-amber-700 block mt-1">Due Date: {item.query.dueDate}</span>
                       )}
@@ -360,11 +358,11 @@ export const EntrepreneurDashboard: React.FC = () => {
                 {activeDeadlines.map((task) => (
                   <div key={task.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                     <div>
-                      <div className="font-bold text-slate-900">{task.taskName}</div>
-                      <div className="text-[10px] text-slate-500">{task.issuingAuthority} • Due {task.dueDate}</div>
+                      <div className="font-bold text-slate-900">{task.title || task.approvalName}</div>
+                      <div className="text-[10px] text-slate-500">{task.department} • Due {task.dueDate}</div>
                     </div>
                     <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold text-[10px]">
-                      {task.daysRemaining} days left
+                      {task.daysLeft} days left
                     </span>
                   </div>
                 ))}
@@ -372,7 +370,7 @@ export const EntrepreneurDashboard: React.FC = () => {
                   <div key={insp.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                     <div>
                       <div className="font-bold text-slate-900">Joint Site Inspection</div>
-                      <div className="text-[10px] text-slate-500">{insp.departmentsInvolved?.join(' + ') || 'MPCB + DISH + Fire Dept'}</div>
+                      <div className="text-[10px] text-slate-500">{insp.attendingDepartments?.join(' + ') || 'MPCB + DISH + Fire Dept'}</div>
                     </div>
                     <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]">
                       {insp.scheduledDate}
@@ -391,7 +389,7 @@ export const EntrepreneurDashboard: React.FC = () => {
                 State Subsidy Alert
               </span>
               <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-bold">
-                {matchingScheme ? matchingScheme.schemeCode || 'State Scheme' : 'Maharashtra State Policy'}
+                {matchingScheme ? matchingScheme.schemeName : 'Maharashtra State Policy'}
               </span>
             </div>
             <div>
@@ -400,7 +398,7 @@ export const EntrepreneurDashboard: React.FC = () => {
               </h4>
               <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                 {matchingScheme 
-                  ? matchingScheme.benefitSummary 
+                  ? (matchingScheme.estimatedBenefit || matchingScheme.shortDesc)
                   : (hasProjects 
                       ? `Your ${activeProject.district || 'Maharashtra'} project qualifies for capital subsidies & SGST rebates under the state industrial policy.` 
                       : 'Create your enterprise profile to view verified state capital subsidies & tax rebates.')

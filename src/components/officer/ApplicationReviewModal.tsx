@@ -296,7 +296,7 @@ export const ApplicationReviewModal: React.FC<Props> = ({ app, onClose }) => {
                     return (
                       <div key={q.id} className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 shadow-xs">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-bold text-xs text-amber-800 dark:text-amber-300">{q.category}</span>
+                          <span className="font-bold text-xs text-amber-800 dark:text-amber-300">{q.queryCategory || 'Technical Clarification'}</span>
                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${q.status === 'RESPONDED' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'}`}>
                             {q.status === 'RESPONDED' ? '✓ Responded by Applicant' : '⏳ Pending Response'}
                           </span>
@@ -304,7 +304,7 @@ export const ApplicationReviewModal: React.FC<Props> = ({ app, onClose }) => {
 
                         <div className="text-xs text-slate-800 dark:text-slate-200 bg-amber-50/60 dark:bg-amber-950/30 p-3 rounded-xl border border-amber-200 dark:border-amber-900/40">
                           <div className="text-[10px] text-amber-700 dark:text-amber-400 font-bold uppercase mb-1">Officer Query ({q.dueDate ? `Due: ${q.dueDate}` : ''})</div>
-                          <p>{q.question}</p>
+                          <p>{q.queryText}</p>
                         </div>
 
                         {q.status === 'RESPONDED' && (
