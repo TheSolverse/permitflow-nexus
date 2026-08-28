@@ -12,7 +12,7 @@ import {
   INITIAL_RULES,
   INITIAL_NOC_APPLICATIONS,
   INITIAL_JOINT_INSPECTIONS
-} from '../../src/data/mockData';
+} from '../data/mockData';
 import { 
   BusinessProject, 
   Application, 
@@ -25,7 +25,7 @@ import {
   ApprovalRule, 
   NocApplication, 
   JointInspection 
-} from '../../src/types';
+} from '../types';
 
 // In-memory cache / fallback store
 let memoryUsers = [...INITIAL_USERS];

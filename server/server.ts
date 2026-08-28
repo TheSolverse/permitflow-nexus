@@ -23,8 +23,8 @@ import {
   getNotifications,
   getRules
 } from './db/queries';
-import { generateSmartChecklist } from '../src/utils/rulesEngine';
-import { calculateRiskScore } from '../src/utils/riskCalculator';
+import { generateSmartChecklist } from './utils/rulesEngine';
+import { calculateRiskScore } from './utils/riskCalculator';
 import { analyzeDocumentOCR, preValidateApplicationBundle } from './ai/ocrEngine';
 import { queryRegulatoryRAG, explainOfficerQuery } from './ai/regulatoryKnowledge';
 
@@ -851,8 +851,12 @@ app.post('/api/ai/explain-query', async (req, res) => {
 });
 
 // Boot and Server Initialization
-app.listen(PORT, async () => {
-  console.log(`[Express] PermitFlow Nexus Backend server running on http://localhost:${PORT}`);
-  // Attempt PostgreSQL initialization on boot
-  await initDatabase();
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, async () => {
+    console.log(`[Express] PermitFlow Nexus Backend server running on http://localhost:${PORT}`);
+    // Attempt PostgreSQL initialization on boot
+    await initDatabase();
+  });
+}
+
+export default app;

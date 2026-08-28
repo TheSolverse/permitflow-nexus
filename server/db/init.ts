@@ -14,7 +14,7 @@ import {
   INITIAL_RULES,
   INITIAL_NOC_APPLICATIONS,
   INITIAL_JOINT_INSPECTIONS
-} from '../../src/data/mockData';
+} from '../data/mockData';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
