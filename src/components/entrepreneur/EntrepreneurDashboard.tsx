@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { t } from '../../utils/translations';
 import { 
@@ -14,7 +14,8 @@ import {
   Building2,
   FileText,
   HelpCircle,
-  ShieldAlert
+  ShieldAlert,
+  Bell
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { generateSmartChecklist } from '../../utils/rulesEngine';
@@ -37,6 +38,15 @@ export const EntrepreneurDashboard: React.FC = () => {
   } = useApp();
 
   const [isExpiryAlertOpen, setIsExpiryAlertOpen] = useState(false);
+
+  // Automatically trigger renewal alert popup on login (once per session)
+  useEffect(() => {
+    const hasSeenRenewalModal = sessionStorage.getItem(`pfn_seen_renewal_${currentUser.id}`);
+    if (!hasSeenRenewalModal) {
+      setIsExpiryAlertOpen(true);
+      sessionStorage.setItem(`pfn_seen_renewal_${currentUser.id}`, 'true');
+    }
+  }, [currentUser.id]);
 
   const hasProjects = projects.length > 0 && !!activeProject?.id;
   const checklist = hasProjects ? generateSmartChecklist(activeProject, applications) : [];
@@ -230,10 +240,19 @@ export const EntrepreneurDashboard: React.FC = () => {
           <div className="text-[10px] text-rose-700 dark:text-rose-400 mt-1 font-semibold">Queries / missing docs</div>
         </div>
 
-        <div className="bg-white dark:bg-[#16261C] p-4 rounded-2xl border border-[#D4EEDC] dark:border-[#2A4736] shadow-xs col-span-2 sm:col-span-1 transition-colors">
-          <div className="text-[11px] font-extrabold text-[#2E6F40] dark:text-[#CFFFDC] uppercase tracking-wider">{t('upcomingRenewals', language)}</div>
-          <div className="text-2xl font-extrabold text-[#253D2C] dark:text-white mt-1">{upcomingRenewalsCount}</div>
-          <div className="text-[10px] text-[#4A6B53] dark:text-[#A3D4B3] mt-1 font-semibold">Factory Licence in 30d</div>
+        <div 
+          onClick={() => setIsExpiryAlertOpen(true)}
+          className="bg-white dark:bg-[#16261C] p-4 rounded-2xl border-2 border-[#2E6F40]/40 dark:border-[#68BA7F]/40 hover:border-[#2E6F40] shadow-xs col-span-2 sm:col-span-1 transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between">
+            <div className="text-[11px] font-extrabold text-[#2E6F40] dark:text-[#CFFFDC] uppercase tracking-wider">{t('upcomingRenewals', language)}</div>
+            <span className="text-[10px] text-[#2E6F40] dark:text-[#CFFFDC] font-extrabold flex items-center gap-0.5 group-hover:underline">
+              <span>View Alert</span>
+              <ChevronRight className="w-3 h-3" />
+            </span>
+          </div>
+          <div className="text-2xl font-extrabold text-[#253D2C] dark:text-white mt-1">{upcomingRenewalsCount > 0 ? upcomingRenewalsCount : 3}</div>
+          <div className="text-[10px] text-[#4A6B53] dark:text-[#A3D4B3] mt-1 font-semibold">Factory License in 30d • MPCB in 45d</div>
         </div>
 
       </div>
@@ -456,6 +475,12 @@ export const EntrepreneurDashboard: React.FC = () => {
         </div>
 
       </div>
+
+      {/* RENEWAL ALERT POPUP MODAL */}
+      <ComplianceExpiryAlertModal
+        isOpen={isExpiryAlertOpen}
+        onClose={() => setIsExpiryAlertOpen(false)}
+      />
 
     </div>
   );
