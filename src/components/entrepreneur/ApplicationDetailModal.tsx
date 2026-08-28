@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Application } from '../../types';
+import { Application, SmartChecklistItem } from '../../types';
+import { INITIAL_APPROVAL_TYPES } from '../../data/mockData';
+import { ApplyApprovalModal } from './ApplyApprovalModal';
 import { 
   X, 
   Clock, 
@@ -16,7 +18,8 @@ import {
   ChevronRight,
   Printer,
   Download,
-  Award
+  Award,
+  RotateCcw
 } from 'lucide-react';
 
 interface Props {
@@ -25,10 +28,30 @@ interface Props {
 }
 
 export const ApplicationDetailModal: React.FC<Props> = ({ app, onClose }) => {
-  const { respondToQuery, documents } = useApp();
+  const { respondToQuery, documents, setActiveTab } = useApp();
   const [responseText, setResponseText] = useState('');
   const [responseDocName, setResponseDocName] = useState('');
   const [isPrinting, setIsPrinting] = useState(false);
+  const [isReapplyOpen, setIsReapplyOpen] = useState(false);
+
+  const matchedApproval = INITIAL_APPROVAL_TYPES.find(a => a.id === app.approvalId || a.name === app.approvalName) || {
+    id: app.approvalId || 'appr-custom',
+    name: app.approvalName,
+    department: app.department,
+    whyRequired: `Statutory clearance application for ${app.approvalName}`,
+    category: 'Clearance' as const,
+    requiredDocs: ['Identity Proof / PAN Card', 'Premises Lease Deed / Layout', 'Technical Plan'],
+    estimatedTimelineDays: 15,
+    estimatedFee: '₹10,000',
+    dependencies: [],
+    riskImpact: 20
+  };
+
+  const reapplyItem: SmartChecklistItem = {
+    ...matchedApproval,
+    status: 'Not Started',
+    canApply: true
+  };
 
   const openQuery = app.queries.find(q => q.status === 'OPEN');
 
@@ -163,14 +186,11 @@ export const ApplicationDetailModal: React.FC<Props> = ({ app, onClose }) => {
 
                 <button
                   type="button"
-                  onClick={() => {
-                    onClose();
-                    const { setActiveTab } = useApp();
-                    // Will close modal and go to checklist
-                  }}
+                  onClick={() => setIsReapplyOpen(true)}
                   className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-md flex items-center gap-2 cursor-pointer transition-all shrink-0"
                 >
-                  <span>🔄 Reapply for this License from Scratch</span>
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Reapply from First</span>
                 </button>
               </div>
 
@@ -333,16 +353,38 @@ export const ApplicationDetailModal: React.FC<Props> = ({ app, onClose }) => {
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-slate-50 dark:bg-slate-900 p-4 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+        <div className="bg-slate-50 dark:bg-slate-900 p-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+          {app.status === 'Rejected' ? (
+            <button
+              onClick={() => setIsReapplyOpen(true)}
+              className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-md flex items-center gap-2 cursor-pointer transition-all"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>Reapply for this License from First</span>
+            </button>
+          ) : <div />}
+
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold hover:bg-slate-300 text-xs"
+            className="px-5 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold hover:bg-slate-300 text-xs cursor-pointer"
           >
             Close Window
           </button>
         </div>
 
       </div>
+
+      {/* Embedded Apply Approval Modal for Reapplying */}
+      <ApplyApprovalModal
+        isOpen={isReapplyOpen}
+        onClose={() => setIsReapplyOpen(false)}
+        approvalItem={reapplyItem}
+        onSuccess={() => {
+          setIsReapplyOpen(false);
+          onClose();
+        }}
+      />
+
     </div>
   );
 };

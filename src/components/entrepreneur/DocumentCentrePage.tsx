@@ -21,17 +21,27 @@ import {
 } from 'lucide-react';
 
 export const DocumentCentrePage: React.FC = () => {
-  const { documents, uploadDocument, deleteDocument, activeProject, currentUser } = useApp();
+  const { documents, uploadDocument, deleteDocument, updateDocumentStatus, activeProject, currentUser } = useApp();
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [uploadDocName, setUploadDocName] = useState('');
   const [uploadDocCategory, setUploadDocCategory] = useState('PAN Card');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [activeDocForFeedback, setActiveDocForFeedback] = useState<DocumentItem | null>(documents[0] || null);
+  
+  // Flagged documents requiring user replacement or correction
+  const flaggedDocs = documents.filter(d => 
+    d.status === 'Name Mismatch' || d.status === 'Expired' || d.status === 'Blurry / Unreadable' || d.status === 'Missing'
+  );
+
+  const [activeDocForFeedback, setActiveDocForFeedback] = useState<DocumentItem | null>(
+    flaggedDocs.length > 0 ? flaggedDocs[0] : (documents[0] || null)
+  );
   const [inspectingDoc, setInspectingDoc] = useState<DocumentItem | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [replacingDocId, setReplacingDocId] = useState<string | null>(null);
 
   const categories = [
     'ALL',
+    ...(flaggedDocs.length > 0 ? [`⚠️ Flagged / Needs Attention (${flaggedDocs.length})`] : []),
     'PAN Card',
     'Aadhaar Card',
     'GST Certificate',
@@ -45,7 +55,49 @@ export const DocumentCentrePage: React.FC = () => {
 
   const filteredDocs = selectedCategory === 'ALL'
     ? documents
+    : selectedCategory.includes('Flagged')
+    ? flaggedDocs
     : documents.filter(d => d.category.toLowerCase().includes(selectedCategory.toLowerCase()));
+
+  // 1-Click Replace and Re-scan Document
+  const handleReplaceDocument = async (docToReplace: DocumentItem, file: File) => {
+    setIsScanning(true);
+    setReplacingDocId(docToReplace.id);
+    try {
+      let persistentFileUrl = URL.createObjectURL(file);
+      try {
+        persistentFileUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => resolve(URL.createObjectURL(file));
+          reader.readAsDataURL(file);
+        });
+      } catch {}
+
+      const ocrRes = await performRealOcr(file, docToReplace.category, docToReplace.docName, {
+        businessName: activeProject.businessName,
+        applicantName: currentUser?.name || 'Applicant',
+        district: activeProject.district
+      });
+
+      // Remove existing flawed doc and upload verified replacement
+      deleteDocument(docToReplace.id);
+      const replacedDoc = uploadDocument(
+        docToReplace.docName,
+        docToReplace.category,
+        file,
+        ocrRes,
+        persistentFileUrl
+      );
+      setActiveDocForFeedback(replacedDoc);
+      setInspectingDoc(replacedDoc);
+    } catch (err) {
+      console.error('Error replacing doc:', err);
+    } finally {
+      setIsScanning(false);
+      setReplacingDocId(null);
+    }
+  };
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,6 +210,81 @@ export const DocumentCentrePage: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Flagged Document Resolution Desk (Rendered ONLY when there are flagged documents) */}
+      {flaggedDocs.length > 0 && (
+        <div className="p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-300 dark:border-rose-800 space-y-4 shadow-sm animate-fadeIn">
+          <div className="flex items-center justify-between border-b border-rose-200 dark:border-rose-900 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold shadow-xs">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-rose-950 dark:text-rose-100">
+                  ⚠️ Action Required: {flaggedDocs.length} Document{flaggedDocs.length > 1 ? 's' : ''} Flagged with Discrepancies
+                </h3>
+                <p className="text-xs text-rose-700 dark:text-rose-300">
+                  Please replace or re-scan the following files to prevent approval rejections:
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {flaggedDocs.map((fDoc) => (
+              <div key={fDoc.id} className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-800 shadow-xs flex flex-col justify-between space-y-3">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-xs text-slate-900 dark:text-white">{fDoc.docName}</h4>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-200">
+                      {fDoc.status}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">Category: {fDoc.category}</div>
+
+                  {fDoc.aiValidationResult?.issues && fDoc.aiValidationResult.issues.length > 0 ? (
+                    <div className="mt-2 text-[11px] text-rose-800 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/60 p-2 rounded-lg border border-rose-200 dark:border-rose-900">
+                      <strong>Flag Issue:</strong> {fDoc.aiValidationResult.issues[0]}
+                    </div>
+                  ) : (
+                    <div className="mt-2 text-[11px] text-rose-800 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/60 p-2 rounded-lg border border-rose-200 dark:border-rose-900">
+                      <strong>Officer Note:</strong> Document flagged for correction / re-verification.
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <label className="px-3 py-1.5 rounded-xl bg-[#2E6F40] hover:bg-[#253D2C] text-white font-extrabold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer transition-all">
+                    <UploadCloud className="w-3.5 h-3.5 text-[#CFFFDC]" />
+                    <span>Upload Corrected File</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleReplaceDocument(fDoc, file);
+                      }}
+                    />
+                  </label>
+
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Remove flagged document "${fDoc.docName}"?`)) {
+                        deleteDocument(fDoc.id);
+                      }
+                    }}
+                    className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 cursor-pointer"
+                    title="Delete flagged document"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Grid: Upload Box + AI Validation Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -370,11 +497,20 @@ export const DocumentCentrePage: React.FC = () => {
                   key={doc.id}
                   onClick={() => setActiveDocForFeedback(doc)}
                   className={`hover:bg-slate-50 transition-colors cursor-pointer ${
-                    activeDocForFeedback?.id === doc.id ? 'bg-amber-50/60 font-semibold' : ''
+                    activeDocForFeedback?.id === doc.id 
+                      ? 'bg-amber-50/60 font-semibold' 
+                      : doc.status !== 'Valid'
+                      ? 'bg-rose-50/40 dark:bg-rose-950/20'
+                      : ''
                   }`}
                 >
                   <td className="py-3.5 px-4 font-bold text-slate-900">
-                    {doc.docName}
+                    <div className="flex items-center gap-2">
+                      {doc.status !== 'Valid' && (
+                        <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                      )}
+                      <span>{doc.docName}</span>
+                    </div>
                     <div className="text-[10px] text-slate-400 font-normal">{doc.fileSize || '1.2 MB'}</div>
                   </td>
                   <td className="py-3.5 px-4 text-slate-600">
@@ -393,17 +529,36 @@ export const DocumentCentrePage: React.FC = () => {
                   </td>
                   <td className="py-3.5 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveDocForFeedback(doc);
-                          setInspectingDoc(doc);
-                        }}
-                        className="px-3.5 py-1.5 rounded-xl bg-[#2E6F40] text-white font-bold hover:bg-[#235833] text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5 text-[#CFFFDC]" />
-                        <span>Inspect AI Report</span>
-                      </button>
+                      {doc.status !== 'Valid' ? (
+                        <label 
+                          onClick={(e) => e.stopPropagation()}
+                          className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <UploadCloud className="w-3.5 h-3.5 text-white" />
+                          <span>{replacingDocId === doc.id ? 'Scanning...' : 'Replace File'}</span>
+                          <input
+                            type="file"
+                            accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleReplaceDocument(doc, file);
+                            }}
+                          />
+                        </label>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveDocForFeedback(doc);
+                            setInspectingDoc(doc);
+                          }}
+                          className="px-3.5 py-1.5 rounded-xl bg-[#2E6F40] text-white font-bold hover:bg-[#235833] text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-[#CFFFDC]" />
+                          <span>Inspect AI Report</span>
+                        </button>
+                      )}
 
                       <button
                         onClick={(e) => {

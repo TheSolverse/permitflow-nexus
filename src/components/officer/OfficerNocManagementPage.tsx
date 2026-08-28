@@ -30,6 +30,7 @@ export const OfficerNocManagementPage: React.FC = () => {
   const { 
     nocApplications, 
     jointInspections, 
+    projects,
     scheduleJointInspection, 
     raiseNocQuery, 
     issueNocCertificate 
@@ -48,6 +49,7 @@ export const OfficerNocManagementPage: React.FC = () => {
   const [certTypeToIssue, setCertTypeToIssue] = useState<'PROVISIONAL' | 'FINAL'>('PROVISIONAL');
 
   // Joint Inspection Scheduler Form state
+  const [selectedEnterpriseName, setSelectedEnterpriseName] = useState<string>('Sahyadri Food Extracts & Spices');
   const [inspectionDate, setInspectionDate] = useState<string>('2026-09-05');
   const [inspectionTime, setInspectionTime] = useState<string>('10:30 AM');
   const [inspectionLocation, setInspectionLocation] = useState<string>('Plot No. C-42, MIDC Chakan Phase 2, Pune Industrial Zone');
@@ -98,12 +100,13 @@ export const OfficerNocManagementPage: React.FC = () => {
   // Schedule Joint Inspection
   const handleScheduleInspectionSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedNoc) return;
+    const targetBusiness = selectedNoc?.businessName || selectedEnterpriseName || (projects[0]?.businessName) || 'Sahyadri Food Extracts & Spices';
+    const targetProjectId = selectedNoc?.projectId || (projects.find(p => p.businessName === targetBusiness)?.id) || 'proj-1';
 
     scheduleJointInspection({
-      nocApplicationId: selectedNoc.id,
-      projectId: selectedNoc.projectId,
-      businessName: selectedNoc.businessName,
+      nocApplicationId: selectedNoc?.id || `noc-${Date.now()}`,
+      projectId: targetProjectId,
+      businessName: targetBusiness,
       scheduledDate: inspectionDate,
       scheduledTime: inspectionTime,
       attendingDepartments: [
@@ -441,7 +444,7 @@ export const OfficerNocManagementPage: React.FC = () => {
       </div>
 
       {/* MODAL 1: JOINT INSPECTION SCHEDULER */}
-      {isInspectionModalOpen && selectedNoc && (
+      {isInspectionModalOpen && (
         <div 
           role="dialog"
           aria-modal="true"
@@ -458,7 +461,7 @@ export const OfficerNocManagementPage: React.FC = () => {
               </div>
               <button 
                 onClick={() => setIsInspectionModalOpen(false)} 
-                className="text-purple-200 hover:text-white p-1 rounded-lg"
+                className="text-purple-200 hover:text-white p-1 rounded-lg cursor-pointer"
                 aria-label="Close modal"
               >
                 <X className="w-4 h-4" />
@@ -466,10 +469,26 @@ export const OfficerNocManagementPage: React.FC = () => {
             </div>
 
             <form onSubmit={handleScheduleInspectionSubmit} className="p-6 space-y-4 text-xs">
-              <p className="text-slate-600 dark:text-slate-300">
-                Schedule a unified single-visit joint site inspection for{' '}
-                <strong className="text-purple-900 dark:text-purple-300">{selectedNoc.businessName}</strong> involving Fire, MPCB, MIDC, and DISH officers.
-              </p>
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Target Business Enterprise *</label>
+                {selectedNoc ? (
+                  <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 font-bold text-purple-950 dark:text-purple-200">
+                    {selectedNoc.businessName} ({selectedNoc.nocName})
+                  </div>
+                ) : (
+                  <select
+                    value={selectedEnterpriseName}
+                    onChange={(e) => setSelectedEnterpriseName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold"
+                  >
+                    {projects.map(p => (
+                      <option key={p.id} value={p.businessName}>{p.businessName} ({p.sector})</option>
+                    ))}
+                    <option value="Sahyadri Food Extracts & Spices">Sahyadri Food Extracts & Spices (Food Processing)</option>
+                    <option value="Apex Agro Processing Hub">Apex Agro Processing Hub (Manufacturing)</option>
+                  </select>
+                )}
+              </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
