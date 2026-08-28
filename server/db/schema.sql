@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS documents (
     project_id VARCHAR(64) REFERENCES business_projects(id) ON DELETE CASCADE,
     doc_name VARCHAR(255) NOT NULL,
     category VARCHAR(128) NOT NULL,
-    file_url VARCHAR(512),
+    file_url TEXT,
     file_size VARCHAR(32),
     upload_date DATE,
     status VARCHAR(64) NOT NULL DEFAULT 'Valid',

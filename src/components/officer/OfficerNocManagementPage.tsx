@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { NocApplication, NocType, JointInspection } from '../../types';
 import { NocCertificateModal } from './NocCertificateModal';
+import { LiveJointInspectionModal } from './LiveJointInspectionModal';
 
 export const OfficerNocManagementPage: React.FC = () => {
   const { 
@@ -43,6 +44,7 @@ export const OfficerNocManagementPage: React.FC = () => {
   const [isInspectionModalOpen, setIsInspectionModalOpen] = useState<boolean>(false);
   const [isQueryModalOpen, setIsQueryModalOpen] = useState<boolean>(false);
   const [isCertModalOpen, setIsCertModalOpen] = useState<boolean>(false);
+  const [liveInspectionToExecute, setLiveInspectionToExecute] = useState<JointInspection | null>(null);
   const [certTypeToIssue, setCertTypeToIssue] = useState<'PROVISIONAL' | 'FINAL'>('PROVISIONAL');
 
   // Joint Inspection Scheduler Form state
@@ -224,8 +226,8 @@ export const OfficerNocManagementPage: React.FC = () => {
 
       {/* JOINT INSPECTIONS CARDS SECTION */}
       {jointInspections.length > 0 && (
-        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-purple-200 dark:border-purple-900/60 shadow-xs space-y-3">
-          <div className="flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-purple-200 dark:border-purple-900/60 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="p-1.5 rounded-lg bg-purple-100 text-purple-900 font-bold text-xs flex items-center gap-1 border border-purple-300">
                 <Users className="w-4 h-4 text-purple-700" />
@@ -235,48 +237,78 @@ export const OfficerNocManagementPage: React.FC = () => {
                 Multi-Department Joint Inspection Calendar ({jointInspections.length})
               </h3>
             </div>
-            <span className="text-xs font-bold text-purple-700 dark:text-purple-300">
-              Single-Visit Multi-Agency Audit
-            </span>
+            
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const defaultNoc = nocApplications[0];
+                  if (defaultNoc) setSelectedNoc(defaultNoc);
+                  setIsInspectionModalOpen(true);
+                }}
+                className="px-3.5 py-2 rounded-xl bg-purple-900 hover:bg-purple-800 text-white font-extrabold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
+              >
+                <Plus className="w-4 h-4 text-amber-400" />
+                <span>Schedule New Joint Inspection</span>
+              </button>
+
+              <span className="text-xs font-bold text-purple-700 dark:text-purple-300 hidden md:inline">
+                Single-Visit Multi-Agency Audit
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {jointInspections.map(insp => (
               <div
                 key={insp.id}
-                className="p-4 rounded-xl bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/60 space-y-3 text-xs"
+                className="p-5 rounded-2xl bg-purple-50/60 dark:bg-purple-950/30 border-2 border-purple-200 dark:border-purple-800/60 space-y-3.5 text-xs shadow-xs flex flex-col justify-between"
               >
-                <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">{insp.businessName}</h4>
+                      <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                        <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                        <span>{insp.inspectionLocation}</span>
+                      </p>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full bg-purple-900 text-white font-extrabold text-[10px] shrink-0 shadow-xs">
+                      {insp.scheduledDate} ({insp.scheduledTime})
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 mt-3">
+                    <span className="text-[10px] font-bold text-purple-900 dark:text-purple-300 uppercase tracking-wider">
+                      Attending Departments ({insp.attendingDepartments.length}):
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {insp.attendingDepartments.map((dept, i) => (
+                        <span key={i} className="px-2.5 py-0.5 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-semibold border border-purple-200 shadow-xs">
+                          ✓ {dept}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-purple-200 dark:border-purple-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px]">
                   <div>
-                    <h4 className="font-extrabold text-slate-900 dark:text-white">{insp.businessName}</h4>
-                    <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
-                      <MapPin className="w-3 h-3 text-slate-400" />
-                      <span>{insp.inspectionLocation}</span>
-                    </p>
+                    <span className="font-semibold text-slate-600 dark:text-slate-300">
+                      Rubric Criteria: {insp.rubricChecklist.length} Points
+                    </span>
+                    <div className="text-[10px] text-purple-700 dark:text-purple-300 font-bold">Status: Ready for Audit</div>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-purple-900 text-white font-extrabold text-[10px]">
-                    {insp.scheduledDate} ({insp.scheduledTime})
-                  </span>
-                </div>
 
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-purple-900 dark:text-purple-300 uppercase">
-                    Attending Departments ({insp.attendingDepartments.length}):
-                  </span>
-                  <div className="flex flex-wrap gap-1">
-                    {insp.attendingDepartments.map((dept, i) => (
-                      <span key={i} className="px-2 py-0.5 rounded bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-semibold border border-purple-200">
-                        ✓ {dept}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-purple-200 dark:border-purple-800/60 flex items-center justify-between text-[11px]">
-                  <span className="font-semibold text-slate-600 dark:text-slate-300">
-                    Rubric Checklist Items: {insp.rubricChecklist.length} Criteria
-                  </span>
-                  <span className="font-bold text-purple-700">Scheduled Status: Active</span>
+                  <button
+                    type="button"
+                    onClick={() => setLiveInspectionToExecute(insp)}
+                    className="px-4 py-2 rounded-xl bg-purple-900 hover:bg-purple-800 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all shrink-0 hover:scale-[1.02]"
+                  >
+                    <Users className="w-4 h-4 text-amber-400" />
+                    <span>Start Live Joint Inspection</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-purple-300" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -577,6 +609,14 @@ export const OfficerNocManagementPage: React.FC = () => {
         noc={selectedNoc}
         certType={certTypeToIssue}
       />
+
+      {/* MODAL 4: LIVE JOINT INSPECTION EXECUTION */}
+      {liveInspectionToExecute && (
+        <LiveJointInspectionModal
+          inspection={liveInspectionToExecute}
+          onClose={() => setLiveInspectionToExecute(null)}
+        />
+      )}
 
     </div>
   );

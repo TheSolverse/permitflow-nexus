@@ -363,7 +363,8 @@ export interface JointInspection {
   officerNames: string[];
   inspectionLocation: string;
   rubricChecklist: JointInspectionRubricItem[];
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'RECTIFICATION_REQUIRED' | 'CANCELLED';
   outcomeSummary?: string;
+  remarks?: string;
 }
 

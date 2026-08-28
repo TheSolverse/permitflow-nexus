@@ -37,12 +37,12 @@ export const Sidebar: React.FC = () => {
     { id: 'compliance', label: t('compliance', language), icon: CalendarClock },
     { id: 'incentives', label: t('incentives', language), icon: Gift },
     { id: 'risk-score', label: t('riskScore', language), icon: ShieldAlert },
-    { id: 'ai-assistant', label: 'Approval Helpdesk', icon: HelpCircle },
+    { id: 'ai-assistant', label: t('approvalHelpdesk', language), icon: HelpCircle },
   ];
 
   const officerNav = [
     { id: 'officer-dashboard', label: t('officerDashboard', language), icon: LayoutDashboard },
-    { id: 'officer-nocs', label: 'NOC & Joint Inspections', icon: ShieldCheck },
+    { id: 'officer-nocs', label: t('nocJointInspections', language), icon: ShieldCheck },
     { id: 'officer-app-review', label: t('appReview', language), icon: ClipboardCheck },
     { id: 'officer-queries', label: t('queryMgmt', language), icon: MessageSquareText },
     { id: 'officer-inspections', label: t('inspectionMgmt', language), icon: Calendar },
@@ -66,14 +66,14 @@ export const Sidebar: React.FC = () => {
       {/* Active Workspace Header - Plain Clean Box */}
       <div className="p-4 border-b border-[#D4EEDC] dark:border-[#253D2C] bg-white dark:bg-[#16261C]">
         <div className="text-[10px] uppercase tracking-wider font-extrabold text-[#2E6F40] dark:text-[#68BA7F] mb-0.5">
-          Active Portal Workspace
+          {t('activeWorkspace', language)}
         </div>
         <div className="font-bold text-sm text-[#253D2C] dark:text-white truncate flex items-center gap-1.5">
           <Building2 className="w-4 h-4 text-[#2E6F40] dark:text-[#68BA7F]" />
           <span>
-            {currentUser.role === 'ENTREPRENEUR' ? 'Entrepreneur Portal' :
-             currentUser.role === 'OFFICER' ? (currentUser.department || 'Officer Desk') :
-             'PFN Admin Console'}
+            {currentUser.role === 'ENTREPRENEUR' ? t('entrepreneurPortal', language) :
+             currentUser.role === 'OFFICER' ? (currentUser.department || t('officerDesk', language)) :
+             t('adminConsole', language)}
           </span>
         </div>
         <div className="text-xs text-[#60826A] dark:text-[#A3D4B3] truncate mt-0.5 font-medium">
@@ -84,7 +84,7 @@ export const Sidebar: React.FC = () => {
       {/* Navigation Links */}
       <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
         <div className="px-3 pb-2 text-[10px] font-extrabold tracking-wider text-[#60826A] dark:text-[#68BA7F] uppercase">
-          Main Menu
+          {t('mainMenu', language)}
         </div>
         {navItems.map((item) => {
           const Icon = item.icon;

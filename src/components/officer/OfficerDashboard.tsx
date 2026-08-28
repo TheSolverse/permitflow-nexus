@@ -14,13 +14,24 @@ import { ApplicationReviewModal } from './ApplicationReviewModal';
 export const OfficerDashboard: React.FC = () => {
   const { applications, currentUser, setActiveTab } = useApp();
   const [selectedAppForReview, setSelectedAppForReview] = useState<Application | null>(null);
+  const [queueFilter, setQueueFilter] = useState<'PENDING' | 'APPROVED' | 'ALL'>('PENDING');
 
-  // Department metrics mock
+  const pendingApps = applications.filter(a => a.status === 'Submitted' || a.status === 'Under Review' || a.status === 'Inspection Scheduled');
+  const approvedApps = applications.filter(a => a.status === 'Approved');
+  const rejectedApps = applications.filter(a => a.status === 'Rejected');
+
+  const displayedQueueApps = queueFilter === 'PENDING' 
+    ? pendingApps 
+    : queueFilter === 'APPROVED' 
+      ? approvedApps 
+      : applications;
+
+  // Real KPI stats
   const totalReceived = 126;
-  const pendingReviewCount = applications.filter(a => a.status === 'Submitted' || a.status === 'Under Review').length + 28;
-  const queryCount = 18;
+  const pendingReviewCount = pendingApps.length;
+  const queryCount = applications.reduce((acc, a) => acc + (a.queries?.filter(q => q.status === 'OPEN').length || 0), 0);
   const inspectionCount = 14;
-  const slaBreachNearingCount = 9;
+  const slaBreachNearingCount = pendingApps.filter(a => a.slaDaysRemaining <= 5).length;
 
   // Recharts Dept Performance dataset
   const deptPerformanceData = [
@@ -103,55 +114,120 @@ export const OfficerDashboard: React.FC = () => {
         
         {/* Left Column (2 Cols): Priority Review Queue */}
         <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
                 <ClipboardCheck className="w-4 h-4 text-slate-700" />
-                Priority Application Review Queue
+                <span>Priority Application Review Queue</span>
               </h3>
               <p className="text-xs text-slate-500">Applications assigned to your department requiring audit decision.</p>
             </div>
-            <span className="px-2.5 py-0.5 rounded bg-slate-100 text-slate-800 font-bold text-[11px] border border-slate-300">
-              {applications.length} Assigned
-            </span>
+            
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
+              <button
+                type="button"
+                onClick={() => setQueueFilter('PENDING')}
+                className={`px-3 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer ${
+                  queueFilter === 'PENDING'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                Pending ({pendingApps.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setQueueFilter('APPROVED')}
+                className={`px-3 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer ${
+                  queueFilter === 'APPROVED'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                Approved ({approvedApps.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setQueueFilter('ALL')}
+                className={`px-3 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer ${
+                  queueFilter === 'ALL'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                All ({applications.length})
+              </button>
+            </div>
           </div>
 
           <div className="space-y-3">
-            {applications.map((app) => (
-              <div
-                key={app.id}
-                className="p-4 rounded-xl bg-slate-50 border border-slate-200 hover:border-slate-400 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-slate-200 font-extrabold text-[10px] text-slate-800">
-                      {app.appId}
-                    </span>
-                    <h4 className="font-bold text-slate-900">{app.approvalName}</h4>
-                  </div>
-                  <div className="text-slate-500 mt-1">
-                    Applicant: <strong>{app.businessName}</strong> • Submitted: {app.submissionDate}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="text-right">
-                    <div className="font-bold text-amber-700 flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
-                      SLA: {app.slaDaysRemaining}d
-                    </div>
-                    <div className="text-[10px] text-slate-400">Risk Score: {app.riskScore}</div>
-                  </div>
-
-                  <button
-                    onClick={() => setSelectedAppForReview(app)}
-                    className="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors shadow-xs"
-                  >
-                    Audit & Review
-                  </button>
-                </div>
+            {displayedQueueApps.length === 0 ? (
+              <div className="p-8 rounded-2xl bg-slate-50 border border-slate-200 text-center text-slate-500 space-y-1">
+                <ClipboardCheck className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
+                <p className="font-extrabold text-xs text-slate-800">
+                  {queueFilter === 'PENDING' ? '🎉 All Applications Processed!' : 'No applications found in this filter.'}
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  {queueFilter === 'PENDING' ? 'There are currently 0 pending clearances awaiting officer review.' : ''}
+                </p>
               </div>
-            ))}
+            ) : (
+              displayedQueueApps.map((app) => {
+                const isAppApproved = app.status === 'Approved';
+                const isAppRejected = app.status === 'Rejected';
+
+                return (
+                  <div
+                    key={app.id}
+                    className="p-4 rounded-xl bg-slate-50 border border-slate-200 hover:border-slate-400 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xs"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-2 py-0.5 rounded bg-slate-200 font-extrabold text-[10px] text-slate-800">
+                          {app.appId}
+                        </span>
+                        <h4 className="font-bold text-slate-900">{app.approvalName}</h4>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${
+                          isAppApproved 
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : isAppRejected
+                              ? 'bg-rose-100 text-rose-800 border-rose-300'
+                              : 'bg-amber-100 text-amber-800 border-amber-300'
+                        }`}>
+                          {app.status}
+                        </span>
+                      </div>
+                      <div className="text-slate-500 mt-1">
+                        Applicant: <strong>{app.businessName}</strong> • Submitted: {app.submissionDate}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="text-right">
+                        <div className="font-bold text-amber-700 flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5" />
+                          SLA: {app.slaDaysRemaining}d
+                        </div>
+                        <div className="text-[10px] text-slate-400">Risk Score: {app.riskScore}</div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setSelectedAppForReview(app)}
+                        className={`px-4 py-2 rounded-xl text-white font-bold transition-all shadow-xs cursor-pointer ${
+                          isAppApproved 
+                            ? 'bg-emerald-700 hover:bg-emerald-800'
+                            : 'bg-slate-900 hover:bg-slate-800'
+                        }`}
+                      >
+                        {isAppApproved ? 'View Sanction' : 'Audit & Review'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 

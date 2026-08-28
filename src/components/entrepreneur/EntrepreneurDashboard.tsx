@@ -27,6 +27,7 @@ export const EntrepreneurDashboard: React.FC = () => {
     projects,
     activeProject, 
     applications, 
+    documents,
     complianceTasks, 
     jointInspections,
     incentiveSchemes,
@@ -48,7 +49,13 @@ export const EntrepreneurDashboard: React.FC = () => {
   const realPendingQueries = applications.flatMap(app => 
     (app.queries || []).filter(q => q.status === 'OPEN').map(q => ({ app, query: q }))
   );
-  const actionRequiredCount = realPendingQueries.length;
+  
+  // Real flagged / rejected documents by inspecting officers
+  const flaggedDocs = (documents || []).filter(d => 
+    d.status === 'Name Mismatch' || d.status === 'Expired' || d.status === 'Blurry / Unreadable'
+  );
+
+  const actionRequiredCount = realPendingQueries.length + flaggedDocs.length;
   const upcomingRenewalsCount = complianceTasks.filter(t => t.status === 'DUE_SOON' || t.status === 'OVERDUE').length;
 
   const completionPercentage = totalApprovals > 0 ? Math.round((approvedCount / totalApprovals) * 100) : 0;
@@ -144,6 +151,38 @@ export const EntrepreneurDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Flagged Document Alert for Entrepreneur */}
+      {flaggedDocs.length > 0 && (
+        <div className="p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-300 dark:border-rose-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-fadeIn">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <ShieldAlert className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="font-extrabold text-sm text-rose-950 dark:text-rose-100">
+                  ⚠️ Action Required: {flaggedDocs.length} Proof Document{flaggedDocs.length > 1 ? 's' : ''} Flagged by Officer
+                </h4>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-200 dark:bg-rose-900 text-rose-800 dark:text-rose-200">
+                  Immediate Attention
+                </span>
+              </div>
+              <p className="text-xs text-rose-700 dark:text-rose-300 mt-1">
+                The reviewing officer has identified discrepancies in: <strong className="text-rose-900 dark:text-white font-extrabold">{flaggedDocs.map(d => d.docName).join(', ')}</strong>. Please re-upload verified proofs in Document Centre.
+              </p>
+            </div>
+          </div>
+          
+          <button
+            onClick={() => setActiveTab('documents')}
+            className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer transition-all"
+          >
+            <span>Resolve in Document Centre</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Onboarding Box if zero projects */}
       {!hasProjects && (

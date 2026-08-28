@@ -40,7 +40,7 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
     applyForApproval 
   } = useApp();
 
-  const [uploadedFiles, setUploadedFiles] = useState<Record<string, { file: File | null; docId?: string; name: string; size: string }>>({});
+  const [uploadedFiles, setUploadedFiles] = useState<Record<string, { file: File | null; dataUrl?: string; docId?: string; name: string; size: string }>>({});
   const [applicantRemarks, setApplicantRemarks] = useState('');
   const [declarationChecked, setDeclarationChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,14 +53,20 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
 
   const handleFileChange = (docName: string, file: File | null) => {
     if (!file) return;
-    setUploadedFiles(prev => ({
-      ...prev,
-      [docName]: {
-        file,
-        name: file.name,
-        size: `${Math.round(file.size / 1024)} KB`
-      }
-    }));
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      setUploadedFiles(prev => ({
+        ...prev,
+        [docName]: {
+          file,
+          dataUrl,
+          name: file.name,
+          size: `${Math.round(file.size / 1024)} KB`
+        }
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleRemoveFile = (docName: string) => {
@@ -95,22 +101,28 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
     try {
       const finalDocIds: string[] = [];
 
-      // 1. Upload new files to Supabase documents table
+      // 1. Upload new files
       for (const [docName, fileData] of Object.entries(uploadedFiles)) {
-        if (fileData.file) {
-          const newDoc = uploadDocument(docName, docName, fileData.file);
+        if (fileData.file || fileData.dataUrl) {
+          const newDoc = uploadDocument(
+            docName, 
+            docName, 
+            fileData.file, 
+            undefined, 
+            fileData.dataUrl
+          );
           finalDocIds.push(newDoc.id);
         } else if (fileData.docId) {
           finalDocIds.push(fileData.docId);
         }
       }
 
-      // If user didn't upload any file, attach existing documents or placeholder
+      // If user didn't upload any file, attach existing documents
       if (finalDocIds.length === 0 && documents.length > 0) {
-        finalDocIds.push(documents[0].id);
+        finalDocIds.push(...documents.slice(0, 3).map(d => d.id));
       }
 
-      // 2. Submit application into Supabase applications table
+      // 2. Submit application into applications table
       const newApp = applyForApproval(
         approvalItem.id,
         approvalItem.name,

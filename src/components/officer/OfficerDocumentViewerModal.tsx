@@ -25,13 +25,21 @@ interface Props {
   onClose: () => void;
   onApprove: (docId: string) => void;
   onReject: (docId: string) => void;
+  onNext?: () => void;
+  hasNext?: boolean;
+  currentIndex?: number;
+  totalDocs?: number;
 }
 
 export const OfficerDocumentViewerModal: React.FC<Props> = ({
   document: doc,
   onClose,
   onApprove,
-  onReject
+  onReject,
+  onNext,
+  hasNext,
+  currentIndex,
+  totalDocs
 }) => {
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [docStatus, setDocStatus] = useState<'IDLE' | 'APPROVED' | 'REJECTED'>('IDLE');
@@ -42,16 +50,26 @@ export const OfficerDocumentViewerModal: React.FC<Props> = ({
     setDocStatus('APPROVED');
     setTimeout(() => {
       onApprove(doc.id);
-      onClose();
-    }, 600);
+      if (hasNext && onNext) {
+        setDocStatus('IDLE');
+        onNext();
+      } else {
+        onClose();
+      }
+    }, 400);
   };
 
   const handleReject = () => {
     setDocStatus('REJECTED');
     setTimeout(() => {
       onReject(doc.id);
-      onClose();
-    }, 600);
+      if (hasNext && onNext) {
+        setDocStatus('IDLE');
+        onNext();
+      } else {
+        onClose();
+      }
+    }, 400);
   };
 
   // Helper to determine document template type by title
@@ -593,12 +611,12 @@ export const OfficerDocumentViewerModal: React.FC<Props> = ({
               {docStatus === 'APPROVED' ? (
                 <div className="p-3 rounded-xl bg-emerald-600 text-white font-extrabold text-center flex items-center justify-center gap-2">
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Document Approved</span>
+                  <span>{hasNext ? 'Approved! Loading Next Document...' : 'Document Approved Successfully'}</span>
                 </div>
               ) : docStatus === 'REJECTED' ? (
                 <div className="p-3 rounded-xl bg-rose-600 text-white font-extrabold text-center flex items-center justify-center gap-2">
                   <XCircle className="w-4 h-4" />
-                  <span>Document Flagged / Rejected</span>
+                  <span>{hasNext ? 'Flagged! Loading Next Document...' : 'Document Flagged / Rejected'}</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
@@ -607,14 +625,14 @@ export const OfficerDocumentViewerModal: React.FC<Props> = ({
                     className="flex-1 py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all"
                   >
                     <XCircle className="w-4 h-4" />
-                    <span>Reject Doc</span>
+                    <span>{hasNext ? 'Reject & Next →' : 'Reject Doc'}</span>
                   </button>
                   <button
                     onClick={handleApprove}
                     className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all"
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Approve Doc</span>
+                    <span>{hasNext ? 'Approve & Next →' : 'Approve Doc'}</span>
                   </button>
                 </div>
               )}

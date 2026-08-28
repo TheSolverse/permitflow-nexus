@@ -92,6 +92,7 @@ interface AppContextType {
   applyForApproval: (approvalId: string, approvalName: string, department: string, documentIds?: string[], remarks?: string) => Application;
   uploadDocument: (docName: string, category: string, file: File | null, ocrResult?: any, customFileUrl?: string) => DocumentItem;
   deleteDocument: (docId: string) => Promise<boolean>;
+  updateDocumentStatus: (docId: string, status: DocumentItem['status']) => void;
   respondToQuery: (queryId: string, responseText: string, responseDocName?: string) => void;
   updateApplicationStatus: (appId: string, status: ApprovalStatus, remarks?: string) => void;
   raiseOfficerQuery: (appId: string, queryCategory: string, queryText: string, dueDate: string) => void;
@@ -103,6 +104,7 @@ interface AppContextType {
   // NOC helpers
   submitNocApplication: (data: Partial<NocApplication> & { nocType: NocApplication['nocType']; nocName: string; department: string }) => NocApplication;
   scheduleJointInspection: (data: Omit<JointInspection, 'id' | 'status'>) => JointInspection;
+  completeJointInspection: (inspectionId: string, outcome: 'SATISFACTORY' | 'RECTIFICATION_REQUIRED' | 'NON_COMPLIANT', remarks: string) => void;
   raiseNocQuery: (nocId: string, question: string) => void;
   respondToNocQuery: (nocId: string, queryId: string, responseText: string, responseDocName?: string) => void;
   issueNocCertificate: (nocId: string, certType: 'PROVISIONAL' | 'FINAL') => void;
@@ -124,7 +126,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : INITIAL_USERS[0];
   });
 
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem('pfn_language') as Language;
+    return (saved === 'en' || saved === 'mr' || saved === 'hi') ? saved : 'en';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('pfn_language', language);
+  }, [language]);
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem('pfn_dark_mode');
     if (saved !== null) {
@@ -221,9 +230,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (data) setNocApplications(data);
     });
 
-    // 4. Documents (isolated to user's projects)
-    fetchDocuments(undefined, userId).then(data => {
-      if (data) setDocuments(data);
+    // 4. Documents (isolated to user's projects for entrepreneur, all for officer)
+    fetchDocuments(undefined, isEntrepreneur ? userId : undefined).then(data => {
+      if (data && data.length > 0) {
+        setDocuments(prev => {
+          const fetchedIds = new Set(data.map(d => d.id));
+          const localOnly = prev.filter(p => !fetchedIds.has(p.id));
+          return [...data, ...localOnly];
+        });
+      }
     });
 
     // 5. Compliance Tasks (isolated to user's projects)
@@ -385,7 +400,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       documentIds: documentIds && documentIds.length > 0 ? documentIds : documents.map(d => d.id)
     };
 
-    setApplications([newApp, ...applications]);
+    setApplications(prev => [newApp, ...prev.filter(a => a.id !== newApp.id)]);
 
     // Persist to Supabase Database
     createApplicationApi(newApp).catch(err => console.warn('Could not save application to backend:', err));
@@ -475,7 +490,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     };
 
-    setDocuments([newDoc, ...documents]);
+    setDocuments(prev => [newDoc, ...prev.filter(d => d.id !== newDoc.id)]);
 
     // Persist document to Supabase / Backend Express Database
     uploadDocumentApi(newDoc).catch(err => console.warn('Could not save document to backend:', err));
@@ -491,6 +506,63 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.warn('Could not delete document from backend:', e);
     }
     return true;
+  };
+
+  const updateDocumentStatus = (docId: string, status: DocumentItem['status']) => {
+    let targetDocName = 'Document';
+    setDocuments(prev => {
+      const exists = prev.some(d => d.id === docId);
+      if (exists) {
+        const found = prev.find(d => d.id === docId);
+        if (found) targetDocName = found.docName;
+        return prev.map(d => d.id === docId ? { ...d, status } : d);
+      }
+      const fallbackDoc = INITIAL_DOCUMENTS.find(d => d.id === docId);
+      if (fallbackDoc) {
+        targetDocName = fallbackDoc.docName;
+        return [{ ...fallbackDoc, status }, ...prev];
+      }
+      return prev;
+    });
+
+    if (status === 'Expired' || status === 'Name Mismatch' || status === 'Blurry / Unreadable') {
+      const newNotif: NotificationItem = {
+        id: `notif-${Date.now()}`,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        title: `⚠️ Action Required: Document Flagged`,
+        message: `Department Officer ${currentUser.name} flagged "${targetDocName}" (${status}). Please review and re-upload in Document Centre.`,
+        type: 'WARNING',
+        read: false,
+        channels: ['IN_APP', 'EMAIL', 'SMS']
+      };
+      setNotifications(prev => [newNotif, ...prev]);
+
+      setAuditLogs(prevLogs => [
+        {
+          id: `log-${Date.now()}`,
+          timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+          user: currentUser.name,
+          role: currentUser.role,
+          action: 'Document Flagged / Discrepancy Raised',
+          previousStatus: 'Valid',
+          newStatus: status,
+          ipAddress: '10.240.12.91',
+          details: `Officer ${currentUser.name} flagged certificate "${targetDocName}" for ${status}. Notification dispatched to entrepreneur dashboard.`
+        },
+        ...prevLogs
+      ]);
+    } else if (status === 'Valid') {
+      const newNotif: NotificationItem = {
+        id: `notif-${Date.now()}`,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        title: `✓ Document Verified & Approved`,
+        message: `Your proof document "${targetDocName}" has been successfully verified and accepted by ${currentUser.name}.`,
+        type: 'SUCCESS',
+        read: false,
+        channels: ['IN_APP']
+      };
+      setNotifications(prev => [newNotif, ...prev]);
+    }
   };
 
   const respondToQuery = (queryId: string, responseText: string, responseDocName?: string) => {
@@ -546,7 +618,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateApplicationStatus = (appId: string, status: ApprovalStatus, remarks?: string) => {
-    const updatedApps = applications.map(app => {
+    setApplications(prev => prev.map(app => {
       if (app.id === appId) {
         const prevStatus = app.status;
         const newTimeline = [
@@ -561,7 +633,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
         ];
 
-        setAuditLogs([
+        setAuditLogs(prevLogs => [
           {
             id: `log-${Date.now()}`,
             timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
@@ -574,7 +646,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             ipAddress: '10.240.12.91',
             details: remarks || `Status changed from ${prevStatus} to ${status}.`
           },
-          ...auditLogs
+          ...prevLogs
         ]);
 
         return {
@@ -586,11 +658,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
       }
       return app;
-    });
+    }));
 
-    setApplications(updatedApps);
-
-    // Persist status update to Supabase
+    // Persist status update to Supabase / Backend
     updateApplicationStatusApi(appId, status, remarks, currentUser.name).catch(err => console.warn('Could not save status update to backend:', err));
   };
 
@@ -762,6 +832,64 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return newInsp;
   };
 
+  const completeJointInspection = (
+    inspectionId: string, 
+    outcome: 'SATISFACTORY' | 'RECTIFICATION_REQUIRED' | 'NON_COMPLIANT', 
+    remarks: string
+  ) => {
+    let targetBusiness = 'Enterprise';
+    setJointInspections(prev =>
+      prev.map(insp => {
+        if (insp.id === inspectionId) {
+          targetBusiness = insp.businessName;
+          return {
+            ...insp,
+            status: outcome === 'SATISFACTORY' ? 'COMPLETED' : 'RECTIFICATION_REQUIRED',
+            remarks
+          };
+        }
+        return insp;
+      })
+    );
+
+    // Update notification for entrepreneur
+    const notifTitle = outcome === 'SATISFACTORY' 
+      ? `✅ Joint Inspection Completed: Clearance Recommended`
+      : `⚠️ Joint Inspection Report: Action Required`;
+    
+    const notifMsg = outcome === 'SATISFACTORY'
+      ? `Multi-agency joint site visit at "${targetBusiness}" completed successfully with all attending departments (MPCB, Fire, MIDC, MSEDCL) issuing satisfactory audit findings.`
+      : `Joint inspection completed with field rectification observations. Check inspection desk for compliance timeline.`;
+
+    setNotifications(prev => [
+      {
+        id: `notif-${Date.now()}`,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        title: notifTitle,
+        message: notifMsg,
+        type: outcome === 'SATISFACTORY' ? 'SUCCESS' : 'WARNING',
+        read: false,
+        channels: ['IN_APP', 'EMAIL', 'SMS']
+      },
+      ...prev
+    ]);
+
+    setAuditLogs(prev => [
+      {
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        user: currentUser.name,
+        role: currentUser.role,
+        action: 'Joint Site Inspection Completed',
+        previousStatus: 'SCHEDULED',
+        newStatus: 'COMPLETED',
+        ipAddress: '10.240.12.91',
+        details: `Multi-department joint site audit executed for "${targetBusiness}". Outcome: ${outcome}. Geo-tagged evidence captured.`
+      },
+      ...prev
+    ]);
+  };
+
   const raiseNocQuery = (nocId: string, question: string) => {
     setNocApplications(prev =>
       prev.map(app => {
@@ -890,6 +1018,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         applyForApproval,
         uploadDocument,
         deleteDocument,
+        updateDocumentStatus,
         respondToQuery,
         updateApplicationStatus,
         raiseOfficerQuery,
@@ -899,6 +1028,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateIncentiveUrl,
         submitNocApplication,
         scheduleJointInspection,
+        completeJointInspection,
         raiseNocQuery,
         respondToNocQuery,
         issueNocCertificate,

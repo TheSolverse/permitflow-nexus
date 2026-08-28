@@ -35,9 +35,10 @@ export async function initDatabase() {
     console.log('[PostgreSQL] Executing schema.sql DDL...');
     await pool.query(schemaSql);
 
-    // Ensure documents table has nullable file_url/file_size and users has password_hash
+    // Ensure documents table has nullable file_url/file_size, TEXT type for base64, and users has password_hash
     await pool.query(`
       ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
+      ALTER TABLE documents ALTER COLUMN file_url TYPE TEXT;
       ALTER TABLE documents ALTER COLUMN file_url DROP NOT NULL;
       ALTER TABLE documents ALTER COLUMN file_size DROP NOT NULL;
       ALTER TABLE documents ALTER COLUMN upload_date DROP NOT NULL;
