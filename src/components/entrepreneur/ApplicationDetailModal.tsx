@@ -13,7 +13,10 @@ import {
   Building2, 
   ShieldCheck, 
   User as UserIcon,
-  ChevronRight
+  ChevronRight,
+  Printer,
+  Download,
+  Award
 } from 'lucide-react';
 
 interface Props {
@@ -25,8 +28,17 @@ export const ApplicationDetailModal: React.FC<Props> = ({ app, onClose }) => {
   const { respondToQuery, documents } = useApp();
   const [responseText, setResponseText] = useState('');
   const [responseDocName, setResponseDocName] = useState('');
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const openQuery = app.queries.find(q => q.status === 'OPEN');
+
+  const handlePrintCertificate = () => {
+    setIsPrinting(true);
+    setTimeout(() => {
+      window.print();
+      setIsPrinting(false);
+    }, 300);
+  };
 
   const handleQuerySubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,12 +77,118 @@ export const ApplicationDetailModal: React.FC<Props> = ({ app, onClose }) => {
         {/* Modal Scrollable Content */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
           
+          {/* APPROVED SANCTION CERTIFICATE (Rendered ONLY when status === 'Approved') */}
+          {app.status === 'Approved' && (
+            <div className="bg-gradient-to-br from-emerald-50 via-[#F0FAF3] to-white dark:from-[#16261C] dark:to-[#1E3326] p-6 rounded-2xl border-2 border-[#2E6F40] shadow-lg space-y-5 text-slate-900 dark:text-white relative overflow-hidden">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#D4EEDC] dark:border-[#2A4736]">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-[#2E6F40] text-white flex items-center justify-center font-extrabold shadow-md shrink-0">
+                    <Award className="w-7 h-7 text-[#CFFFDC]" />
+                  </div>
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-[#2E6F40] dark:text-[#CFFFDC] font-extrabold text-[10px] uppercase tracking-wider mb-1">
+                      <CheckCircle2 className="w-3 h-3 text-[#2E6F40]" />
+                      <span>Statutory Clearance Granted</span>
+                    </div>
+                    <h3 className="text-lg font-black text-[#253D2C] dark:text-white">
+                      Official Digital License & Sanction Order
+                    </h3>
+                    <p className="text-xs text-[#4A6B53] dark:text-[#A3D4B3]">
+                      Issued by <strong className="text-[#253D2C] dark:text-[#E8F7ED]">{app.department}</strong> • Govt. of Maharashtra
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={handlePrintCertificate}
+                    className="px-4 py-2 rounded-xl bg-[#2E6F40] hover:bg-[#253D2C] text-white font-extrabold text-xs shadow-md flex items-center gap-2 cursor-pointer transition-all"
+                  >
+                    <Printer className="w-4 h-4 text-[#CFFFDC]" />
+                    <span>Print Certificate (PDF)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Certificate Details Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-white/80 dark:bg-[#122016] p-4 rounded-xl border border-[#D4EEDC] dark:border-[#2A4736]">
+                <div>
+                  <div className="text-[10px] text-[#4A6B53] dark:text-[#A3D4B3] font-semibold uppercase">License / Certificate No.</div>
+                  <div className="font-mono font-extrabold text-xs text-[#253D2C] dark:text-white mt-0.5">MH-LIC-2026-{app.appId.replace(/[^0-9]/g, '') || '8841'}</div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] text-[#4A6B53] dark:text-[#A3D4B3] font-semibold uppercase">Sanctioned Entity</div>
+                  <div className="font-extrabold text-xs text-[#253D2C] dark:text-white mt-0.5">{app.businessName}</div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] text-[#4A6B53] dark:text-[#A3D4B3] font-semibold uppercase">Approval Granted By</div>
+                  <div className="font-extrabold text-xs text-[#253D2C] dark:text-white mt-0.5">{app.officerAssigned || 'Dr. V. K. Patil'}</div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] text-[#4A6B53] dark:text-[#A3D4B3] font-semibold uppercase">Sanction Date</div>
+                  <div className="font-extrabold text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">{new Date().toISOString().split('T')[0]} (Active)</div>
+                </div>
+              </div>
+
+              {/* Officer Endorsement Notes */}
+              {app.remarks && (
+                <div className="p-3 bg-white/60 dark:bg-[#16261C] rounded-xl border border-dashed border-[#68BA7F]/60 text-xs">
+                  <span className="font-extrabold text-[#253D2C] dark:text-[#CFFFDC]">Officer Approval Endorsement: </span>
+                  <span className="text-[#4A6B53] dark:text-[#A3D4B3]">{app.remarks}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* REJECTED BANNER (Rendered ONLY when status === 'Rejected') */}
+          {app.status === 'Rejected' && (
+            <div className="bg-rose-50 dark:bg-rose-950/40 p-6 rounded-2xl border-2 border-rose-500 shadow-md space-y-4 text-slate-900 dark:text-white">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-rose-200 dark:border-rose-900">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold shadow-xs">
+                    <X className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-rose-950 dark:text-rose-200">
+                      Application Rejected by Reviewing Officer
+                    </h3>
+                    <p className="text-xs text-rose-700 dark:text-rose-400">
+                      Reviewed by {app.officerAssigned || 'Desk Review Officer'} ({app.department})
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    const { setActiveTab } = useApp();
+                    // Will close modal and go to checklist
+                  }}
+                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-md flex items-center gap-2 cursor-pointer transition-all shrink-0"
+                >
+                  <span>🔄 Reapply for this License from Scratch</span>
+                </button>
+              </div>
+
+              <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-rose-200 dark:border-rose-800 text-xs">
+                <div className="font-bold text-rose-900 dark:text-rose-300 mb-1">Reason for Rejection / Statutory Grounds:</div>
+                <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                  {app.remarks || 'Application rejected due to statutory discrepancies or non-compliance with departmental safety distance norms.'}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* SLA & Status Meter Banner */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             
             <div className="bg-slate-50 dark:bg-slate-700/40 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
               <div className="text-[10px] text-slate-400 font-semibold uppercase">Current Status</div>
-              <div className="font-extrabold text-sm text-slate-900 dark:text-white mt-1">{app.status}</div>
+              <div className={`font-extrabold text-sm mt-1 ${app.status === 'Approved' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>{app.status}</div>
               <div className="text-[10px] text-slate-500 mt-0.5">Officer: {app.officerAssigned || 'Auto Dispatcher'}</div>
             </div>
 
@@ -78,7 +196,7 @@ export const ApplicationDetailModal: React.FC<Props> = ({ app, onClose }) => {
               <div className="text-[10px] text-slate-400 font-semibold uppercase">SLA Clock Countdown</div>
               <div className="font-extrabold text-sm text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1.5">
                 <Clock className="w-4 h-4" />
-                <span>{app.slaDaysRemaining} Days Remaining</span>
+                <span>{app.status === 'Approved' ? 'Completed & Cleared' : `${app.slaDaysRemaining} Days Remaining`}</span>
               </div>
               <div className="text-[10px] text-slate-500 mt-0.5">Target SLA: {app.slaDeadlineDate}</div>
             </div>
@@ -88,7 +206,7 @@ export const ApplicationDetailModal: React.FC<Props> = ({ app, onClose }) => {
               <div className="font-extrabold text-sm text-blue-600 dark:text-blue-400 mt-1">
                 Risk Score: {app.riskScore} / 100
               </div>
-              <div className="text-[10px] text-slate-500 mt-0.5">Low-Medium Risk Profile</div>
+              <div className="text-[10px] text-slate-500 mt-0.5">{app.status === 'Approved' ? 'Zero Non-Compliance Risk' : 'Low-Medium Risk Profile'}</div>
             </div>
 
           </div>

@@ -219,32 +219,43 @@ export const ApplicationReviewModal: React.FC<Props> = ({ app, onClose }) => {
               new Map([...INITIAL_DOCUMENTS, ...localSaved, ...documents].map(d => [d.id, d])).values()
             );
 
-            // 1. Direct matched documents by ID or Project ID
+            // 1. Direct matched documents strictly linked to this specific application
             let displayDocs = combinedPool.filter(d => 
-              (app.documentIds && app.documentIds.includes(d.id)) ||
-              (d.projectId && app.projectId && d.projectId === app.projectId)
+              app.documentIds && app.documentIds.length > 0 && app.documentIds.includes(d.id)
             );
 
-            // 2. If no direct match was linked, automatically attach applicant's submitted documents & certificates
+            // 2. If no explicit documentIds are linked to this application, show relevant category documents
             if (displayDocs.length === 0) {
-              const deptFiltered = combinedPool.filter(d => {
+              const appL = (app.approvalName || '').toLowerCase();
+              const matchedCategoryDocs = combinedPool.filter(d => {
+                if (d.projectId && app.projectId && d.projectId !== app.projectId) return false;
                 const nameL = (d.docName || '').toLowerCase();
-                const appL = (app.approvalName || '').toLowerCase();
+                const catL = (d.category || '').toLowerCase();
+
+                if (appL.includes('company') || appL.includes('incorporation') || appL.includes('llp')) {
+                  return nameL.includes('incorporation') || nameL.includes('pan') || catL.includes('pan') || nameL.includes('mca');
+                }
+                if (appL.includes('udyam') || appL.includes('msme')) {
+                  return nameL.includes('udyam') || nameL.includes('msme') || nameL.includes('aadhaar');
+                }
+                if (appL.includes('gst')) {
+                  return nameL.includes('gst') || catL.includes('gst');
+                }
                 if (appL.includes('pollution') || appL.includes('cte') || appL.includes('cto')) {
-                  return nameL.includes('pollution') || nameL.includes('consent') || nameL.includes('plan') || nameL.includes('water') || nameL.includes('pan');
+                  return nameL.includes('pollution') || nameL.includes('etp') || nameL.includes('effluent') || nameL.includes('water');
                 }
                 if (appL.includes('fire')) {
-                  return nameL.includes('fire') || nameL.includes('plan') || nameL.includes('layout') || nameL.includes('pan');
+                  return nameL.includes('fire') || nameL.includes('layout') || nameL.includes('hydrant');
                 }
-                if (appL.includes('midc') || appL.includes('building')) {
-                  return nameL.includes('midc') || nameL.includes('plan') || nameL.includes('land') || nameL.includes('pan');
+                if (appL.includes('midc') || appL.includes('land') || appL.includes('building')) {
+                  return nameL.includes('midc') || nameL.includes('land') || nameL.includes('lease');
                 }
-                if (appL.includes('fssai') || appL.includes('food')) {
-                  return nameL.includes('water') || nameL.includes('food') || nameL.includes('hygiene') || nameL.includes('pan');
-                }
-                return true;
+                return false;
               });
-              displayDocs = deptFiltered.length > 0 ? deptFiltered : combinedPool.slice(0, 4);
+
+              displayDocs = matchedCategoryDocs.length > 0 
+                ? matchedCategoryDocs 
+                : combinedPool.filter(d => d.projectId === app.projectId).slice(0, 2);
             }
 
             return (
@@ -444,10 +455,9 @@ export const ApplicationReviewModal: React.FC<Props> = ({ app, onClose }) => {
               new Map([...INITIAL_DOCUMENTS, ...localSaved, ...documents].map(d => [d.id, d])).values()
             );
             const displayDocs = combinedPool.filter(d => 
-              (app.documentIds && app.documentIds.includes(d.id)) ||
-              (d.projectId && app.projectId && d.projectId === app.projectId)
+              app.documentIds && app.documentIds.length > 0 && app.documentIds.includes(d.id)
             );
-            const activeList = displayDocs.length > 0 ? displayDocs : combinedPool.slice(0, 4);
+            const activeList = displayDocs.length > 0 ? displayDocs : combinedPool.filter(d => d.projectId === app.projectId).slice(0, 3);
             const currentIdx = activeList.findIndex(d => d.id === selectedPreviewDoc.id);
 
             return (

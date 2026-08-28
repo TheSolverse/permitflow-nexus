@@ -70,6 +70,8 @@ export const SmartChecklistPage: React.FC = () => {
     switch (status) {
       case 'Approved':
         return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+      case 'Rejected':
+        return 'bg-rose-100 text-rose-800 border-rose-300';
       case 'Under Review':
       case 'Submitted':
         return 'bg-blue-100 text-blue-800 border-blue-300';
@@ -84,7 +86,10 @@ export const SmartChecklistPage: React.FC = () => {
   };
 
   const handleApplyClick = (item: SmartChecklistItem) => {
-    if (item.applicationId) {
+    if (item.status === 'Rejected') {
+      // Reapply from scratch
+      setSelectedApprovalForApply(item);
+    } else if (item.applicationId) {
       const match = applications.find(a => a.id === item.applicationId);
       if (match) {
         setSelectedAppDetail(match);
@@ -431,9 +436,17 @@ export const SmartChecklistPage: React.FC = () => {
                     <td className="py-4 px-4 text-right">
                       <button
                         onClick={() => handleApplyClick(item)}
-                        className="px-4 py-1.5 rounded-xl font-bold text-xs bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-xs"
+                        className={`px-4 py-1.5 rounded-xl font-bold text-xs transition-all shadow-xs cursor-pointer ${
+                          item.status === 'Approved'
+                            ? 'bg-[#2E6F40] hover:bg-[#253D2C] text-white'
+                            : item.status === 'Rejected'
+                            ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                            : item.status === 'Not Started'
+                            ? 'bg-slate-900 hover:bg-slate-800 text-white'
+                            : 'bg-slate-900 hover:bg-slate-800 text-white'
+                        }`}
                       >
-                        {item.status === 'Approved' ? 'View License' : item.status === 'Not Started' ? 'Apply Now' : 'Track App'}
+                        {item.status === 'Approved' ? 'View License' : item.status === 'Rejected' ? '🔄 Reapply Now' : item.status === 'Not Started' ? 'Apply Now' : 'Track App'}
                       </button>
                     </td>
                   </tr>
@@ -483,9 +496,15 @@ export const SmartChecklistPage: React.FC = () => {
                 </div>
                 <button
                   onClick={() => handleApplyClick(item)}
-                  className="px-4 py-1.5 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors"
+                  className={`px-4 py-1.5 rounded-xl font-bold cursor-pointer transition-colors ${
+                    item.status === 'Approved'
+                      ? 'bg-[#2E6F40] hover:bg-[#253D2C] text-white'
+                      : item.status === 'Rejected'
+                      ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                      : 'bg-slate-900 text-white hover:bg-slate-800'
+                  }`}
                 >
-                  {item.status === 'Approved' ? 'View' : 'Manage'}
+                  {item.status === 'Approved' ? 'View License' : item.status === 'Rejected' ? '🔄 Reapply Now' : 'Manage'}
                 </button>
               </div>
             </div>

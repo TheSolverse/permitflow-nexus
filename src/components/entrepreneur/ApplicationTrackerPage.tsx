@@ -26,6 +26,7 @@ export const ApplicationTrackerPage: React.FC = () => {
     'Query Raised',
     'Inspection Scheduled',
     'Approved',
+    'Rejected',
     'Renewal Due'
   ];
 
@@ -41,6 +42,8 @@ export const ApplicationTrackerPage: React.FC = () => {
     switch (status) {
       case 'Approved':
         return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+      case 'Rejected':
+        return 'bg-rose-100 text-rose-800 border-rose-300';
       case 'Under Review':
       case 'Submitted':
         return 'bg-blue-100 text-blue-800 border-blue-300';

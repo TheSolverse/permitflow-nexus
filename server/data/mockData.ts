@@ -572,15 +572,14 @@ export const INITIAL_APPLICATIONS: Application[] = [
     submissionDate: '2026-06-15',
     slaDeadlineDate: '2026-07-06',
     slaDaysRemaining: 0,
-    status: 'Approved',
+    status: 'Submitted',
     officerAssigned: 'Er. Suresh Shinde',
     riskScore: 22,
-    remarks: 'Building drawings verified & approved as per MIDC Development Control Rules.',
+    remarks: 'Building drawings submitted for structural review under MIDC Development Control Rules.',
     timeline: [
-      { id: 't1', title: 'Application Created', description: 'Application filed online by Rahul Sharma', timestamp: '2026-06-15 10:30', actor: 'Rahul Sharma', role: 'ENTREPRENEUR' },
+      { id: 't1', title: 'Application Created', description: 'Application filed online by applicant', timestamp: '2026-06-15 10:30', actor: 'Applicant', role: 'ENTREPRENEUR' },
       { id: 't2', title: 'Documents Validated', description: 'AI verified land title deed & architect certificates', timestamp: '2026-06-15 10:32', actor: 'PermitFlow AI Engine', role: 'ADMIN' },
-      { id: 't3', title: 'Officer Assigned', description: 'Assigned to Er. Suresh Shinde for structural review', timestamp: '2026-06-16 11:00', actor: 'MIDC Auto Dispatcher', role: 'ADMIN' },
-      { id: 't4', title: 'Plan Sanction Granted', description: 'Final building sanction certificate issued', timestamp: '2026-07-01 15:45', actor: 'Er. Suresh Shinde', role: 'OFFICER' }
+      { id: 't3', title: 'Officer Assigned', description: 'Assigned to Er. Suresh Shinde for structural review', timestamp: '2026-06-16 11:00', actor: 'MIDC Auto Dispatcher', role: 'ADMIN' }
     ],
     queries: [],
     documentIds: ['doc-1', 'doc-2', 'doc-3']
