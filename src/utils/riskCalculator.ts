@@ -47,8 +47,9 @@ export function calculateRiskScore(
   let complianceScore = 5;
   let complianceExplanation = 'Good compliance history with minimal delayed filings.';
 
-  const overdueCount = complianceTasks.filter(t => t.status === 'OVERDUE').length;
-  const dueSoonCount = complianceTasks.filter(t => t.status === 'DUE_SOON').length;
+  const projectTasks = complianceTasks.filter(t => !project?.id || t.projectId === project.id);
+  const overdueCount = projectTasks.filter(t => t.status === 'OVERDUE').length;
+  const dueSoonCount = projectTasks.filter(t => t.status === 'DUE_SOON').length;
 
   if (overdueCount > 0) {
     complianceScore += overdueCount * 8;
@@ -64,8 +65,9 @@ export function calculateRiskScore(
   let docScore = 4;
   let docExplanation = 'Most uploaded documents are valid and verified.';
 
-  const missingDocs = documents.filter(d => d.status === 'Missing').length;
-  const invalidDocs = documents.filter(d => d.status === 'Expired' || d.status === 'Name Mismatch' || d.status === 'Blurry / Unreadable').length;
+  const projectDocs = documents.filter(d => !project?.id || d.projectId === project.id);
+  const missingDocs = projectDocs.filter(d => d.status === 'Missing').length;
+  const invalidDocs = projectDocs.filter(d => d.status === 'Expired' || d.status === 'Name Mismatch' || d.status === 'Blurry / Unreadable').length;
 
   if (missingDocs > 0) {
     docScore += missingDocs * 6;

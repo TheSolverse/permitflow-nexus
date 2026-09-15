@@ -54,7 +54,7 @@ export const EntrepreneurDashboard: React.FC = () => {
   
   // Real flagged / rejected documents by inspecting officers
   const flaggedDocs = (documents || []).filter(d => 
-    (!d.projectId || d.projectId === activeProject?.id) &&
+    d.projectId === activeProject?.id &&
     (d.status === 'Name Mismatch' || d.status === 'Expired' || d.status === 'Blurry / Unreadable')
   );
 

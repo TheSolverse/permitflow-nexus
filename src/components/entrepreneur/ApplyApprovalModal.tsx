@@ -161,9 +161,10 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
         }
       }
 
-      // If user didn't upload any file, attach existing documents
-      if (finalDocIds.length === 0 && documents.length > 0) {
-        finalDocIds.push(...documents.slice(0, 3).map(d => d.id));
+      // If user didn't upload any file, attach existing documents for active project
+      const projectDocs = documents.filter(d => d.projectId === activeProject?.id);
+      if (finalDocIds.length === 0 && projectDocs.length > 0) {
+        finalDocIds.push(...projectDocs.slice(0, 3).map(d => d.id));
       }
 
       // 2. Submit application into applications table
@@ -311,8 +312,9 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
               {requiredDocs.map((docName, idx) => {
                 const attached = uploadedFiles[docName];
                 const matchingExistingDocs = documents.filter(d => 
-                  d.docName.toLowerCase().includes(docName.toLowerCase()) || 
-                  d.category.toLowerCase().includes(docName.toLowerCase())
+                  d.projectId === activeProject?.id &&
+                  (d.docName.toLowerCase().includes(docName.toLowerCase()) || 
+                   d.category.toLowerCase().includes(docName.toLowerCase()))
                 );
 
                 return (

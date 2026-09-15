@@ -27,13 +27,16 @@ export const DocumentCentrePage: React.FC = () => {
   const [uploadDocCategory, setUploadDocCategory] = useState('PAN Card');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
-  // Flagged documents requiring user replacement or correction
-  const flaggedDocs = documents.filter(d => 
+  // Scope documents strictly to the active project
+  const projectDocs = documents.filter(d => d.projectId === activeProject?.id);
+
+  // Flagged documents requiring user replacement or correction (scoped to active project)
+  const flaggedDocs = projectDocs.filter(d => 
     d.status === 'Name Mismatch' || d.status === 'Expired' || d.status === 'Blurry / Unreadable' || d.status === 'Missing'
   );
 
   const [activeDocForFeedback, setActiveDocForFeedback] = useState<DocumentItem | null>(
-    flaggedDocs.length > 0 ? flaggedDocs[0] : (documents[0] || null)
+    flaggedDocs.length > 0 ? flaggedDocs[0] : (projectDocs[0] || null)
   );
   const [inspectingDoc, setInspectingDoc] = useState<DocumentItem | null>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -54,10 +57,10 @@ export const DocumentCentrePage: React.FC = () => {
   ];
 
   const filteredDocs = selectedCategory === 'ALL'
-    ? documents
+    ? projectDocs
     : selectedCategory.includes('Flagged')
     ? flaggedDocs
-    : documents.filter(d => d.category.toLowerCase().includes(selectedCategory.toLowerCase()));
+    : projectDocs.filter(d => d.category.toLowerCase().includes(selectedCategory.toLowerCase()));
 
   // 1-Click Replace and Re-scan Document
   const handleReplaceDocument = async (docToReplace: DocumentItem, file: File) => {
@@ -491,8 +494,23 @@ export const DocumentCentrePage: React.FC = () => {
                 <th className="py-3 px-4 font-bold text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredDocs.map((doc) => (
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {filteredDocs.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-slate-500">
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600" />
+                      <p className="font-bold text-slate-700 dark:text-slate-300">
+                        No documents uploaded yet for {activeProject?.businessName || 'this project'}.
+                      </p>
+                      <p className="text-xs text-slate-400 max-w-md">
+                        Use the "Upload & Pre-Screen New Document" section above to attach your mandatory certificates, land records, or permits.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredDocs.map((doc) => (
                 <tr
                   key={doc.id}
                   onClick={() => setActiveDocForFeedback(doc)}
@@ -581,7 +599,7 @@ export const DocumentCentrePage: React.FC = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

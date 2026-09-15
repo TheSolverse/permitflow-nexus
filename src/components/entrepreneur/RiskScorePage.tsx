@@ -22,16 +22,19 @@ export const RiskScorePage: React.FC = () => {
   const { activeProject, documents, complianceTasks, setActiveTab } = useApp();
   const [isSimulated, setIsSimulated] = useState(false);
 
-  const baseRiskData = calculateRiskScore(activeProject, documents, complianceTasks);
+  const projectDocs = documents.filter(d => d.projectId === activeProject?.id);
+  const projectComplianceTasks = complianceTasks.filter(t => t.projectId === activeProject?.id);
+
+  const baseRiskData = calculateRiskScore(activeProject, projectDocs, projectComplianceTasks);
 
   // If simulation is active, calculate mitigated score (Low Risk)
   const currentScore = isSimulated ? Math.max(22, baseRiskData.overallScore - 50) : baseRiskData.overallScore;
   const currentLabel = isSimulated ? 'Low Risk' : baseRiskData.riskLabel;
 
   // Identify top risk drivers
-  const missingDocsCount = documents.filter(d => d.status === 'Missing').length;
-  const invalidDocsCount = documents.filter(d => d.status === 'Expired' || d.status === 'Name Mismatch' || d.status === 'Blurry / Unreadable').length;
-  const overdueCount = complianceTasks.filter(t => t.status === 'OVERDUE').length;
+  const missingDocsCount = projectDocs.filter(d => d.status === 'Missing').length;
+  const invalidDocsCount = projectDocs.filter(d => d.status === 'Expired' || d.status === 'Name Mismatch' || d.status === 'Blurry / Unreadable').length;
+  const overdueCount = projectComplianceTasks.filter(t => t.status === 'OVERDUE').length;
 
   return (
     <div className="space-y-6">
