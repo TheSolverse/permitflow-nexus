@@ -60,6 +60,37 @@ export const ParallelWorkflowDashboard: React.FC = () => {
   const [queryDueDateInput, setQueryDueDateInput] = useState<string>(new Date(Date.now() + 10 * 86400000).toISOString().split('T')[0]);
   const [responseTextInput, setResponseTextInput] = useState<string>('');
 
+  const userProjects = currentUser?.role === 'ENTREPRENEUR'
+    ? projects.filter(p => !p.userId || p.userId === currentUser.id)
+    : projects;
+
+  const hasProject = currentUser?.role === 'OFFICER' || Boolean(activeProject && activeProject.id && activeProject.id.trim().length > 0 && userProjects.length > 0);
+
+  if (!hasProject) {
+    return (
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-12 border border-slate-200 dark:border-slate-800 shadow-xl text-center space-y-6 max-w-3xl mx-auto my-8 animate-in fade-in duration-200">
+        <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400">
+          <GitMerge className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">
+            No Business Project Profile Created Yet
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 text-sm max-w-lg mx-auto">
+            To view parallel multi-agency approval tracking and automated department dispatching, please create your business project profile first.
+          </p>
+        </div>
+        <button
+          onClick={() => useApp().setActiveTab('new-project')}
+          className="px-6 py-3 rounded-xl bg-[#2E6F40] hover:bg-[#235833] text-white font-extrabold text-sm transition-all shadow-md inline-flex items-center gap-2 cursor-pointer"
+        >
+          <Sparkles className="w-4 h-4 text-[#CFFFDC]" />
+          <span>+ Create New Business Project</span>
+        </button>
+      </div>
+    );
+  }
+
   // Calculate progress formula: Progress = (Approved permissions / Total required permissions) * 100
   const progressMetrics = calculateParallelProgress(activeProject.id);
   const currentProjectPermissions = parallelPermissions.filter(p => p.projectId === activeProject.id);

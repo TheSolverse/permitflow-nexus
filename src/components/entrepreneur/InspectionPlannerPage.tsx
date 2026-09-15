@@ -3,10 +3,43 @@ import { useApp } from '../../context/AppContext';
 import { Calendar, Clock, MapPin, User, CheckCircle2, AlertTriangle, Layers, Phone, FileText } from 'lucide-react';
 
 export const InspectionPlannerPage: React.FC = () => {
-  const { inspections, jointInspections, activeProject } = useApp();
+  const { projects, inspections, jointInspections, activeProject, currentUser, setActiveTab } = useApp();
   const [confirmedIds, setConfirmedIds] = useState<string[]>([]);
   const [rescheduleModalId, setRescheduleModalId] = useState<string | null>(null);
   const [requestedDate, setRequestedDate] = useState('');
+
+  const userProjects = currentUser?.role === 'ENTREPRENEUR'
+    ? projects.filter(p => !p.userId || p.userId === currentUser.id)
+    : projects;
+
+  const hasProject = Boolean(activeProject && activeProject.id && activeProject.id.trim().length > 0 && userProjects.length > 0);
+
+  if (!hasProject) {
+    return (
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-12 border border-slate-200 dark:border-slate-800 shadow-xl text-center space-y-6 max-w-3xl mx-auto my-8 animate-in fade-in duration-200">
+        <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400">
+          <Calendar className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">
+            No Business Project Profile Created Yet
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 text-sm max-w-lg mx-auto">
+            To schedule departmental site audits and track joint multi-agency site inspections, please create your business project profile first.
+          </p>
+        </div>
+        <button
+          onClick={() => setActiveTab('new-project')}
+          className="px-6 py-3 rounded-xl bg-[#2E6F40] hover:bg-[#235833] text-white font-extrabold text-sm transition-all shadow-md inline-flex items-center gap-2 cursor-pointer"
+        >
+          <span>+ Create New Business Project</span>
+        </button>
+      </div>
+    );
+  }
+
+  const projectJointInspections = jointInspections.filter(j => j.projectId === activeProject.id);
+  const projectInspections = inspections.filter(i => !(i as any).projectId || (i as any).projectId === activeProject.id);
 
   const toggleConfirm = (id: string) => {
     if (confirmedIds.includes(id)) {
@@ -35,14 +68,14 @@ export const InspectionPlannerPage: React.FC = () => {
       </div>
 
       {/* JOINT INSPECTIONS CARDS SECTION */}
-      {jointInspections.length > 0 && (
+      {projectJointInspections.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-sm font-extrabold text-purple-950 dark:text-purple-300 uppercase tracking-wider flex items-center gap-2">
             <Calendar className="w-4 h-4 text-purple-700" />
-            Scheduled Multi-Agency Joint Site Inspections ({jointInspections.length})
+            Scheduled Multi-Agency Joint Site Inspections ({projectJointInspections.length})
           </h2>
 
-          {jointInspections.map(j => (
+          {projectJointInspections.map(j => (
             <div
               key={j.id}
               className="bg-purple-900 text-white p-6 rounded-2xl border border-purple-700 shadow-lg space-y-4 text-xs"
