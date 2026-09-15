@@ -1,0 +1,350 @@
+[
+  {
+    "test_case_id": "TC-001",
+    "title": "Indian Private Limited Company with Rented Registered Office",
+    "description": "Standard Private Limited Incorporation with 2 Indian Directors, Rented Office in Mumbai, applying via SPICe+.",
+    "user_answers": {
+      "entity_type": "private_limited_company",
+      "incorporation_channel": "spice_plus",
+      "subscriber_citizenship": "indian_resident",
+      "premises_occupancy_type": "rented",
+      "state": "Maharashtra",
+      "employee_count": 12,
+      "apply_gst_during_incorporation": true,
+      "has_corporate_shareholder": false
+    },
+    "expected_rules": [
+      "RUL-MCA-001",
+      "RUL-MCA-003",
+      "RUL-MCA-005",
+      "RUL-GST-009",
+      "RUL-MAH-011"
+    ],
+    "expected_documents": [
+      "PAN Card of Directors",
+      "Identity Proof (Voter ID / Passport / DL / Aadhaar)",
+      "Bank Statement / Utility Bill of Directors (< 2 months old)",
+      "Notarized Rent Agreement / Lease Deed",
+      "Property Owner NOC",
+      "Registered Office Utility Bill (< 2 months old)",
+      "Digital Signature Certificate (DSC) Class 3"
+    ],
+    "expected_forms": [
+      "SPICe+ Part A",
+      "SPICe+ Part B",
+      "e-MoA (INC-33)",
+      "e-AoA (INC-34)",
+      "AGILE-PRO-S (INC-35)",
+      "Form A Maharashtra Shops Registration"
+    ],
+    "rules_that_must_not_trigger": [
+      "RUL-MCA-002",
+      "RUL-MCA-004",
+      "RUL-MCA-006",
+      "RUL-MCA-007",
+      "RUL-MCA-008",
+      "RUL-MAH-012"
+    ]
+  },
+  {
+    "test_case_id": "TC-002",
+    "title": "Indian Private Limited Company with Owned Registered Office",
+    "description": "Private Limited Incorporation with Owned Office premises by Director.",
+    "user_answers": {
+      "entity_type": "private_limited_company",
+      "incorporation_channel": "spice_plus",
+      "subscriber_citizenship": "indian_resident",
+      "premises_occupancy_type": "owned",
+      "state": "Maharashtra",
+      "employee_count": 5,
+      "apply_gst_during_incorporation": false,
+      "has_corporate_shareholder": false
+    },
+    "expected_rules": [
+      "RUL-MCA-001",
+      "RUL-MCA-004",
+      "RUL-MCA-005",
+      "RUL-MAH-012"
+    ],
+    "expected_documents": [
+      "PAN Card of Directors",
+      "Identity & Address Proof",
+      "Property Title Deed / Tax Receipt",
+      "Owner NOC",
+      "Registered Office Utility Bill (< 2 months old)"
+    ],
+    "expected_forms": [
+      "SPICe+ Part A",
+      "SPICe+ Part B",
+      "e-MoA (INC-33)",
+      "e-AoA (INC-34)",
+      "AGILE-PRO-S (INC-35)",
+      "Form F Maharashtra Shops Intimation"
+    ],
+    "rules_that_must_not_trigger": [
+      "RUL-MCA-002",
+      "RUL-MCA-003",
+      "RUL-MCA-006",
+      "RUL-GST-009",
+      "RUL-MAH-011"
+    ]
+  },
+  {
+    "test_case_id": "TC-003",
+    "title": "LLP with Indian Designated Partners",
+    "description": "LLP Registration via FiLLiP with 2 Indian Designated Partners and Rented Premises.",
+    "user_answers": {
+      "entity_type": "llp",
+      "incorporation_channel": "fillip",
+      "subscriber_citizenship": "indian_resident",
+      "premises_occupancy_type": "rented",
+      "state": "Maharashtra",
+      "employee_count": 4,
+      "apply_gst_during_incorporation": false,
+      "has_corporate_shareholder": false
+    },
+    "expected_rules": [
+      "RUL-MCA-002",
+      "RUL-MCA-003",
+      "RUL-MCA-005",
+      "RUL-MAH-012"
+    ],
+    "expected_documents": [
+      "PAN Card of Designated Partners",
+      "Identity & Address Proof of Partners",
+      "Rent Agreement / Lease Deed",
+      "Owner NOC",
+      "Utility Bill (< 2 months old)",
+      "DSC of Designated Partners"
+    ],
+    "expected_forms": [
+      "RUN-LLP",
+      "Form FiLLiP",
+      "Form 3 LLP Agreement",
+      "Form F Maharashtra Shops Intimation"
+    ],
+    "rules_that_must_not_trigger": [
+      "RUL-MCA-001",
+      "RUL-MCA-004",
+      "RUL-MCA-006",
+      "RUL-MCA-007",
+      "RUL-MCA-008"
+    ]
+  },
+  {
+    "test_case_id": "TC-004",
+    "title": "Company with Foreign Subscriber / Director",
+    "description": "Private Limited Company with 1 Foreign Subscriber requiring Apostilled documents and Physical MoA/AoA.",
+    "user_answers": {
+      "entity_type": "private_limited_company",
+      "incorporation_channel": "spice_plus",
+      "subscriber_citizenship": "foreign_national",
+      "premises_occupancy_type": "rented",
+      "state": "Maharashtra",
+      "employee_count": 2,
+      "apply_gst_during_incorporation": false,
+      "has_corporate_shareholder": false
+    },
+    "expected_rules": [
+      "RUL-MCA-001",
+      "RUL-MCA-003",
+      "RUL-MCA-006",
+      "RUL-MAH-012"
+    ],
+    "expected_documents": [
+      "Apostilled / Consular Certified Passport of Foreign Subscriber",
+      "Apostilled Proof of Address",
+      "Physical MoA and AoA Subscriber Sheet",
+      "Rent Agreement & Owner NOC",
+      "Registered Office Utility Bill (< 2 months old)"
+    ],
+    "expected_forms": [
+      "SPICe+ Part A",
+      "SPICe+ Part B (Physical MoA/AoA Attachment)",
+      "AGILE-PRO-S (INC-35)"
+    ],
+    "rules_that_must_not_trigger": [
+      "RUL-MCA-002",
+      "RUL-MCA-004",
+      "RUL-MCA-005",
+      "RUL-MCA-008"
+    ]
+  },
+  {
+    "test_case_id": "TC-005",
+    "title": "Company with Corporate Shareholder (Holding Company)",
+    "description": "Private Limited Company subsidiary incorporated by an existing Indian holding company.",
+    "user_answers": {
+      "entity_type": "private_limited_company",
+      "incorporation_channel": "spice_plus",
+      "subscriber_citizenship": "indian_resident",
+      "premises_occupancy_type": "owned",
+      "state": "Maharashtra",
+      "employee_count": 15,
+      "apply_gst_during_incorporation": true,
+      "has_corporate_shareholder": true
+    },
+    "expected_rules": [
+      "RUL-MCA-001",
+      "RUL-MCA-004",
+      "RUL-MCA-005",
+      "RUL-MCA-007",
+      "RUL-GST-009",
+      "RUL-MAH-011"
+    ],
+    "expected_documents": [
+      "Board Resolution of Holding Corporate",
+      "Certificate of Incorporation of Holding Corporate",
+      "PAN & Identity Proof of Nominated Representative",
+      "Property Title Deed & Owner NOC",
+      "Utility Bill (< 2 months old)"
+    ],
+    "expected_forms": [
+      "SPICe+ Part A",
+      "SPICe+ Part B",
+      "e-MoA (INC-33)",
+      "e-AoA (INC-34)",
+      "AGILE-PRO-S (INC-35)",
+      "Form A Maharashtra Shops Registration"
+    ],
+    "rules_that_must_not_trigger": [
+      "RUL-MCA-002",
+      "RUL-MCA-003",
+      "RUL-MCA-006",
+      "RUL-MCA-008"
+    ]
+  },
+  {
+    "test_case_id": "TC-006",
+    "title": "One Person Company (OPC) Incorporation",
+    "description": "OPC Incorporation with single member and Nominee consent in Form INC-3.",
+    "user_answers": {
+      "entity_type": "opc",
+      "incorporation_channel": "spice_plus",
+      "subscriber_citizenship": "indian_resident",
+      "premises_occupancy_type": "rented",
+      "state": "Maharashtra",
+      "employee_count": 1,
+      "apply_gst_during_incorporation": false,
+      "has_corporate_shareholder": false
+    },
+    "expected_rules": [
+      "RUL-MCA-001",
+      "RUL-MCA-003",
+      "RUL-MCA-005",
+      "RUL-MCA-008",
+      "RUL-MAH-012"
+    ],
+    "expected_documents": [
+      "PAN Card of Sole Member",
+      "Form INC-3 Nominee Consent & Nominee Identity/Address Proof",
+      "Rent Agreement & Owner NOC",
+      "Utility Bill (< 2 months old)"
+    ],
+    "expected_forms": [
+      "SPICe+ Part A",
+      "SPICe+ Part B",
+      "e-MoA (INC-33)",
+      "e-AoA (INC-34)",
+      "Form INC-3",
+      "AGILE-PRO-S (INC-35)",
+      "Form F Maharashtra Shops Intimation"
+    ],
+    "rules_that_must_not_trigger": [
+      "RUL-MCA-002",
+      "RUL-MCA-004",
+      "RUL-MCA-006",
+      "RUL-MCA-007"
+    ]
+  },
+  {
+    "test_case_id": "TC-007",
+    "title": "Company Applying for GST during Incorporation",
+    "description": "Private Limited Company applying for GSTIN via AGILE-PRO-S integrated form.",
+    "user_answers": {
+      "entity_type": "private_limited_company",
+      "incorporation_channel": "spice_plus",
+      "subscriber_citizenship": "indian_resident",
+      "premises_occupancy_type": "rented",
+      "state": "Maharashtra",
+      "employee_count": 8,
+      "apply_gst_during_incorporation": true,
+      "has_corporate_shareholder": false
+    },
+    "expected_rules": [
+      "RUL-MCA-001",
+      "RUL-MCA-003",
+      "RUL-MCA-005",
+      "RUL-GST-009",
+      "RUL-MAH-012"
+    ],
+    "expected_documents": [
+      "PAN Card & Address Proof",
+      "Rent Agreement & Owner NOC",
+      "Utility Bill (< 2 months old)",
+      "Primary Authorized Signatory Photo & Resolution for GST"
+    ],
+    "expected_forms": [
+      "SPICe+ Part A",
+      "SPICe+ Part B",
+      "e-MoA (INC-33)",
+      "e-AoA (INC-34)",
+      "AGILE-PRO-S (INC-35)",
+      "Form F Maharashtra Shops Intimation"
+    ],
+    "rules_that_must_not_trigger": [
+      "RUL-MCA-002",
+      "RUL-MCA-004",
+      "RUL-MCA-006",
+      "RUL-MCA-008"
+    ]
+  },
+  {
+    "test_case_id": "TC-008",
+    "title": "Manufacturing Startup in Maharashtra with DPIIT Recognition & MAITRI Clearances",
+    "description": "Manufacturing unit in Maharashtra seeking DPIIT Startup Recognition and MAITRI single-window clearances.",
+    "user_answers": {
+      "entity_type": "private_limited_company",
+      "incorporation_channel": "spice_plus",
+      "subscriber_citizenship": "indian_resident",
+      "premises_occupancy_type": "owned",
+      "state": "Maharashtra",
+      "employee_count": 25,
+      "apply_gst_during_incorporation": true,
+      "has_corporate_shareholder": false,
+      "is_startup_applicant": true,
+      "annual_turnover_inr_cr": 2,
+      "years_since_incorporation": 1
+    },
+    "expected_rules": [
+      "RUL-MCA-001",
+      "RUL-MCA-004",
+      "RUL-MCA-005",
+      "RUL-GST-009",
+      "RUL-DPIIT-010",
+      "RUL-MAH-011"
+    ],
+    "expected_documents": [
+      "PAN Card & Identity Proofs",
+      "Property Ownership Title Deed",
+      "Utility Bill (< 2 months old)",
+      "Certificate of Incorporation",
+      "Startup Pitch / Write-up on Innovation",
+      "Factory Building Plan & MPCB Layout"
+    ],
+    "expected_forms": [
+      "SPICe+ Part B",
+      "e-MoA/e-AoA",
+      "AGILE-PRO-S",
+      "DPIIT Startup Recognition Portal",
+      "MAITRI Single Window Application",
+      "Form A Maharashtra Shops Registration"
+    ],
+    "rules_that_must_not_trigger": [
+      "RUL-MCA-002",
+      "RUL-MCA-003",
+      "RUL-MCA-006",
+      "RUL-MAH-012"
+    ]
+  }
+]

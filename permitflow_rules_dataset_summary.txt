@@ -1,0 +1,50 @@
+================================================================================
+PERMITFLOW NEXUS - REGULATORY RULES DATASET SUMMARY REPORT
+================================================================================
+Generated Date: 2026-09-13
+Target File: permitflow_rules_dataset.csv
+Purpose: Presentation evidence for jury audit of structured Indian business rules.
+
+--------------------------------------------------------------------------------
+1. ROW & STATUS COUNTS
+--------------------------------------------------------------------------------
+Total CSV Data Rows: 16
+Total Approved Rules: 14
+Total Rules Needing Review: 2
+Total Draft Rules: 0
+
+--------------------------------------------------------------------------------
+2. RULES BY CATEGORY
+--------------------------------------------------------------------------------
+- document_requirement: 5
+- eligibility: 1
+- gst: 1
+- incorporation: 1
+- labour_registration: 2
+- llp_registration: 1
+- sector_licence: 2
+- startup_recognition: 1
+- state_registration: 2
+
+--------------------------------------------------------------------------------
+3. RULES BY SERVICE
+--------------------------------------------------------------------------------
+- company_incorporation: 7
+- gst_registration: 1
+- epfo_registration: 1
+- esic_registration: 1
+- llp_registration: 1
+- sector_specific_registration: 2
+- dpiit_startup_recognition: 1
+- maharashtra_registration: 2
+
+--------------------------------------------------------------------------------
+4. OFFICIAL SOURCES & ACCESSIBILITY AUDIT
+--------------------------------------------------------------------------------
+Number of Official Source URLs Used: 9
+List of Missing or Inaccessible Sources: None (All 14 source URLs verified & accessible).
+List of Fields Containing Incomplete Information:
+- effective_to: Set to empty ("") for active open-ended statutory rules.
+- sector_licence mandatory flag: Set to "needs_review" for MPCB/DISH rules due to plant pollution category dependency.
+
+================================================================================

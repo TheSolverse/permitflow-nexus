@@ -346,44 +346,136 @@ export const LoginPage: React.FC = () => {
           {/* One-Click Quick Demo Login Section */}
           <div className="border-t border-[#D4EEDC] dark:border-[#253D2C] pt-4 space-y-2">
             <div className="text-[11px] font-extrabold text-[#60826A] dark:text-[#A3D4B3] uppercase tracking-wider">
-              {t('instantDemoAccess', language)}
+              ⚡ 1-Click Role Login Demo Accounts
             </div>
 
-            <div className="space-y-1.5 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+              {/* 1. Entrepreneur */}
               <button
                 type="button"
-                onClick={() => loginAsDemo('ENTREPRENEUR')}
-                className="w-full p-2.5 rounded-2xl bg-[#F8FCF9] hover:bg-[#EDF8F1] dark:bg-[#16261C] dark:hover:bg-[#1E3326] border border-[#D4EEDC] dark:border-[#253D2C] transition-all flex items-center justify-between text-left group font-medium cursor-pointer shadow-xs"
+                onClick={() => {
+                  const u = INITIAL_USERS.find(user => user.role === 'ENTREPRENEUR');
+                  if (u) { setCurrentUser(u); setActiveTab('applications'); }
+                }}
+                className="p-2 rounded-xl bg-[#F8FCF9] hover:bg-[#EDF8F1] dark:bg-[#16261C] border border-[#D4EEDC] dark:border-[#253D2C] flex items-center gap-2 text-left cursor-pointer"
               >
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-[#CFFFDC] dark:bg-[#253D2C] text-[#2E6F40] dark:text-[#CFFFDC] flex items-center justify-center font-extrabold text-[11px]">E</span>
-                  <span className="font-bold text-[#192A1E] dark:text-white">{t('demoEntrepreneur', language)}</span>
+                <span className="w-6 h-6 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 flex items-center justify-center font-bold text-[10px]">1</span>
+                <div>
+                  <div className="font-bold text-[11px] text-[#192A1E] dark:text-white">Entrepreneur</div>
+                  <div className="text-[9px] text-[#60826A] dark:text-[#A3D4B3]">Rahul Sharma</div>
                 </div>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#2E6F40] dark:group-hover:text-[#68BA7F]" />
               </button>
 
+              {/* 2. MPCB Officer */}
               <button
                 type="button"
-                onClick={() => loginAsDemo('OFFICER')}
-                className="w-full p-2.5 rounded-2xl bg-[#F8FCF9] hover:bg-[#EDF8F1] dark:bg-[#16261C] dark:hover:bg-[#1E3326] border border-[#D4EEDC] dark:border-[#253D2C] transition-all flex items-center justify-between text-left group font-medium cursor-pointer shadow-xs"
+                onClick={() => {
+                  const u = INITIAL_USERS.find(user => user.role === 'OFFICER_MPCB' || user.email.includes('mpcb'));
+                  if (u) { setCurrentUser(u); setActiveTab('officer-dashboard'); }
+                }}
+                className="p-2 rounded-xl bg-blue-50/60 hover:bg-blue-100/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 flex items-center gap-2 text-left cursor-pointer"
               >
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200 flex items-center justify-center font-extrabold text-[11px]">O</span>
-                  <span className="font-bold text-[#192A1E] dark:text-white">{t('demoOfficer', language)}</span>
+                <span className="w-6 h-6 rounded bg-blue-100 text-blue-800 dark:bg-blue-900 text-xs flex items-center justify-center font-bold text-[10px]">2</span>
+                <div>
+                  <div className="font-bold text-[11px] text-blue-950 dark:text-blue-200">MPCB Officer</div>
+                  <div className="text-[9px] text-blue-700 dark:text-blue-400">Dr. V. K. Patil</div>
                 </div>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#2E6F40] dark:group-hover:text-[#68BA7F]" />
               </button>
 
+              {/* 3. Fire Department Officer */}
               <button
                 type="button"
-                onClick={() => loginAsDemo('ADMIN')}
-                className="w-full p-2.5 rounded-2xl bg-[#F8FCF9] hover:bg-[#EDF8F1] dark:bg-[#16261C] dark:hover:bg-[#1E3326] border border-[#D4EEDC] dark:border-[#253D2C] transition-all flex items-center justify-between text-left group font-medium cursor-pointer shadow-xs"
+                onClick={() => {
+                  const u = INITIAL_USERS.find(user => user.role === 'OFFICER_FIRE' || user.email.includes('fire'));
+                  if (u) { setCurrentUser(u); setActiveTab('officer-dashboard'); }
+                }}
+                className="p-2 rounded-xl bg-red-50/60 hover:bg-red-100/60 dark:bg-red-950/30 border border-red-200 dark:border-red-900 flex items-center gap-2 text-left cursor-pointer"
               >
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-200 flex items-center justify-center font-extrabold text-[11px]">A</span>
-                  <span className="font-bold text-[#192A1E] dark:text-white">{t('demoAdmin', language)}</span>
+                <span className="w-6 h-6 rounded bg-red-100 text-red-800 dark:bg-red-900 text-xs flex items-center justify-center font-bold text-[10px]">3</span>
+                <div>
+                  <div className="font-bold text-[11px] text-red-950 dark:text-red-200">Fire Dept Officer</div>
+                  <div className="text-[9px] text-red-700 dark:text-red-400">Sunita Rane</div>
                 </div>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#2E6F40] dark:group-hover:text-[#68BA7F]" />
+              </button>
+
+              {/* 4. DISH Officer */}
+              <button
+                type="button"
+                onClick={() => {
+                  const u = INITIAL_USERS.find(user => user.role === 'OFFICER_DISH' || user.email.includes('dish'));
+                  if (u) { setCurrentUser(u); setActiveTab('officer-dashboard'); }
+                }}
+                className="p-2 rounded-xl bg-amber-50/60 hover:bg-amber-100/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 flex items-center gap-2 text-left cursor-pointer"
+              >
+                <span className="w-6 h-6 rounded bg-amber-100 text-amber-800 dark:bg-amber-900 text-xs flex items-center justify-center font-bold text-[10px]">4</span>
+                <div>
+                  <div className="font-bold text-[11px] text-amber-950 dark:text-amber-200">DISH Labour Officer</div>
+                  <div className="text-[9px] text-amber-700 dark:text-amber-400">Inspector A. B. Kadam</div>
+                </div>
+              </button>
+
+              {/* 5. MIDC Officer */}
+              <button
+                type="button"
+                onClick={() => {
+                  const u = INITIAL_USERS.find(user => user.role === 'OFFICER_MIDC' || user.email.includes('midc'));
+                  if (u) { setCurrentUser(u); setActiveTab('officer-dashboard'); }
+                }}
+                className="p-2 rounded-xl bg-teal-50/60 hover:bg-teal-100/60 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-900 flex items-center gap-2 text-left cursor-pointer"
+              >
+                <span className="w-6 h-6 rounded bg-teal-100 text-teal-800 dark:bg-teal-900 text-xs flex items-center justify-center font-bold text-[10px]">5</span>
+                <div>
+                  <div className="font-bold text-[11px] text-teal-950 dark:text-teal-200">MIDC Officer</div>
+                  <div className="text-[9px] text-teal-700 dark:text-teal-400">Er. Suresh Shinde</div>
+                </div>
+              </button>
+
+              {/* 6. MSEDCL Officer */}
+              <button
+                type="button"
+                onClick={() => {
+                  const u = INITIAL_USERS.find(user => user.role === 'OFFICER_MSEDCL' || user.email.includes('mahadiscom'));
+                  if (u) { setCurrentUser(u); setActiveTab('officer-dashboard'); }
+                }}
+                className="p-2 rounded-xl bg-indigo-50/60 hover:bg-indigo-100/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900 flex items-center gap-2 text-left cursor-pointer"
+              >
+                <span className="w-6 h-6 rounded bg-indigo-100 text-indigo-800 dark:bg-indigo-900 text-xs flex items-center justify-center font-bold text-[10px]">6</span>
+                <div>
+                  <div className="font-bold text-[11px] text-indigo-950 dark:text-indigo-200">MSEDCL Officer</div>
+                  <div className="text-[9px] text-indigo-700 dark:text-indigo-400">Er. R. N. Deshpande</div>
+                </div>
+              </button>
+
+              {/* 7. FSSAI Officer */}
+              <button
+                type="button"
+                onClick={() => {
+                  const u = INITIAL_USERS.find(user => user.role === 'OFFICER_FSSAI' || user.email.includes('fssai'));
+                  if (u) { setCurrentUser(u); setActiveTab('officer-dashboard'); }
+                }}
+                className="p-2 rounded-xl bg-orange-50/60 hover:bg-orange-100/60 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900 flex items-center gap-2 text-left cursor-pointer"
+              >
+                <span className="w-6 h-6 rounded bg-orange-100 text-orange-800 dark:bg-orange-900 text-xs flex items-center justify-center font-bold text-[10px]">7</span>
+                <div>
+                  <div className="font-bold text-[11px] text-orange-950 dark:text-orange-200">FSSAI Officer</div>
+                  <div className="text-[9px] text-orange-700 dark:text-orange-400">Meena Thorat</div>
+                </div>
+              </button>
+
+              {/* 8. Admin */}
+              <button
+                type="button"
+                onClick={() => {
+                  const u = INITIAL_USERS.find(user => user.role === 'ADMIN');
+                  if (u) { setCurrentUser(u); setActiveTab('admin-dashboard'); }
+                }}
+                className="p-2 rounded-xl bg-purple-50/60 hover:bg-purple-100/60 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900 flex items-center gap-2 text-left cursor-pointer"
+              >
+                <span className="w-6 h-6 rounded bg-purple-100 text-purple-800 dark:bg-purple-900 text-xs flex items-center justify-center font-bold text-[10px]">8</span>
+                <div>
+                  <div className="font-bold text-[11px] text-purple-950 dark:text-purple-200">Platform Admin</div>
+                  <div className="text-[9px] text-purple-700 dark:text-purple-400">MAITRI Admin</div>
+                </div>
               </button>
             </div>
           </div>

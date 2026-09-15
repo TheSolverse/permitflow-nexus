@@ -150,8 +150,8 @@ export const OfficerDocumentViewerModal: React.FC<Props> = ({
                 </span>
               </div>
 
-              {/* REAL UPLOADED FILE PREVIEW (If entrepreneur uploaded an actual image/file) */}
-              {doc.fileUrl && (doc.fileUrl.startsWith('blob:') || doc.fileUrl.startsWith('data:image') || doc.docName.match(/\.(png|jpg|jpeg|webp)$/i)) && (
+              {/* REAL UPLOADED FILE PREVIEW (If entrepreneur uploaded an actual image/file/PDF) */}
+              {doc.fileUrl && (doc.fileUrl.startsWith('blob:') || doc.fileUrl.startsWith('data:') || doc.fileUrl.startsWith('http')) ? (
                 <div className="space-y-4 mb-6">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-200">
                     <div>
@@ -162,78 +162,97 @@ export const OfficerDocumentViewerModal: React.FC<Props> = ({
                       Live Upload ({doc.fileSize || '1.2 MB'})
                     </span>
                   </div>
-                  <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center p-3">
-                    <img 
-                      src={doc.fileUrl} 
-                      alt={doc.docName} 
-                      className="max-h-[420px] w-auto max-w-full object-contain rounded-xl shadow-xs"
-                    />
+                  <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center p-3 min-h-[350px]">
+                    {doc.fileUrl.startsWith('data:application/pdf') || doc.docName.match(/\.pdf$/i) ? (
+                      <object
+                        data={doc.fileUrl}
+                        type="application/pdf"
+                        className="w-full h-[500px] rounded-xl"
+                      >
+                        <div className="text-center p-6 space-y-3">
+                          <FileText className="w-12 h-12 text-slate-400 mx-auto" />
+                          <p className="font-bold text-slate-800">Uploaded PDF File: {doc.docName}</p>
+                          <a
+                            href={doc.fileUrl}
+                            download={doc.docName}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-[#2E6F40] text-white rounded-xl text-xs font-bold"
+                          >
+                            <Download className="w-4 h-4" /> Download PDF Attachment
+                          </a>
+                        </div>
+                      </object>
+                    ) : (
+                      <img 
+                        src={doc.fileUrl} 
+                        alt={doc.docName} 
+                        className="max-h-[480px] w-auto max-w-full object-contain rounded-xl shadow-xs"
+                      />
+                    )}
                   </div>
                 </div>
-              )}
-
-              {/* TEMPLATE 1: COMPANY PAN CARD */}
-              {isPan && (!doc.fileUrl || (!doc.fileUrl.startsWith('blob:') && !doc.fileUrl.startsWith('data:image'))) && (
-                <div className="space-y-6">
-                  <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-4 rounded-xl flex items-center justify-between border-b-4 border-amber-500">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold text-amber-400 border border-white/20">
-                        🇮🇳
-                      </div>
-                      <div>
-                        <div className="text-[11px] font-extrabold uppercase text-amber-300 tracking-wider">INCOME TAX DEPARTMENT • GOVT OF INDIA</div>
-                        <div className="text-xs font-black tracking-widest text-white">आयकर विभाग • भारत सरकार</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded uppercase">PERMANENT ACCOUNT NUMBER CARD</span>
-                    </div>
-                  </div>
-
-                  <div className="p-6 bg-slate-50 rounded-xl border border-slate-300 shadow-inner grid grid-cols-3 gap-4 text-xs font-semibold">
-                    <div className="col-span-2 space-y-3">
-                      <div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase">Name of Entity / Card Holder</div>
-                        <div className="font-extrabold text-sm text-slate-900 tracking-tight">SAHYADRI FOOD EXTRACTS & SPICES PRIVATE LIMITED</div>
-                      </div>
-
-                      <div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase">Entity Type & Act</div>
-                        <div className="font-bold text-slate-800">Incorporated under Companies Act, 2013</div>
-                      </div>
-
-                      <div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase">Date of Incorporation</div>
-                        <div className="font-bold text-slate-800">12 / 06 / 2021</div>
-                      </div>
-
-                      <div>
-                        <div className="text-[10px] text-amber-700 font-extrabold uppercase">Permanent Account Number (PAN)</div>
-                        <div className="font-black text-xl text-slate-950 tracking-widest font-mono bg-amber-100/80 px-3 py-1 rounded border border-amber-300 inline-block">
-                          AAACA9812K
+              ) : (
+                <>
+                  {/* TEMPLATE 1: COMPANY PAN CARD */}
+                  {isPan && (
+                    <div className="space-y-6">
+                      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-4 rounded-xl flex items-center justify-between border-b-4 border-amber-500">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold text-amber-400 border border-white/20">
+                            🇮🇳
+                          </div>
+                          <div>
+                            <div className="text-[11px] font-extrabold uppercase text-amber-300 tracking-wider">INCOME TAX DEPARTMENT • GOVT OF INDIA</div>
+                            <div className="text-xs font-black tracking-widest text-white">आयकर विभाग • भारत सरकार</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded uppercase">PERMANENT ACCOUNT NUMBER CARD</span>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex flex-col items-center justify-center space-y-3 border-l border-slate-200 pl-4">
-                      <div className="w-24 h-24 bg-slate-900 rounded-xl p-1 shadow-md flex items-center justify-center text-white">
-                        {/* Fake QR code illustration */}
-                        <div className="w-full h-full border-2 border-dashed border-amber-400/80 flex items-center justify-center text-[9px] font-mono text-center p-1">
-                          GOI TAX QR STAMP
+                      <div className="p-6 bg-slate-50 rounded-xl border border-slate-300 shadow-inner grid grid-cols-3 gap-4 text-xs font-semibold">
+                        <div className="col-span-2 space-y-3">
+                          <div>
+                            <div className="text-[10px] text-slate-400 font-bold uppercase">Name of Entity / Card Holder</div>
+                            <div className="font-extrabold text-sm text-slate-900 tracking-tight">SAHYADRI FOOD EXTRACTS & SPICES PRIVATE LIMITED</div>
+                          </div>
+
+                          <div>
+                            <div className="text-[10px] text-slate-400 font-bold uppercase">Entity Type & Act</div>
+                            <div className="font-bold text-slate-800">Incorporated under Companies Act, 2013</div>
+                          </div>
+
+                          <div>
+                            <div className="text-[10px] text-slate-400 font-bold uppercase">Date of Incorporation</div>
+                            <div className="font-bold text-slate-800">12 / 06 / 2021</div>
+                          </div>
+
+                          <div>
+                            <div className="text-[10px] text-amber-700 font-extrabold uppercase">Permanent Account Number (PAN)</div>
+                            <div className="font-black text-xl text-slate-950 tracking-widest font-mono bg-amber-100/80 px-3 py-1 rounded border border-amber-300 inline-block">
+                              AAACA9812K
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-center justify-center space-y-3 border-l border-slate-200 pl-4">
+                          <div className="w-24 h-24 bg-slate-900 rounded-xl p-1 shadow-md flex items-center justify-center text-white">
+                            <div className="w-full h-full border-2 border-dashed border-amber-400/80 flex items-center justify-center text-[9px] font-mono text-center p-1">
+                              GOI TAX QR STAMP
+                            </div>
+                          </div>
+                          <div className="text-[10px] font-bold text-slate-500 text-center">Digitally Verified Income Tax Hologram</div>
                         </div>
                       </div>
-                      <div className="text-[10px] font-bold text-slate-500 text-center">Digitally Verified Income Tax Hologram</div>
-                    </div>
-                  </div>
 
-                  <div className="flex justify-between items-center text-[11px] text-slate-500 border-t border-slate-200 pt-3">
-                    <span>Signature of Authorized Officer: <em>[Digitally Signed DSC Key #9921]</em></span>
-                    <span className="font-bold text-emerald-700 flex items-center gap-1">
-                      <ShieldCheck className="w-3.5 h-3.5" /> Direct Tax Database Match
-                    </span>
-                  </div>
-                </div>
-              )}
+                      <div className="flex justify-between items-center text-[11px] text-slate-500 border-t border-slate-200 pt-3">
+                        <span>Signature of Authorized Officer: <em>[Digitally Signed DSC Key #9921]</em></span>
+                        <span className="font-bold text-emerald-700 flex items-center gap-1">
+                          <ShieldCheck className="w-3.5 h-3.5" /> Direct Tax Database Match
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
               {/* TEMPLATE 2: GST REGISTRATION CERTIFICATE (FORM REG-06) */}
               {isGst && (
@@ -537,6 +556,8 @@ export const OfficerDocumentViewerModal: React.FC<Props> = ({
                   </div>
                 </div>
               )}
+            </>
+          )}
 
             </div>
           </div>

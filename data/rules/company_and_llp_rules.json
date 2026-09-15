@@ -1,0 +1,453 @@
+[
+  {
+    "rule_id": "RUL-MCA-001",
+    "service": "company_incorporation",
+    "entity_type": "private_limited_company",
+    "jurisdiction": {
+      "country": "India",
+      "state": "all"
+    },
+    "conditions": [
+      {
+        "field": "entity_type",
+        "operator": "equals",
+        "value": "private_limited_company"
+      },
+      {
+        "field": "incorporation_channel",
+        "operator": "equals",
+        "value": "spice_plus"
+      }
+    ],
+    "requirement_type": "form",
+    "requirement_name": "SPICe+ Part A & Part B Integrated Incorporation Application",
+    "description": "Filing of SPICe+ Part A (Name Reservation) and SPICe+ Part B (Integrated Application for Incorporation, DIN, PAN, TAN, EPFO, ESIC, Bank Account, and Professional Tax).",
+    "mandatory": true,
+    "accepted_alternatives": [],
+    "forms": [
+      "SPICe+ Part A (INC-32)",
+      "SPICe+ Part B (INC-32)",
+      "AGILE-PRO-S (INC-35)",
+      "INC-9"
+    ],
+    "authority": "Ministry of Corporate Affairs (MCA), Government of India",
+    "source_id": "SRC-MCA-003",
+    "source_url": "https://www.mca.gov.in/content/mca/global/en/services/company-services/incorporation-services.html",
+    "source_section": "SPICe+ Instruction Kit - Section 1: Integrated Incorporation Procedure",
+    "effective_from": "2020-02-23",
+    "effective_to": null,
+    "last_verified": "2026-09-13",
+    "status": "approved",
+    "notes": "Zero MCA Government Fee applies for companies with Authorized Capital up to Rs. 15,00,000 under SPICe+ Part B scheme. State Stamp Duty remains payable."
+  },
+  {
+    "rule_id": "RUL-MCA-002",
+    "service": "llp_registration",
+    "entity_type": "llp",
+    "jurisdiction": {
+      "country": "India",
+      "state": "all"
+    },
+    "conditions": [
+      {
+        "field": "entity_type",
+        "operator": "equals",
+        "value": "llp"
+      },
+      {
+        "field": "incorporation_channel",
+        "operator": "equals",
+        "value": "fillip"
+      }
+    ],
+    "requirement_type": "form",
+    "requirement_name": "Form FiLLiP Integrated LLP Incorporation & Form 3 Agreement Filing",
+    "description": "Filing of Form FiLLiP for LLP Incorporation and DPIN allotment, followed by Form 3 within 30 days of registration for filing the executed LLP Agreement.",
+    "mandatory": true,
+    "accepted_alternatives": [],
+    "forms": [
+      "RUN-LLP",
+      "Form FiLLiP",
+      "Form 3 LLP Agreement"
+    ],
+    "authority": "Ministry of Corporate Affairs (MCA), Government of India",
+    "source_id": "SRC-MCA-009",
+    "source_url": "https://www.mca.gov.in/content/mca/global/en/services/llp-services/fillip-instruction-kit.html",
+    "source_section": "RUN-LLP & FiLLiP Instruction Kit - Section 2: FiLLiP E-Form Procedure",
+    "effective_from": "2022-04-01",
+    "effective_to": null,
+    "last_verified": "2026-09-13",
+    "status": "approved",
+    "notes": "Form 3 must be filed within 30 days of LLP incorporation with executed LLP Agreement stamped under State Stamp Act."
+  },
+  {
+    "rule_id": "RUL-MCA-003",
+    "service": "company_incorporation",
+    "entity_type": "private_limited_company",
+    "jurisdiction": {
+      "country": "India",
+      "state": "all"
+    },
+    "conditions": [
+      {
+        "field": "premises_occupancy_type",
+        "operator": "equals",
+        "value": "rented"
+      }
+    ],
+    "requirement_type": "document",
+    "requirement_name": "Registered Office Rented Premises Proof Package",
+    "description": "When the proposed registered office is rented, the applicant must provide a notarized/registered Lease Deed or Rent Agreement, owner NOC, and utility bill not older than two months.",
+    "mandatory": true,
+    "accepted_alternatives": [
+      "Lease Deed",
+      "Rent Agreement with Rent Paid Receipt"
+    ],
+    "forms": [
+      "SPICe+ Part B Attachment"
+    ],
+    "authority": "Ministry of Corporate Affairs (MCA), Government of India",
+    "source_id": "SRC-MCA-002",
+    "source_url": "https://www.mca.gov.in/content/mca/global/en/acts-rules/companies-act/rules.html",
+    "source_section": "Companies (Incorporation) Rules 2014 - Rule 25(1)(b) & (c)",
+    "effective_from": "2014-04-01",
+    "effective_to": null,
+    "last_verified": "2026-09-13",
+    "status": "approved",
+    "notes": "Utility bill (electricity, gas, water, mobile) must be in the property owner name and strictly less than 2 months old."
+  },
+  {
+    "rule_id": "RUL-MCA-004",
+    "service": "company_incorporation",
+    "entity_type": "private_limited_company",
+    "jurisdiction": {
+      "country": "India",
+      "state": "all"
+    },
+    "conditions": [
+      {
+        "field": "premises_occupancy_type",
+        "operator": "equals",
+        "value": "owned"
+      }
+    ],
+    "requirement_type": "document",
+    "requirement_name": "Registered Office Owned Premises Proof Package",
+    "description": "When the proposed registered office is owned by the company or promoter, property title deed or municipal tax receipt must be submitted along with a recent utility bill.",
+    "mandatory": true,
+    "accepted_alternatives": [
+      "Property Title Deed",
+      "Municipal Tax Paid Receipt",
+      "Registry Conveyance Deed"
+    ],
+    "forms": [
+      "SPICe+ Part B Attachment"
+    ],
+    "authority": "Ministry of Corporate Affairs (MCA), Government of India",
+    "source_id": "SRC-MCA-002",
+    "source_url": "https://www.mca.gov.in/content/mca/global/en/acts-rules/companies-act/rules.html",
+    "source_section": "Companies (Incorporation) Rules 2014 - Rule 25(1)(a) & (d)",
+    "effective_from": "2014-04-01",
+    "effective_to": null,
+    "last_verified": "2026-09-13",
+    "status": "approved",
+    "notes": "Owner NOC is required if property is owned by individual promoter or director in their personal capacity."
+  },
+  {
+    "rule_id": "RUL-MCA-005",
+    "service": "company_incorporation",
+    "entity_type": "private_limited_company",
+    "jurisdiction": {
+      "country": "India",
+      "state": "all"
+    },
+    "conditions": [
+      {
+        "field": "subscriber_citizenship",
+        "operator": "equals",
+        "value": "indian_resident"
+      }
+    ],
+    "requirement_type": "document",
+    "requirement_name": "Indian Resident Subscriber Identity & Address Proof",
+    "description": "Indian resident subscribers/directors must submit mandatory PAN card along with identity proof (Voter ID, Passport, Driving License, or Aadhaar) and address proof (Bank statement, Electricity bill, Mobile bill < 2 months old).",
+    "mandatory": true,
+    "accepted_alternatives": [
+      "Voter ID",
+      "Passport",
+      "Driving License",
+      "Aadhaar Card"
+    ],
+    "forms": [
+      "SPICe+ Part B Director Proofs"
+    ],
+    "authority": "Ministry of Corporate Affairs (MCA), Government of India",
+    "source_id": "SRC-MCA-002",
+    "source_url": "https://www.mca.gov.in/content/mca/global/en/acts-rules/companies-act/rules.html",
+    "source_section": "Companies (Incorporation) Rules 2014 - Rule 16(1)",
+    "effective_from": "2014-04-01",
+    "effective_to": null,
+    "last_verified": "2026-09-13",
+    "status": "approved",
+    "notes": "PAN is mandatory for Indian nationals residing in India. Aadhaar is acceptable but not exclusively mandated."
+  },
+  {
+    "rule_id": "RUL-MCA-006",
+    "service": "company_incorporation",
+    "entity_type": "private_limited_company",
+    "jurisdiction": {
+      "country": "India",
+      "state": "all"
+    },
+    "conditions": [
+      {
+        "field": "subscriber_citizenship",
+        "operator": "equals",
+        "value": "foreign_national"
+      }
+    ],
+    "requirement_type": "document",
+    "requirement_name": "Foreign Subscriber Passport & Apostilled Verification Proofs",
+    "description": "Foreign subscribers or directors must submit valid Passport copy notarized and apostilled in the home country (or embassy certified), along with apostilled proof of residential address.",
+    "mandatory": true,
+    "accepted_alternatives": [
+      "Apostilled Foreign Passport",
+      "Consular Certified Identity Card"
+    ],
+    "forms": [
+      "SPICe+ Part B Attachment",
+      "Physical MoA/AoA Subscriber Sheet"
+    ],
+    "authority": "Ministry of Corporate Affairs (MCA), Government of India",
+    "source_id": "SRC-MCA-002",
+    "source_url": "https://www.mca.gov.in/content/mca/global/en/acts-rules/companies-act/rules.html",
+    "source_section": "Companies (Incorporation) Rules 2014 - Rule 16(2)",
+    "effective_from": "2014-04-01",
+    "effective_to": null,
+    "last_verified": "2026-09-13",
+    "status": "approved",
+    "notes": "Physical MoA and AoA are mandatory when subscribers include foreign individuals or foreign body corporates."
+  },
+  {
+    "rule_id": "RUL-MCA-007",
+    "service": "company_incorporation",
+    "entity_type": "private_limited_company",
+    "jurisdiction": {
+      "country": "India",
+      "state": "all"
+    },
+    "conditions": [
+      {
+        "field": "has_corporate_shareholder",
+        "operator": "equals",
+        "value": true
+      }
+    ],
+    "requirement_type": "document",
+    "requirement_name": "Corporate Shareholder Board Resolution & Certificate of Incorporation",
+    "description": "When a body corporate is a subscriber, it must submit Board Resolution authorizing investment & appointment of authorized representative, Certificate of Incorporation, and MoA/AoA of holding corporate.",
+    "mandatory": true,
+    "accepted_alternatives": [],
+    "forms": [
+      "SPICe+ Part B Attachment"
+    ],
+    "authority": "Ministry of Corporate Affairs (MCA), Government of India",
+    "source_id": "SRC-MCA-002",
+    "source_url": "https://www.mca.gov.in/content/mca/global/en/acts-rules/companies-act/rules.html",
+    "source_section": "Companies (Incorporation) Rules 2014 - Rule 16(3)",
+    "effective_from": "2014-04-01",
+    "effective_to": null,
+    "last_verified": "2026-09-13",
+    "status": "approved",
+    "notes": "If holding company is foreign, board resolution and incorporation documents must be apostilled/consular certified."
+  },
+  {
+    "rule_id": "RUL-MCA-008",
+    "service": "company_incorporation",
+    "entity_type": "opc",
+    "jurisdiction": {
+      "country": "India",
+      "state": "all"
+    },
+    "conditions": [
+      {
+        "field": "entity_type",
+        "operator": "equals",
+        "value": "opc"
+      }
+    ],
+    "requirement_type": "eligibility",
+    "requirement_name": "Sole Member Eligibility & Nominee Consent (Form INC-3)",
+    "description": "One Person Company (OPC) member must be a natural person who is an Indian citizen. A nominee consent in Form INC-3 along with nominee identity/address proof is mandatory.",
+    "mandatory": true,
+    "accepted_alternatives": [],
+    "forms": [
+      "SPICe+ Part B",
+      "Form INC-3 (Nominee Consent)"
+    ],
+    "authority": "Ministry of Corporate Affairs (MCA), Government of India",
+    "source_id": "SRC-MCA-006",
+    "source_url": "https://www.mca.gov.in/content/mca/global/en/help/faqs/company-incorporation-faqs.html",
+    "source_section": "Company Incorporation FAQs - Q4: OPC Rules",
+    "effective_from": "2021-04-01",
+    "effective_to": null,
+    "last_verified": "2026-09-13",
+    "status": "approved",
+    "notes": "Nominee must be an Indian citizen. NRI residency requirement reduced to 120 days under Companies Amendment Rules 2021."
+  },
+  {
+    "rule_id": "RUL-GST-009",
+    "service": "gst_registration",
+    "entity_type": "private_limited_company",
+    "jurisdiction": {
+      "country": "India",
+      "state": "all"
+    },
+    "conditions": [
+      {
+        "field": "apply_gst_during_incorporation",
+        "operator": "equals",
+        "value": true
+      }
+    ],
+    "requirement_type": "form",
+    "requirement_name": "AGILE-PRO-S Linked GSTIN Application",
+    "description": "Opting for GST registration during company incorporation via AGILE-PRO-S form (INC-35). Requires primary authorized signatory declaration and bank account nomination.",
+    "mandatory": false,
+    "accepted_alternatives": [
+      "Post-Incorporation Form GST REG-01"
+    ],
+    "forms": [
+      "AGILE-PRO-S (INC-35)",
+      "Form GST REG-01"
+    ],
+    "authority": "Central Board of Indirect Taxes and Customs (CBIC) & MCA",
+    "source_id": "SRC-MCA-005",
+    "source_url": "https://www.mca.gov.in/content/mca/global/en/services/company-services/agile-pro-s-guidelines.html",
+    "source_section": "AGILE-PRO-S Instruction Kit - Section 1: GSTIN Option",
+    "effective_from": "2021-06-07",
+    "effective_to": null,
+    "last_verified": "2026-09-13",
+    "status": "approved",
+    "notes": "GST registration is optional during incorporation unless business activity triggers mandatory registration under Section 24 CGST Act."
+  },
+  {
+    "rule_id": "RUL-DPIIT-010",
+    "service": "dpiit_startup_recognition",
+    "entity_type": "startup",
+    "jurisdiction": {
+      "country": "India",
+      "state": "all"
+    },
+    "conditions": [
+      {
+        "field": "is_startup_applicant",
+        "operator": "equals",
+        "value": true
+      },
+      {
+        "field": "annual_turnover_inr_cr",
+        "operator": "less_than",
+        "value": 100
+      },
+      {
+        "field": "years_since_incorporation",
+        "operator": "less_than",
+        "value": 10
+      }
+    ],
+    "requirement_type": "eligibility",
+    "requirement_name": "DPIIT Startup Recognition Certificate",
+    "description": "Entity registered as Private Limited, LLP, or Registered Partnership within 10 years of incorporation with annual turnover < Rs. 100 Crore and working on innovation/scalability.",
+    "mandatory": false,
+    "accepted_alternatives": [],
+    "forms": [
+      "Startup India Portal Recognition Application"
+    ],
+    "authority": "Department for Promotion of Industry and Internal Trade (DPIIT)",
+    "source_id": "SRC-DPIIT-010",
+    "source_url": "https://www.startupindia.gov.in/content/sih/en/startup-scheme.html",
+    "source_section": "DPIIT Notification G.S.R. 127(E) - Paragraph 1 & 2",
+    "effective_from": "2019-02-19",
+    "effective_to": null,
+    "last_verified": "2026-09-13",
+    "status": "approved",
+    "notes": "Entities formed by splitting up or reconstruction of existing business are ineligible."
+  },
+  {
+    "rule_id": "RUL-MAH-011",
+    "service": "state_registration",
+    "entity_type": "private_limited_company",
+    "jurisdiction": {
+      "country": "India",
+      "state": "Maharashtra"
+    },
+    "conditions": [
+      {
+        "field": "state",
+        "operator": "equals",
+        "value": "Maharashtra"
+      },
+      {
+        "field": "employee_count",
+        "operator": "greater_than",
+        "value": 9
+      }
+    ],
+    "requirement_type": "form",
+    "requirement_name": "Maharashtra Shops and Establishments Registration Certificate (Form A)",
+    "description": "Establishments in Maharashtra employing 10 or more workers must apply online in Form A for Shops and Establishment Registration Certificate within 60 days of business launch.",
+    "mandatory": true,
+    "accepted_alternatives": [],
+    "forms": [
+      "Form A Registration Application (Aaple Sarkar Portal)"
+    ],
+    "authority": "Labour Department, Government of Maharashtra",
+    "source_id": "SRC-MAH-014",
+    "source_url": "https://maharashtra.gov.in/",
+    "source_section": "Maharashtra Shops & Establishments Act 2017 - Section 6",
+    "effective_from": "2017-12-19",
+    "effective_to": null,
+    "last_verified": "2026-09-13",
+    "status": "approved",
+    "notes": "For establishments with 0 to 9 workers, only Form F Intimation (Gumasta Intimation) is required."
+  },
+  {
+    "rule_id": "RUL-MAH-012",
+    "service": "state_registration",
+    "entity_type": "private_limited_company",
+    "jurisdiction": {
+      "country": "India",
+      "state": "Maharashtra"
+    },
+    "conditions": [
+      {
+        "field": "state",
+        "operator": "equals",
+        "value": "Maharashtra"
+      },
+      {
+        "field": "employee_count",
+        "operator": "less_than",
+        "value": 10
+      }
+    ],
+    "requirement_type": "form",
+    "requirement_name": "Maharashtra Shops Intimation Receipt (Form F - Gumasta)",
+    "description": "Establishments in Maharashtra with less than 10 workers submit online Intimation in Form F along with self-declaration to receive instant online receipt.",
+    "mandatory": true,
+    "accepted_alternatives": [],
+    "forms": [
+      "Form F Online Intimation (Aaple Sarkar / MAITRI Portal)"
+    ],
+    "authority": "Labour Department, Government of Maharashtra",
+    "source_id": "SRC-MAH-014",
+    "source_url": "https://maharashtra.gov.in/",
+    "source_section": "Maharashtra Shops & Establishments Act 2017 - Section 7",
+    "effective_from": "2017-12-19",
+    "effective_to": null,
+    "last_verified": "2026-09-13",
+    "status": "approved",
+    "notes": "No inspection or renewal fee is required for Form F intimation receipts."
+  }
+]

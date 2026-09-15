@@ -45,11 +45,55 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
   const [declarationChecked, setDeclarationChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Dynamic MCA document rules engine selectors
+  const [premisesType, setPremisesType] = useState<'RENTED' | 'OWNED' | 'DIRECTOR_RESIDENCE'>('RENTED');
+  const [directorResidency, setDirectorResidency] = useState<'INDIAN' | 'FOREIGN'>('INDIAN');
+
   if (!isOpen || !approvalItem) return null;
 
-  const requiredDocs = approvalItem.requiredDocs && approvalItem.requiredDocs.length > 0
-    ? approvalItem.requiredDocs
-    : ['PAN Card / Identity Proof', 'Address Proof / Lease Deed', 'Site Layout / Floor Plan'];
+  const isMcaCompany = approvalItem.id === 'appr-1' || approvalItem.name.toLowerCase().includes('company incorporation') || approvalItem.name.toLowerCase().includes('spice+');
+  const isMcaLlp = approvalItem.id === 'appr-1-llp' || approvalItem.name.toLowerCase().includes('llp incorporation') || approvalItem.name.toLowerCase().includes('fillip');
+
+  let requiredDocs: string[] = [];
+
+  if (isMcaCompany) {
+    requiredDocs = [
+      'PAN Card of Proposed Directors / Subscribers',
+      directorResidency === 'FOREIGN' 
+        ? 'Passport & Apostilled/Notarized Identity & Address Proof' 
+        : 'Identity & Address Proof (Voter ID / Passport / Driving License / Aadhaar)',
+      'Digital Signature Certificate (DSC) for Signatories',
+      premisesType === 'RENTED' 
+        ? 'Registered Lease Deed / Rent Agreement' 
+        : premisesType === 'OWNED' 
+        ? 'Property Ownership Title Deed / Tax Receipt' 
+        : 'Director/Subscriber Residence Proof & Title Document',
+      'Registered Office Utility Bill (< 2 Months Old: Electricity/Gas/Water)',
+      'Owner NOC (No Objection Certificate) for Registered Office',
+      'Draft e-MoA (INC-33) & e-AoA (INC-34) Details',
+      'AGILE-PRO-S (GSTIN, EPFO, ESIC & Bank Account) Particulars'
+    ];
+  } else if (isMcaLlp) {
+    requiredDocs = [
+      'PAN Card of Designated Partners',
+      directorResidency === 'FOREIGN' 
+        ? 'Passport & Apostilled/Notarized Identity & Address Proof' 
+        : 'Identity & Address Proof (Voter ID / Passport / Driving License / Aadhaar)',
+      'Digital Signature Certificate (DSC) of Designated Partners',
+      premisesType === 'RENTED' 
+        ? 'Registered Lease Deed / Rent Agreement' 
+        : premisesType === 'OWNED' 
+        ? 'Property Ownership Title Deed / Tax Receipt' 
+        : 'Partner Residence Proof & Title Document',
+      'Registered Office Utility Bill (< 2 Months Old: Electricity/Gas/Water)',
+      'Owner NOC (No Objection Certificate) for Registered Office',
+      'Form 3 LLP Agreement & Partners Consent (Subscriber Sheet)'
+    ];
+  } else {
+    requiredDocs = approvalItem.requiredDocs && approvalItem.requiredDocs.length > 0
+      ? approvalItem.requiredDocs
+      : ['PAN Card / Identity Proof', 'Address Proof / Lease Deed', 'Site Layout / Floor Plan'];
+  }
 
   const handleFileChange = (docName: string, file: File | null) => {
     if (!file) return;
@@ -181,6 +225,70 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
               Sector: <span className="font-bold text-slate-700 dark:text-slate-300">{activeProject.sector}</span> ({activeProject.district})
             </div>
           </div>
+
+          {/* MCA Statutory Incorporation Rules & Configuration Box */}
+          {(isMcaCompany || isMcaLlp) && (
+            <div className="mt-4 p-4 rounded-2xl bg-emerald-50/50 dark:bg-slate-800/80 border border-emerald-200/80 dark:border-slate-700 space-y-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>MCA Statutory Rules & Premises Configuration</span>
+                </span>
+                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                  {isMcaCompany ? 'SPICe+ Integrated Application' : 'FiLLiP LLP Incorporation'}
+                </span>
+              </div>
+
+              {/* Dynamic Selectors */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Signatory / Director Citizenship:
+                  </label>
+                  <select
+                    value={directorResidency}
+                    onChange={(e) => setDirectorResidency(e.target.value as any)}
+                    className="w-full text-xs p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+                  >
+                    <option value="INDIAN">Indian Resident Citizen (Voter ID / Passport / DL / Aadhaar)</option>
+                    <option value="FOREIGN">Foreign National / NRI (Passport Mandatory + Apostille)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Registered Office Premises Status:
+                  </label>
+                  <select
+                    value={premisesType}
+                    onChange={(e) => setPremisesType(e.target.value as any)}
+                    className="w-full text-xs p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+                  >
+                    <option value="RENTED">Rented Premises (Lease Deed + Utility Bill + Owner NOC Required)</option>
+                    <option value="OWNED">Company / Promoter Owned (Title Deed + Utility Bill Required)</option>
+                    <option value="DIRECTOR_RESIDENCE">Director Residence Address (Title Deed + NOC + Utility Bill)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Statutory MCA Forms Summary Note */}
+              <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 text-[11px] text-slate-600 dark:text-slate-300 flex items-start gap-2">
+                <FileCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-slate-900 dark:text-white font-bold">MCA Statutory Forms Auto-Generated: </strong>
+                  {isMcaCompany ? (
+                    <span>
+                      SPICe+ Part A (Name Approval), SPICe+ Part B (Incorporation), e-MoA (INC-33), e-AoA (INC-34), AGILE-PRO-S (GSTIN, ESIC, EPFO, Bank Account) and INC-9 Declaration.
+                    </span>
+                  ) : (
+                    <span>
+                      RUN-LLP (Name Reservation), FiLLiP (LLP Incorporation Form), Form 3 (LLP Agreement Execution within 30 days of registration).
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Required Documents Upload Section */}
           <div className="mt-6 space-y-4">

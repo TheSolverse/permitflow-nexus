@@ -1,0 +1,21 @@
+================================================================================
+SOURCE ID: SRC-MCA-006
+TITLE: Frequently Asked Questions (FAQs) on SPICe+ and Company Incorporation
+AUTHORITY: Ministry of Corporate Affairs (MCA), Government of India
+OFFICIAL URL: https://www.mca.gov.in/content/mca/global/en/help/faqs/company-incorporation-faqs.html
+VERIFIED DATE: 2026-09-13
+================================================================================
+
+MINISTRY OF CORPORATE AFFAIRS - INCORPORATION FAQS
+
+Q1: Is PAN mandatory for Indian subscribers/directors?
+A: Yes, PAN is mandatory for Indian nationals residing in India.
+
+Q2: Is Aadhaar mandatory for incorporation?
+A: No, Aadhaar is not universally mandatory. Acceptable identity proofs include Voter ID, Passport, Driving License, or Aadhaar.
+
+Q3: What address proof is required for registered office?
+A: Utility bill (electricity, gas, mobile, telephone, or water) not older than two months along with Rent Agreement / Lease Deed / Title Deed and Owner NOC.
+
+Q4: What is OPC (One Person Company) restriction?
+A: Only a natural person who is an Indian citizen and resident in India shall be eligible to incorporate an OPC or be a nominee for the sole member of an OPC.

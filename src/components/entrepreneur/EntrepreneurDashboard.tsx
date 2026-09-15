@@ -39,34 +39,38 @@ export const EntrepreneurDashboard: React.FC = () => {
 
   const [isExpiryAlertOpen, setIsExpiryAlertOpen] = useState(false);
 
-  // Automatically trigger renewal alert popup on login (once per session)
-  useEffect(() => {
-    const hasSeenRenewalModal = sessionStorage.getItem(`pfn_seen_renewal_${currentUser.id}`);
-    if (!hasSeenRenewalModal) {
-      setIsExpiryAlertOpen(true);
-      sessionStorage.setItem(`pfn_seen_renewal_${currentUser.id}`, 'true');
-    }
-  }, [currentUser.id]);
-
   const hasProjects = projects.length > 0 && !!activeProject?.id;
   const checklist = hasProjects ? generateSmartChecklist(activeProject, applications) : [];
   const totalApprovals = checklist.length;
 
-  const approvedCount = applications.filter(a => a.status === 'Approved').length;
-  const underReviewCount = applications.filter(a => a.status === 'Under Review' || a.status === 'Submitted' || a.status === 'Inspection Scheduled').length;
+  const projectApps = applications.filter(a => a.projectId === activeProject?.id);
+  const approvedCount = projectApps.filter(a => a.status === 'Approved').length;
+  const underReviewCount = projectApps.filter(a => a.status === 'Under Review' || a.status === 'Submitted' || a.status === 'Inspection Scheduled').length;
   
   // Real pending queries raised by officers from DB
-  const realPendingQueries = applications.flatMap(app => 
+  const realPendingQueries = projectApps.flatMap(app => 
     (app.queries || []).filter(q => q.status === 'OPEN').map(q => ({ app, query: q }))
   );
   
   // Real flagged / rejected documents by inspecting officers
   const flaggedDocs = (documents || []).filter(d => 
-    d.status === 'Name Mismatch' || d.status === 'Expired' || d.status === 'Blurry / Unreadable'
+    (!d.projectId || d.projectId === activeProject?.id) &&
+    (d.status === 'Name Mismatch' || d.status === 'Expired' || d.status === 'Blurry / Unreadable')
   );
 
   const actionRequiredCount = realPendingQueries.length + flaggedDocs.length;
-  const upcomingRenewalsCount = complianceTasks.filter(t => t.status === 'DUE_SOON' || t.status === 'OVERDUE').length;
+  const projectComplianceTasks = complianceTasks.filter(t => activeProject?.id && t.projectId === activeProject.id);
+  const upcomingRenewalsCount = projectComplianceTasks.filter(t => t.status === 'DUE_SOON' || t.status === 'OVERDUE').length;
+
+  // Trigger renewal alert popup on login ONLY IF the active project has tasks requiring attention
+  useEffect(() => {
+    if (!currentUser?.id || !activeProject?.id) return;
+    const hasSeenRenewalModal = sessionStorage.getItem(`pfn_seen_renewal_${currentUser.id}_${activeProject.id}`);
+    if (!hasSeenRenewalModal && upcomingRenewalsCount > 0) {
+      setIsExpiryAlertOpen(true);
+      sessionStorage.setItem(`pfn_seen_renewal_${currentUser.id}_${activeProject.id}`, 'true');
+    }
+  }, [currentUser?.id, activeProject?.id, upcomingRenewalsCount]);
 
   const completionPercentage = totalApprovals > 0 ? Math.round((approvedCount / totalApprovals) * 100) : 0;
 
@@ -80,8 +84,8 @@ export const EntrepreneurDashboard: React.FC = () => {
     { name: 'Not Started', value: 1, color: '#CBD5E1' }
   ];
 
-  // Real deadlines & inspections from DB
-  const activeDeadlines = complianceTasks.filter(t => t.status === 'DUE_SOON' || t.status === 'OVERDUE');
+  // Real deadlines & inspections from DB for active project
+  const activeDeadlines = projectComplianceTasks.filter(t => t.status === 'DUE_SOON' || t.status === 'OVERDUE');
   const activeInspections = jointInspections.filter(i => i.status === 'SCHEDULED');
 
   // Real matching incentive scheme for the business sector
@@ -251,8 +255,10 @@ export const EntrepreneurDashboard: React.FC = () => {
               <ChevronRight className="w-3 h-3" />
             </span>
           </div>
-          <div className="text-2xl font-extrabold text-[#253D2C] dark:text-white mt-1">{upcomingRenewalsCount > 0 ? upcomingRenewalsCount : 3}</div>
-          <div className="text-[10px] text-[#4A6B53] dark:text-[#A3D4B3] mt-1 font-semibold">Factory License in 30d • MPCB in 45d</div>
+          <div className="text-2xl font-extrabold text-[#253D2C] dark:text-white mt-1">{upcomingRenewalsCount}</div>
+          <div className="text-[10px] text-[#4A6B53] dark:text-[#A3D4B3] mt-1 font-semibold">
+            {upcomingRenewalsCount > 0 ? `${upcomingRenewalsCount} items requiring action` : 'All clearances up to date'}
+          </div>
         </div>
 
       </div>

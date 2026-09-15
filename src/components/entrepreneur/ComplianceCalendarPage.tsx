@@ -18,9 +18,10 @@ export const ComplianceCalendarPage: React.FC = () => {
   const { complianceTasks, activeProject } = useApp();
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
-  const completedCount = complianceTasks.filter(t => t.status === 'COMPLETED').length;
-  const totalTasks = complianceTasks.length;
-  const complianceHealthPct = Math.round((completedCount / Math.max(totalTasks, 1)) * 100) || 82;
+  const projectTasks = complianceTasks.filter(t => activeProject?.id && t.projectId === activeProject.id);
+  const completedCount = projectTasks.filter(t => t.status === 'COMPLETED').length;
+  const totalTasks = projectTasks.length;
+  const complianceHealthPct = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 100;
 
   const getStatusBadge = (status: ComplianceTask['status']) => {
     switch (status) {
@@ -97,7 +98,7 @@ export const ComplianceCalendarPage: React.FC = () => {
             ))}
             {Array.from({ length: 31 }).map((_, i) => {
               const dayNum = i + 1;
-              const hasTask = complianceTasks.find(t => t.dueDate.endsWith(`-${dayNum < 10 ? '0' + dayNum : dayNum}`));
+              const hasTask = projectTasks.find(t => t.dueDate.endsWith(`-${dayNum < 10 ? '0' + dayNum : dayNum}`));
 
               return (
                 <div
@@ -124,7 +125,16 @@ export const ComplianceCalendarPage: React.FC = () => {
       {/* LIST VIEW */}
       {viewMode === 'list' && (
         <div className="space-y-4">
-          {complianceTasks.map((task) => (
+          {projectTasks.length === 0 ? (
+            <div className="p-8 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center space-y-2">
+              <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400 mx-auto opacity-80" />
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white">No Renewal Deadlines Due</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                All statutory clearances and annual returns for <strong className="text-slate-700 dark:text-slate-200">{activeProject?.businessName}</strong> are up to date.
+              </p>
+            </div>
+          ) : (
+            projectTasks.map((task) => (
             <div
               key={task.id}
               className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-3"
@@ -186,7 +196,7 @@ export const ComplianceCalendarPage: React.FC = () => {
                 </button>
               </div>
             </div>
-          ))}
+          )))}
         </div>
       )}
 

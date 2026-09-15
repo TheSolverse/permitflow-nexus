@@ -1,0 +1,9 @@
+MINISTRY OF CORPORATE AFFAIRS - AGILE-PRO-S (INC-35) INSTRUCTION KIT
+
+AGILE-PRO-S is a linked mandatory form filed along with SPICe+ Part B for:
+1. GSTIN (Optional application during incorporation).
+2. EPFO Registration (Mandatory for all new incorporated companies).
+3. ESIC Registration (Mandatory for all new incorporated companies).
+4. Bank Account Opening (Mandatory selection of designated bank).
+5. Professional Tax Registration (Mandatory for Maharashtra & West Bengal).
+6. Shops and Establishment Registration (Integrated for select states including Maharashtra).

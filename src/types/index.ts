@@ -1,4 +1,13 @@
-export type Role = 'ENTREPRENEUR' | 'OFFICER' | 'ADMIN';
+export type Role = 
+  | 'ENTREPRENEUR' 
+  | 'OFFICER' 
+  | 'ADMIN' 
+  | 'OFFICER_MPCB' 
+  | 'OFFICER_FIRE' 
+  | 'OFFICER_DISH' 
+  | 'OFFICER_MIDC' 
+  | 'OFFICER_MSEDCL' 
+  | 'OFFICER_FSSAI';
 
 export type Language = 'en' | 'mr' | 'hi';
 
@@ -59,11 +68,58 @@ export type ApprovalStatus =
   | 'Ready to Apply'
   | 'Submitted'
   | 'Under Review'
+  | 'More Information Needed'
+  | 'Inspection Pending'
   | 'Query Raised'
   | 'Inspection Scheduled'
+  | 'Inspection Required'
   | 'Approved'
   | 'Rejected'
+  | 'Delayed'
+  | 'Blocked by Dependency'
   | 'Renewal Due';
+
+export interface ParallelPermissionItem {
+  id: string;
+  projectId: string;
+  approvalId: string;
+  approvalName: string;
+  department: string;
+  category: 'Registration' | 'Environmental' | 'Safety' | 'Utility' | 'Clearance';
+  assignedOfficer: string;
+  officerEmail?: string;
+  status: ApprovalStatus;
+  pendingWith: string; // e.g. "Fire Officer", "Entrepreneur", "MPCB Officer"
+  pendingAction?: string; // e.g. "Upload NABL Water Test Report"
+  delayReason?: string; // e.g. "Inspection not completed"
+  dateReceived?: string; // Submission date
+  lastUpdatedDateTime?: string; // e.g. "12 Sept 2026, 11:30 AM"
+  pendingDocs: string[];
+  documentIds?: string[];
+  queriesCount: number;
+  openQueries?: { id: string; queryCategory: string; queryText: string; raisedDate: string; dueDate: string }[];
+  inspectionDate?: string;
+  slaDeadlineDate: string;
+  slaDaysRemaining: number;
+  dependencies: string[]; // Array of Prerequisite Approval IDs e.g. ['mpcb-cte', 'fire-noc']
+  blockedBy?: string[]; // Human-readable names of unapproved prerequisites
+  submittedDate: string;
+  lastUpdatedDate: string;
+  remarks?: string;
+  activityHistory?: { id: string; timestamp: string; actor: string; department: string; action: string; notes?: string }[];
+}
+
+export interface ParallelWorkflowSummary {
+  projectId: string;
+  totalRequired: number;
+  approvedCount: number;
+  underReviewCount: number;
+  queryRaisedCount: number;
+  inspectionRequiredCount: number;
+  delayedCount: number;
+  blockedCount: number;
+  progressPercentage: number;
+}
 
 export interface ApprovalType {
   id: string;
@@ -245,6 +301,8 @@ export interface AuditLogItem {
 
 export interface NotificationItem {
   id: string;
+  projectId?: string;
+  userId?: string;
   timestamp: string;
   title: string;
   message: string;

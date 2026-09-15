@@ -31,6 +31,12 @@ import { RulesEngineManager } from './components/admin/RulesEngineManager';
 import { NotificationCentrePage } from './components/admin/NotificationCentrePage';
 import { AuditLogsPage } from './components/admin/AuditLogsPage';
 
+// Parallel Workflow & Department Role Components
+import { ParallelWorkflowDashboard } from './components/workflow/ParallelWorkflowDashboard';
+import { SimplePermissionCardView } from './components/entrepreneur/SimplePermissionCardView';
+import { DepartmentOfficerDesk } from './components/officer/DepartmentOfficerDesk';
+import { AdminAssignmentConsole } from './components/admin/AdminAssignmentConsole';
+
 import { ComplianceExpiryAlertModal } from './components/entrepreneur/ComplianceExpiryAlertModal';
 
 export const MainContent: React.FC = () => {
@@ -56,12 +62,16 @@ export const MainContent: React.FC = () => {
         <Sidebar />
 
         <main className="flex-1 min-w-0 overflow-x-hidden">
+          {/* Shared & Role-Scoped Main Component Views */}
+          {activeTab === 'parallel-workflow' && <ParallelWorkflowDashboard />}
+          {activeTab === 'simple-tracker' && <SimplePermissionCardView />}
+
           {/* Entrepreneur View Tabs */}
           {activeTab === 'dashboard' && <EntrepreneurDashboard />}
           {activeTab === 'new-project' && <NewProjectForm />}
           {activeTab === 'checklist' && <SmartChecklistPage />}
           {activeTab === 'documents' && <DocumentCentrePage />}
-          {activeTab === 'applications' && <ApplicationTrackerPage />}
+          {activeTab === 'applications' && <SimplePermissionCardView />}
           {activeTab === 'inspections' && <InspectionPlannerPage />}
           {activeTab === 'compliance' && <ComplianceCalendarPage />}
           {activeTab === 'incentives' && <IncentiveFinderPage />}
@@ -69,15 +79,15 @@ export const MainContent: React.FC = () => {
           {activeTab === 'ai-assistant' && <AiAssistantPage />}
 
           {/* Officer View Tabs */}
-          {activeTab === 'officer-dashboard' && <OfficerDashboard />}
-          {activeTab === 'officer-app-review' && <OfficerDashboard />}
+          {activeTab === 'officer-dashboard' && <DepartmentOfficerDesk />}
+          {activeTab === 'officer-app-review' && <DepartmentOfficerDesk />}
           {activeTab === 'officer-queries' && <OfficerQueryPage />}
           {activeTab === 'officer-inspections' && <OfficerInspectionPage />}
           {activeTab === 'officer-analytics' && <SlaAnalyticsPage />}
           {activeTab === 'officer-nocs' && <OfficerNocManagementPage />}
 
           {/* Admin View Tabs */}
-          {activeTab === 'admin-dashboard' && <AdminDashboard />}
+          {activeTab === 'admin-dashboard' && <AdminAssignmentConsole />}
           {activeTab === 'admin-rules' && <RulesEngineManager />}
           {activeTab === 'admin-notifications' && <NotificationCentrePage />}
           {activeTab === 'admin-audit' && <AuditLogsPage />}

@@ -1,0 +1,15 @@
+MINISTRY OF CORPORATE AFFAIRS - SPICe+ INSTRUCTION KIT
+
+SPICe+ Part A: Name Reservation
+- Reservation of name for new company incorporation or change of name.
+- Maximum 2 names can be proposed in Part A.
+
+SPICe+ Part B: Integrated Incorporation Services
+- Covers DIN allocation (up to 3 directors without existing DIN), Incorporation, PAN allotment, TAN allotment, EPFO registration, ESIC registration, Bank Account opening, GSTIN registration, and Professional Tax registration (Maharashtra & WB).
+
+Fee Waiver Scheme:
+- Zero MCA Government Incorporation Fee applies for companies with Authorized Capital up to Rs. 15,00,000 (Rupees Fifteen Lakhs) under SPICe+ Part B.
+- State Stamp Duty remains payable as per the relevant State Stamp Act (e.g., Maharashtra Stamp Act).
+
+Mandatory Digital Signatures (DSC):
+- DSC of Class 3 is mandatory for at least one subscriber/director who signs SPICe+ Part B and linked e-forms.

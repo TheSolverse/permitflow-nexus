@@ -17,12 +17,13 @@ import {
   Sparkles
 } from 'lucide-react';
 import { MASTER_SECTOR_DATA } from '../../data/sectorData';
-import { Sector, ApprovalStatus, NocType, SmartChecklistItem } from '../../types';
+import { Sector, ApprovalStatus, NocType, SmartChecklistItem, Application } from '../../types';
 import { NocApplicationWizardModal } from './NocApplicationWizardModal';
 import { ApplyApprovalModal } from './ApplyApprovalModal';
+import { ApplicationDetailModal } from './ApplicationDetailModal';
 
 export const SmartChecklistPage: React.FC = () => {
-  const { activeProject, applications, applyForApproval, setActiveTab, setSelectedAppDetail } = useApp();
+  const { activeProject, applications, parallelPermissions, documents, applyForApproval, setActiveTab, selectedAppDetail, setSelectedAppDetail } = useApp();
   const [viewMode, setViewMode] = useState<'table' | 'cards' | 'dependency'>('table');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
 
@@ -31,6 +32,13 @@ export const SmartChecklistPage: React.FC = () => {
   const [selectedSubSector, setSelectedSubSector] = useState<string>(
     activeProject.subSector || 'Textiles (spinning, weaving, garment manufacturing)'
   );
+
+  React.useEffect(() => {
+    if (activeProject) {
+      setSelectedSector(activeProject.sector || 'Manufacturing');
+      setSelectedSubSector(activeProject.subSector || '');
+    }
+  }, [activeProject.id, activeProject.sector, activeProject.subSector]);
 
   // Application Modal State
   const [selectedApprovalForApply, setSelectedApprovalForApply] = useState<SmartChecklistItem | null>(null);
@@ -89,15 +97,69 @@ export const SmartChecklistPage: React.FC = () => {
     if (item.status === 'Rejected') {
       // Reapply from scratch
       setSelectedApprovalForApply(item);
-    } else if (item.applicationId) {
-      const match = applications.find(a => a.id === item.applicationId);
-      if (match) {
-        setSelectedAppDetail(match);
-        setActiveTab('applications');
-      }
-    } else {
+    } else if (item.status === 'Not Started') {
       // Open interactive application & document upload modal
       setSelectedApprovalForApply(item);
+    } else {
+      // TRACK APP: Open focused officer tracking detail modal for ONLY this approval
+      const match = applications.find(a => 
+        (item.applicationId && a.id === item.applicationId) || 
+        a.approvalId === item.id || 
+        a.approvalName.toLowerCase() === item.name.toLowerCase()
+      );
+
+      if (match) {
+        setSelectedAppDetail(match);
+      } else {
+        const parallelMatch = parallelPermissions.find(p => p.approvalId === item.id || p.approvalName.toLowerCase().includes(item.name.toLowerCase()));
+        
+        const trackedApp: Application = {
+          id: item.applicationId || `app-${Date.now()}`,
+          appId: `PFN-2026-${item.department.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '')}-${Math.floor(100 + Math.random() * 900)}`,
+          projectId: activeProject.id,
+          businessName: activeProject.businessName,
+          approvalId: item.id,
+          approvalName: item.name,
+          department: item.department,
+          submissionDate: parallelMatch?.submittedDate || new Date().toISOString().split('T')[0],
+          slaDeadlineDate: parallelMatch?.slaDeadlineDate || new Date(Date.now() + (item.estimatedTimelineDays || 15) * 86400000).toISOString().split('T')[0],
+          slaDaysRemaining: parallelMatch?.slaDaysRemaining || item.estimatedTimelineDays || 15,
+          status: item.status,
+          officerAssigned: parallelMatch?.assignedOfficer || 'Department Desk Officer',
+          timeline: parallelMatch?.activityHistory?.map(a => ({
+            id: a.id,
+            title: a.action,
+            description: a.notes || `${a.department}: ${a.action}`,
+            timestamp: a.timestamp,
+            actor: a.actor,
+            role: 'OFFICER' as const
+          })) || [
+            {
+              id: `t-${Date.now()}`,
+              title: 'Application Under Officer Scrutiny',
+              description: `Application for ${item.name} assigned to ${parallelMatch?.assignedOfficer || 'Department Officer'}.`,
+              timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+              actor: parallelMatch?.assignedOfficer || 'Auto Dispatcher',
+              role: 'OFFICER'
+            }
+          ],
+          queries: parallelMatch?.openQueries?.map(q => ({
+            id: q.id,
+            applicationId: item.applicationId || item.id,
+            officerName: parallelMatch.assignedOfficer,
+            department: item.department,
+            queryCategory: q.queryCategory,
+            queryText: q.queryText,
+            raisedDate: q.raisedDate,
+            dueDate: q.dueDate,
+            status: 'OPEN' as const
+          })) || [],
+          documentIds: parallelMatch?.documentIds || documents.filter(d => d.projectId === activeProject.id).map(d => d.id),
+          riskScore: item.riskImpact || 20,
+          remarks: parallelMatch?.remarks
+        };
+        setSelectedAppDetail(trackedApp);
+      }
     }
   };
 
@@ -528,6 +590,14 @@ export const SmartChecklistPage: React.FC = () => {
           setActiveTab('applications');
         }}
       />
+
+      {/* Focused Officer Application Tracking Detail Modal */}
+      {selectedAppDetail && (
+        <ApplicationDetailModal
+          app={selectedAppDetail}
+          onClose={() => setSelectedAppDetail(null)}
+        />
+      )}
 
     </div>
   );

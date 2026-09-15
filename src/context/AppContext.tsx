@@ -16,7 +16,8 @@ import {
   ApprovalStatus,
   NocApplication,
   JointInspection,
-  NocQuery
+  NocQuery,
+  ParallelPermissionItem
 } from '../types';
 import { 
   INITIAL_USERS, 
@@ -30,7 +31,8 @@ import {
   INITIAL_NOTIFICATIONS, 
   INITIAL_RULES,
   INITIAL_NOC_APPLICATIONS,
-  INITIAL_JOINT_INSPECTIONS
+  INITIAL_JOINT_INSPECTIONS,
+  INITIAL_PARALLEL_PERMISSIONS
 } from '../data/mockData';
 import { generateSmartChecklist } from '../utils/rulesEngine';
 import { calculateRiskScore } from '../utils/riskCalculator';
@@ -86,6 +88,7 @@ interface AppContextType {
   rules: ApprovalRule[];
   nocApplications: NocApplication[];
   jointInspections: JointInspection[];
+  parallelPermissions: ParallelPermissionItem[];
 
   // Dynamic state helpers
   addProject: (projData: Omit<BusinessProject, 'id' | 'createdAt' | 'userId'>) => BusinessProject;
@@ -100,6 +103,18 @@ interface AppContextType {
   markNotificationRead: (id: string) => void;
   addRule: (ruleData: Omit<ApprovalRule, 'id'>) => void;
   updateIncentiveUrl: (id: string, officialUrl: string, officialApplyUrl?: string, officialInfoUrl?: string) => void;
+
+  // Parallel Workflow Coordination & Department Officer Action Helpers
+  triggerParallelAutoRouting: (targetProjectId?: string) => void;
+  updateParallelPermissionStatus: (permId: string, newStatus: ApprovalStatus, remarks?: string, inspectionDate?: string) => void;
+  raiseParallelPermissionQuery: (permId: string, queryCategory: string, queryText: string, dueDate: string) => void;
+  respondToParallelPermissionQuery: (permId: string, queryId: string, responseText: string) => void;
+  calculateParallelProgress: (targetProjectId?: string) => { approvedCount: number; totalRequired: number; progressPercentage: number };
+  officerApprovePermission: (permId: string, remarks?: string) => void;
+  officerRejectPermission: (permId: string, remarks?: string) => void;
+  officerRequestDocument: (permId: string, documentName: string, instructions?: string) => void;
+  officerScheduleInspection: (permId: string, inspectionDate: string, location?: string) => void;
+  officerMarkDelayed: (permId: string, delayReason: string, remarks?: string) => void;
   
   // NOC helpers
   submitNocApplication: (data: Partial<NocApplication> & { nocType: NocApplication['nocType']; nocName: string; department: string }) => NocApplication;
@@ -193,6 +208,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : INITIAL_JOINT_INSPECTIONS;
   });
 
+  const [parallelPermissions, setParallelPermissions] = useState<ParallelPermissionItem[]>(() => {
+    const saved = localStorage.getItem('pfn_parallel_permissions');
+    return saved ? JSON.parse(saved) : INITIAL_PARALLEL_PERMISSIONS;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('pfn_parallel_permissions', JSON.stringify(parallelPermissions));
+  }, [parallelPermissions]);
+
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [rules, setRules] = useState<ApprovalRule[]>(INITIAL_RULES);
@@ -232,13 +256,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // 4. Documents (isolated to user's projects for entrepreneur, all for officer)
     fetchDocuments(undefined, isEntrepreneur ? userId : undefined).then(data => {
-      if (data && data.length > 0) {
-        setDocuments(prev => {
-          const fetchedIds = new Set(data.map(d => d.id));
-          const localOnly = prev.filter(p => !fetchedIds.has(p.id));
-          return [...data, ...localOnly];
-        });
-      }
+      if (data) setDocuments(data);
     });
 
     // 5. Compliance Tasks (isolated to user's projects)
@@ -248,23 +266,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // 6. Common Catalogues & Logs
     fetchIncentiveSchemes().then(data => {
-      if (data && data.length > 0) setIncentiveSchemes(data);
+      if (data) setIncentiveSchemes(data);
     });
 
     fetchJointInspections().then(data => {
-      if (data && data.length > 0) setJointInspections(data);
+      if (data) setJointInspections(data);
     });
 
     fetchAuditLogs().then(data => {
-      if (data && data.length > 0) setAuditLogs(data);
+      if (data) setAuditLogs(data);
     });
 
-    fetchNotifications().then(data => {
-      if (data && data.length > 0) setNotifications(data);
+    fetchNotifications(userId).then(data => {
+      if (data) setNotifications(data);
     });
 
     fetchRules().then(data => {
-      if (data && data.length > 0) setRules(data);
+      if (data) setRules(data);
     });
   }, [currentUser?.id, currentUser?.role]);
 
@@ -346,6 +364,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setProjects(updated);
     setActiveProjectId(newProj.id);
 
+    // Automatically trigger Parallel Workflow Routing for newly created project
+    setTimeout(() => {
+      triggerParallelAutoRouting(newProj.id);
+    }, 100);
+
     // Persist to Supabase Database
     createProjectApi(newProj).catch(err => console.warn('Could not save project to backend:', err));
 
@@ -402,11 +425,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setApplications(prev => [newApp, ...prev.filter(a => a.id !== newApp.id)]);
 
+    // Also sync parallelPermissions so department officers see the uploaded documents
+    const attachedDocNames = documents.filter(d => newApp.documentIds.includes(d.id)).map(d => d.docName);
+    setParallelPermissions(prev => {
+      const exists = prev.some(p => p.projectId === activeProject.id && (p.approvalId === approvalId || p.approvalName.toLowerCase().includes(approvalName.toLowerCase())));
+      if (exists) {
+        return prev.map(p => {
+          if (p.projectId === activeProject.id && (p.approvalId === approvalId || p.approvalName.toLowerCase().includes(approvalName.toLowerCase()))) {
+            return {
+              ...p,
+              status: 'Submitted' as ApprovalStatus,
+              documentIds: newApp.documentIds,
+              pendingDocs: attachedDocNames.length > 0 ? attachedDocNames : p.pendingDocs,
+              lastUpdatedDate: new Date().toISOString().split('T')[0],
+              lastUpdatedDateTime: new Date().toLocaleString()
+            };
+          }
+          return p;
+        });
+      }
+      return prev;
+    });
+
     // Persist to Supabase Database
     createApplicationApi(newApp).catch(err => console.warn('Could not save application to backend:', err));
 
     // Audit log
-    setAuditLogs([
+    setAuditLogs(prev => [
       {
         id: `log-${Date.now()}`,
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
@@ -419,11 +464,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ipAddress: '192.168.1.45',
         details: `Submitted ${approvalName} to ${department}.`
       },
-      ...auditLogs
+      ...prev
     ]);
 
     // Notification
-    setNotifications([
+    setNotifications(prev => [
       {
         id: `notif-${Date.now()}`,
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
@@ -433,7 +478,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         read: false,
         channels: ['IN_APP', 'EMAIL']
       },
-      ...notifications
+      ...prev
     ]);
 
     return newApp;
@@ -991,6 +1036,584 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return true;
   };
 
+  // ----------------------------------------------------
+  // PARALLEL WORKFLOW COORDINATION LOGIC
+  // ----------------------------------------------------
+
+  const calculateParallelProgress = (targetProjectId?: string) => {
+    const projId = targetProjectId || activeProjectId || (projects[0] ? projects[0].id : 'proj-1');
+    const items = parallelPermissions.filter(p => p.projectId === projId);
+    if (items.length === 0) {
+      return { approvedCount: 0, totalRequired: 0, progressPercentage: 0 };
+    }
+    const approvedCount = items.filter(p => p.status === 'Approved').length;
+    const totalRequired = items.length;
+    const progressPercentage = Math.round((approvedCount / totalRequired) * 100);
+    return { approvedCount, totalRequired, progressPercentage };
+  };
+
+  const triggerParallelAutoRouting = (targetProjectId?: string) => {
+    const projId = targetProjectId || activeProjectId;
+    const targetProj = projects.find(p => p.id === projId) || activeProject;
+
+    const nowStr = new Date().toLocaleString();
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const newPermissions: ParallelPermissionItem[] = [
+      {
+        id: `perm-${Date.now()}-1`,
+        projectId: targetProj.id,
+        approvalId: 'mpcb-cte',
+        approvalName: 'Pollution Consent (MPCB CTE)',
+        department: 'Maharashtra Pollution Control Board (MPCB)',
+        category: 'Environmental',
+        assignedOfficer: 'Dr. V. K. Patil',
+        officerEmail: 'vk.patil@mpcb.gov.in',
+        status: 'Submitted',
+        pendingWith: 'MPCB Officer',
+        pendingAction: 'Technical scrutiny of stack height & emission controls',
+        dateReceived: todayStr,
+        lastUpdatedDateTime: nowStr,
+        pendingDocs: [],
+        queriesCount: 0,
+        slaDeadlineDate: new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0],
+        slaDaysRemaining: 15,
+        dependencies: [],
+        submittedDate: todayStr,
+        lastUpdatedDate: todayStr,
+        remarks: 'Automatically routed to MPCB for preliminary environmental scrutiny.',
+        activityHistory: [{ id: 'a-1', timestamp: nowStr, actor: currentUser.name, department: 'System', action: 'Auto-Routed to MPCB', notes: 'Consent to Establish assigned to Dr. V. K. Patil' }]
+      },
+      {
+        id: `perm-${Date.now()}-2`,
+        projectId: targetProj.id,
+        approvalId: 'midc-bldg',
+        approvalName: 'Industrial Permission (MIDC Building Plan)',
+        department: 'MIDC Infrastructure & Planning',
+        category: 'Clearance',
+        assignedOfficer: 'Er. Suresh Shinde',
+        officerEmail: 'suresh.shinde@midcindia.org',
+        status: 'Submitted',
+        pendingWith: 'MIDC Officer',
+        pendingAction: 'Architectural blueprint review',
+        dateReceived: todayStr,
+        lastUpdatedDateTime: nowStr,
+        pendingDocs: [],
+        queriesCount: 0,
+        slaDeadlineDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+        slaDaysRemaining: 14,
+        dependencies: [],
+        submittedDate: todayStr,
+        lastUpdatedDate: todayStr,
+        remarks: 'Architectural blueprint drawings routed to MIDC Civil Planning team.',
+        activityHistory: [{ id: 'a-2', timestamp: nowStr, actor: currentUser.name, department: 'System', action: 'Auto-Routed to MIDC', notes: 'Building plan assigned to Er. Suresh Shinde' }]
+      },
+      {
+        id: `perm-${Date.now()}-3`,
+        projectId: targetProj.id,
+        approvalId: 'fire-noc',
+        approvalName: 'Fire NOC (Provisional Safety Clearance)',
+        department: 'Maharashtra Fire Services',
+        category: 'Safety',
+        assignedOfficer: 'Officer Sunita Rane',
+        officerEmail: 'sunita.rane@mahfire.gov.in',
+        status: 'Submitted',
+        pendingWith: 'Fire Officer',
+        pendingAction: 'Fire fighting equipment layout review',
+        dateReceived: todayStr,
+        lastUpdatedDateTime: nowStr,
+        pendingDocs: [],
+        queriesCount: 0,
+        slaDeadlineDate: new Date(Date.now() + 10 * 86400000).toISOString().split('T')[0],
+        slaDaysRemaining: 10,
+        dependencies: [],
+        submittedDate: todayStr,
+        lastUpdatedDate: todayStr,
+        remarks: 'Fire Fighting Equipment layout under review by Fire Inspectorate.',
+        activityHistory: [{ id: 'a-3', timestamp: nowStr, actor: currentUser.name, department: 'System', action: 'Auto-Routed to Fire Dept', notes: 'Provisional Fire NOC assigned to Officer Sunita Rane' }]
+      },
+      {
+        id: `perm-${Date.now()}-4`,
+        projectId: targetProj.id,
+        approvalId: 'dish-factory',
+        approvalName: 'Factory / Labour Licence (DISH Safety Clearance)',
+        department: 'Directorate of Industrial Safety & Health (DISH)',
+        category: 'Safety',
+        assignedOfficer: 'Inspector A. B. Kadam',
+        officerEmail: 'ab.kadam@dish.maharashtra.gov.in',
+        status: 'Blocked by Dependency',
+        pendingWith: 'MPCB Department',
+        pendingAction: 'Waiting for prerequisite MPCB Pollution Consent approval',
+        dateReceived: todayStr,
+        lastUpdatedDateTime: nowStr,
+        pendingDocs: [],
+        queriesCount: 0,
+        slaDeadlineDate: new Date(Date.now() + 25 * 86400000).toISOString().split('T')[0],
+        slaDaysRemaining: 25,
+        dependencies: ['mpcb-cte', 'fire-noc'],
+        blockedBy: ['MPCB Consent to Establish (CTE)', 'Provisional Fire Safety NOC'],
+        submittedDate: todayStr,
+        lastUpdatedDate: todayStr,
+        remarks: 'Auto-blocked: Awaiting prerequisite MPCB CTE & Fire NOC approvals.',
+        activityHistory: [{ id: 'a-4', timestamp: nowStr, actor: currentUser.name, department: 'System', action: 'Auto-Routed (Gated)', notes: 'DISH Factory Licence waiting for MPCB CTE approval' }]
+      },
+      {
+        id: `perm-${Date.now()}-5`,
+        projectId: targetProj.id,
+        approvalId: 'msedcl-power',
+        approvalName: 'Electricity Connection (MSEDCL 11kV Load)',
+        department: 'Maharashtra State Electricity Distribution Co Ltd (MSEDCL)',
+        category: 'Utility',
+        assignedOfficer: 'Er. R. N. Deshpande',
+        officerEmail: 'rn.deshpande@mahadiscom.in',
+        status: 'Submitted',
+        pendingWith: 'MSEDCL Officer',
+        pendingAction: 'Transformer load sanction review',
+        dateReceived: todayStr,
+        lastUpdatedDateTime: nowStr,
+        pendingDocs: [],
+        queriesCount: 0,
+        slaDeadlineDate: new Date(Date.now() + 12 * 86400000).toISOString().split('T')[0],
+        slaDaysRemaining: 12,
+        dependencies: [],
+        submittedDate: todayStr,
+        lastUpdatedDate: todayStr,
+        remarks: 'Load sanction application routed to MSEDCL Substation Engineer.',
+        activityHistory: [{ id: 'a-5', timestamp: nowStr, actor: currentUser.name, department: 'System', action: 'Auto-Routed to MSEDCL', notes: 'Grid Load connection assigned to Er. R. N. Deshpande' }]
+      },
+      {
+        id: `perm-${Date.now()}-6`,
+        projectId: targetProj.id,
+        approvalId: 'fssai-licence',
+        approvalName: 'Food Licence (Central FSSAI Processing Licence)',
+        department: 'Food Safety & Standards Authority (FSSAI)',
+        category: 'Registration',
+        assignedOfficer: 'Officer Meena Thorat',
+        officerEmail: 'm.thorat@fssai.gov.in',
+        status: targetProj.sector === 'Food Processing' ? 'Submitted' : 'Not Started',
+        pendingWith: 'FSSAI Officer',
+        pendingAction: 'Hygiene & food safety scrutiny',
+        dateReceived: todayStr,
+        lastUpdatedDateTime: nowStr,
+        pendingDocs: [],
+        queriesCount: 0,
+        slaDeadlineDate: new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0],
+        slaDaysRemaining: 15,
+        dependencies: [],
+        submittedDate: todayStr,
+        lastUpdatedDate: todayStr,
+        remarks: 'Food hygiene compliance protocol submitted.',
+        activityHistory: [{ id: 'a-6', timestamp: nowStr, actor: currentUser.name, department: 'System', action: 'Auto-Routed to FSSAI', notes: 'Food licence assigned to Officer Meena Thorat' }]
+      }
+    ];
+
+    setParallelPermissions(prev => [
+      ...newPermissions,
+      ...prev.filter(p => p.projectId !== targetProj.id)
+    ]);
+
+    setNotifications(prev => [
+      {
+        id: `notif-${Date.now()}`,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        title: '⚡ Parallel Workflow Auto-Routed',
+        message: `Project "${targetProj.businessName}" permissions automatically assigned to MPCB, Fire, DISH, MIDC, MSEDCL & FSSAI departments.`,
+        type: 'SUCCESS',
+        read: false,
+        channels: ['IN_APP', 'EMAIL']
+      },
+      ...prev
+    ]);
+
+    setAuditLogs(prev => [
+      {
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        user: currentUser.name,
+        role: currentUser.role,
+        action: 'Triggered Parallel Workflow Auto-Routing',
+        ipAddress: '192.168.1.45',
+        details: `Auto-routed 6 department approvals in parallel for project ${targetProj.businessName}.`
+      },
+      ...prev
+    ]);
+  };
+
+  const updateParallelPermissionStatus = (
+    permId: string, 
+    newStatus: ApprovalStatus, 
+    remarks?: string, 
+    inspectionDate?: string
+  ) => {
+    let updatedTarget: ParallelPermissionItem | undefined;
+
+    setParallelPermissions(prevPermissions => {
+      const target = prevPermissions.find(p => p.id === permId);
+      if (!target) return prevPermissions;
+
+      updatedTarget = {
+        ...target,
+        status: newStatus,
+        remarks: remarks || target.remarks,
+        inspectionDate: inspectionDate || target.inspectionDate,
+        lastUpdatedDate: new Date().toISOString().split('T')[0]
+      };
+
+      const updatedList = prevPermissions.map(p => p.id === permId ? updatedTarget! : p);
+
+      if (newStatus === 'Approved') {
+        const approvedApprovalIds = new Set(
+          updatedList
+            .filter(p => p.projectId === target.projectId && p.status === 'Approved')
+            .map(p => p.approvalId)
+        );
+
+        return updatedList.map(p => {
+          if (p.projectId === target.projectId && p.status === 'Blocked by Dependency' && p.dependencies.length > 0) {
+            const allSatisfied = p.dependencies.every(depId => approvedApprovalIds.has(depId));
+            if (allSatisfied) {
+              return {
+                ...p,
+                status: 'Submitted' as ApprovalStatus,
+                blockedBy: [],
+                remarks: `Auto-unblocked: Prerequisites (${p.dependencies.join(', ')}) have been granted approval.`
+              };
+            } else {
+              const remainingBlocked = p.dependencies
+                .filter(depId => !approvedApprovalIds.has(depId))
+                .map(depId => {
+                  const depItem = updatedList.find(i => i.projectId === target.projectId && i.approvalId === depId);
+                  return depItem ? depItem.approvalName : depId;
+                });
+              return {
+                ...p,
+                blockedBy: remainingBlocked
+              };
+            }
+          }
+          return p;
+        });
+      }
+
+      return updatedList;
+    });
+
+    if (updatedTarget) {
+      setNotifications(prev => [
+        {
+          id: `notif-${Date.now()}`,
+          timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+          title: `Status Updated: ${updatedTarget?.approvalName}`,
+          message: `${updatedTarget?.department} updated permission status to "${newStatus}".`,
+          type: newStatus === 'Approved' ? 'SUCCESS' : newStatus === 'Rejected' ? 'ALERT' : 'INFO',
+          read: false,
+          channels: ['IN_APP', 'EMAIL']
+        },
+        ...prev
+      ]);
+
+      setAuditLogs(prev => [
+        {
+          id: `log-${Date.now()}`,
+          timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+          user: currentUser.name,
+          role: currentUser.role,
+          action: 'Updated Parallel Permission Status',
+          previousStatus: updatedTarget?.status,
+          newStatus,
+          ipAddress: '10.240.12.91',
+          details: remarks || `Permission "${updatedTarget?.approvalName}" status set to ${newStatus} by ${currentUser.name}.`
+        },
+        ...prev
+      ]);
+    }
+  };
+
+  const raiseParallelPermissionQuery = (permId: string, queryCategory: string, queryText: string, dueDate: string) => {
+    setParallelPermissions(prev => prev.map(p => {
+      if (p.id === permId) {
+        const newQuery = {
+          id: `q-perm-${Date.now()}`,
+          queryCategory,
+          queryText,
+          raisedDate: new Date().toISOString().split('T')[0],
+          dueDate
+        };
+        const existingQueries = p.openQueries || [];
+        return {
+          ...p,
+          status: 'Query Raised' as ApprovalStatus,
+          queriesCount: existingQueries.length + 1,
+          openQueries: [...existingQueries, newQuery],
+          lastUpdatedDate: new Date().toISOString().split('T')[0]
+        };
+      }
+      return p;
+    }));
+
+    setNotifications(prev => [
+      {
+        id: `notif-${Date.now()}`,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        title: '⚠️ Query Raised on Department Clearance',
+        message: `Officer ${currentUser.name} raised query: "${queryCategory}". Action required before deadline.`,
+        type: 'WARNING',
+        read: false,
+        channels: ['IN_APP', 'EMAIL', 'SMS']
+      },
+      ...prev
+    ]);
+  };
+
+  const respondToParallelPermissionQuery = (permId: string, queryId: string, responseText: string) => {
+    setParallelPermissions(prev => prev.map(p => {
+      if (p.id === permId) {
+        const remainingQueries = (p.openQueries || []).filter(q => q.id !== queryId);
+        const newStatus = remainingQueries.length === 0 ? 'Under Review' as ApprovalStatus : 'More Information Needed' as ApprovalStatus;
+        const nowStr = new Date().toLocaleString();
+        const newActivity = {
+          id: `act-${Date.now()}`,
+          timestamp: nowStr,
+          actor: currentUser.name,
+          department: 'Entrepreneur',
+          action: 'Query Response Submitted',
+          notes: responseText
+        };
+        return {
+          ...p,
+          status: newStatus,
+          pendingWith: currentUser.department || 'Department Officer',
+          pendingAction: 'Scrutinize entrepreneur query response',
+          queriesCount: remainingQueries.length,
+          openQueries: remainingQueries,
+          remarks: `Applicant responded: "${responseText.substring(0, 40)}..."`,
+          lastUpdatedDate: new Date().toISOString().split('T')[0],
+          lastUpdatedDateTime: nowStr,
+          activityHistory: [newActivity, ...(p.activityHistory || [])]
+        };
+      }
+      return p;
+    }));
+  };
+
+  const officerApprovePermission = (permId: string, remarks?: string) => {
+    updateParallelPermissionStatus(permId, 'Approved', remarks);
+    setParallelPermissions(prev => prev.map(p => {
+      if (p.id === permId) {
+        const nowStr = new Date().toLocaleString();
+        const newAct = {
+          id: `act-${Date.now()}`,
+          timestamp: nowStr,
+          actor: currentUser.name,
+          department: currentUser.department || 'Department Officer',
+          action: 'Approved Permission',
+          notes: remarks || 'Approval Granted'
+        };
+        return {
+          ...p,
+          pendingWith: 'Completed',
+          pendingAction: 'Permission Issued',
+          lastUpdatedDateTime: nowStr,
+          activityHistory: [newAct, ...(p.activityHistory || [])]
+        };
+      }
+      return p;
+    }));
+  };
+
+  const officerRejectPermission = (permId: string, remarks?: string) => {
+    updateParallelPermissionStatus(permId, 'Rejected', remarks);
+    setParallelPermissions(prev => prev.map(p => {
+      if (p.id === permId) {
+        const nowStr = new Date().toLocaleString();
+        const newAct = {
+          id: `act-${Date.now()}`,
+          timestamp: nowStr,
+          actor: currentUser.name,
+          department: currentUser.department || 'Department Officer',
+          action: 'Rejected Application',
+          notes: remarks || 'Application Rejected'
+        };
+        return {
+          ...p,
+          pendingWith: 'Closed',
+          pendingAction: 'Re-application Required',
+          lastUpdatedDateTime: nowStr,
+          activityHistory: [newAct, ...(p.activityHistory || [])]
+        };
+      }
+      return p;
+    }));
+  };
+
+  const officerRequestDocument = (permId: string, documentName: string, instructions?: string) => {
+    const nowStr = new Date().toLocaleString();
+    setParallelPermissions(prev => prev.map(p => {
+      if (p.id === permId) {
+        const updatedDocs = Array.from(new Set([...p.pendingDocs, documentName]));
+        const newAct = {
+          id: `act-${Date.now()}`,
+          timestamp: nowStr,
+          actor: currentUser.name,
+          department: currentUser.department || 'Department Officer',
+          action: `Requested Document: ${documentName}`,
+          notes: instructions
+        };
+        return {
+          ...p,
+          status: 'More Information Needed' as ApprovalStatus,
+          pendingWith: 'Entrepreneur',
+          pendingAction: `Upload document: ${documentName}`,
+          pendingDocs: updatedDocs,
+          remarks: instructions || `Requested document: ${documentName}`,
+          lastUpdatedDate: new Date().toISOString().split('T')[0],
+          lastUpdatedDateTime: nowStr,
+          activityHistory: [newAct, ...(p.activityHistory || [])]
+        };
+      }
+      return p;
+    }));
+
+    // Notification
+    setNotifications(prev => [
+      {
+        id: `notif-${Date.now()}`,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        title: '⚠️ Action Required: Document Requested',
+        message: `Officer ${currentUser.name} requested "${documentName}". Please upload in Document Centre.`,
+        type: 'WARNING',
+        read: false,
+        channels: ['IN_APP', 'EMAIL', 'SMS']
+      },
+      ...prev
+    ]);
+
+    // Audit log
+    setAuditLogs(prev => [
+      {
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        user: currentUser.name,
+        role: currentUser.role,
+        action: 'Requested Additional Document',
+        newStatus: 'More Information Needed',
+        ipAddress: '10.240.12.91',
+        details: `Requested document "${documentName}" for permission ${permId}.`
+      },
+      ...prev
+    ]);
+  };
+
+  const officerScheduleInspection = (permId: string, inspectionDate: string, location?: string) => {
+    const nowStr = new Date().toLocaleString();
+    setParallelPermissions(prev => prev.map(p => {
+      if (p.id === permId) {
+        const newAct = {
+          id: `act-${Date.now()}`,
+          timestamp: nowStr,
+          actor: currentUser.name,
+          department: currentUser.department || 'Department Officer',
+          action: 'Scheduled Site Inspection',
+          notes: `Inspection scheduled for ${inspectionDate} at ${location || 'Factory site'}`
+        };
+        return {
+          ...p,
+          status: 'Inspection Pending' as ApprovalStatus,
+          pendingWith: 'Field Inspector & Entrepreneur',
+          pendingAction: `Prepare site for audit on ${inspectionDate}`,
+          inspectionDate,
+          remarks: `Inspection scheduled for ${inspectionDate}`,
+          lastUpdatedDate: new Date().toISOString().split('T')[0],
+          lastUpdatedDateTime: nowStr,
+          activityHistory: [newAct, ...(p.activityHistory || [])]
+        };
+      }
+      return p;
+    }));
+
+    setNotifications(prev => [
+      {
+        id: `notif-${Date.now()}`,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        title: '📅 Site Inspection Scheduled',
+        message: `Officer ${currentUser.name} scheduled inspection for ${inspectionDate}. Please keep site ready.`,
+        type: 'INFO',
+        read: false,
+        channels: ['IN_APP', 'EMAIL', 'SMS']
+      },
+      ...prev
+    ]);
+
+    setAuditLogs(prev => [
+      {
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        user: currentUser.name,
+        role: currentUser.role,
+        action: 'Scheduled Site Inspection',
+        newStatus: 'Inspection Pending',
+        ipAddress: '10.240.12.91',
+        details: `Scheduled inspection on ${inspectionDate} for permission ${permId}.`
+      },
+      ...prev
+    ]);
+  };
+
+  const officerMarkDelayed = (permId: string, delayReason: string, remarks?: string) => {
+    const nowStr = new Date().toLocaleString();
+    setParallelPermissions(prev => prev.map(p => {
+      if (p.id === permId) {
+        const newAct = {
+          id: `act-${Date.now()}`,
+          timestamp: nowStr,
+          actor: currentUser.name,
+          department: currentUser.department || 'Department Officer',
+          action: 'Flagged Application Delay',
+          notes: `Reason: ${delayReason}`
+        };
+        return {
+          ...p,
+          status: 'Delayed' as ApprovalStatus,
+          pendingWith: currentUser.department || 'Department Officer',
+          delayReason,
+          pendingAction: 'Expedite technical scrutiny',
+          remarks: remarks || `Delayed: ${delayReason}`,
+          lastUpdatedDate: new Date().toISOString().split('T')[0],
+          lastUpdatedDateTime: nowStr,
+          activityHistory: [newAct, ...(p.activityHistory || [])]
+        };
+      }
+      return p;
+    }));
+
+    setNotifications(prev => [
+      {
+        id: `notif-${Date.now()}`,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        title: '🚨 Delay Flagged on Permission',
+        message: `Permission delayed with ${currentUser.department || 'Department'}. Reason: ${delayReason}.`,
+        type: 'ALERT',
+        read: false,
+        channels: ['IN_APP', 'EMAIL', 'SMS']
+      },
+      ...prev
+    ]);
+
+    setAuditLogs(prev => [
+      {
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        user: currentUser.name,
+        role: currentUser.role,
+        action: 'Flagged Permission Delay',
+        newStatus: 'Delayed',
+        ipAddress: '10.240.12.91',
+        details: `Reason: ${delayReason}. Remarks: ${remarks || 'None'}.`
+      },
+      ...prev
+    ]);
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -1014,6 +1637,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         rules,
         nocApplications,
         jointInspections,
+        parallelPermissions,
         addProject,
         applyForApproval,
         uploadDocument,
@@ -1026,6 +1650,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         markNotificationRead,
         addRule,
         updateIncentiveUrl,
+        triggerParallelAutoRouting,
+        updateParallelPermissionStatus,
+        raiseParallelPermissionQuery,
+        respondToParallelPermissionQuery,
+        calculateParallelProgress,
+        officerApprovePermission,
+        officerRejectPermission,
+        officerRequestDocument,
+        officerScheduleInspection,
+        officerMarkDelayed,
         submitNocApplication,
         scheduleJointInspection,
         completeJointInspection,

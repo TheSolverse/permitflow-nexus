@@ -227,8 +227,12 @@ export async function createAuditLogApi(logData: any) {
 }
 
 // Notifications
-export async function fetchNotifications() {
-  return apiRequest<any[]>('/notifications');
+export async function fetchNotifications(userId?: string, projectId?: string) {
+  const params = new URLSearchParams();
+  if (userId) params.append('userId', userId);
+  if (projectId) params.append('projectId', projectId);
+  const qs = params.toString() ? `?${params.toString()}` : '';
+  return apiRequest<any[]>(`/notifications${qs}`);
 }
 
 export async function markNotificationReadApi(id: string) {

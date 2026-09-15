@@ -3,10 +3,16 @@ import { useApp } from '../../context/AppContext';
 import { Bell, Check, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
 
 export const NotificationDropdown: React.FC = () => {
-  const { notifications, markNotificationRead } = useApp();
+  const { currentUser, activeProject, notifications, markNotificationRead } = useApp();
   const [isOpen, setIsOpen] = useState(false);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // Scope notifications to current user and active project
+  const userNotifications = notifications.filter(n => 
+    (!n.userId || n.userId === currentUser.id) &&
+    (!n.projectId || (activeProject?.id && n.projectId === activeProject.id))
+  );
+
+  const unreadCount = userNotifications.filter(n => !n.read).length;
 
   return (
     <div className="relative">
@@ -43,12 +49,12 @@ export const NotificationDropdown: React.FC = () => {
           </div>
 
           <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700">
-            {notifications.length === 0 ? (
+            {userNotifications.length === 0 ? (
               <div className="p-6 text-center text-xs text-slate-500">
                 No notifications right now.
               </div>
             ) : (
-              notifications.map((n) => (
+              userNotifications.map((n) => (
                 <div
                   key={n.id}
                   onClick={() => markNotificationRead(n.id)}

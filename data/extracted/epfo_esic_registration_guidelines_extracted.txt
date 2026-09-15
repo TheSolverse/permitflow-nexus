@@ -1,0 +1,16 @@
+================================================================================
+SOURCE ID: SRC-LBR-012
+TITLE: EPFO & ESIC Mandatory Registration Criteria under Shram Suvidha & MCA AGILE-PRO-S Portal
+AUTHORITY: Employees Provident Fund Organisation (EPFO) & ESIC, Ministry of Labour & Employment
+OFFICIAL URL: https://www.epfindia.gov.in/
+VERIFIED DATE: 2026-09-13
+================================================================================
+
+MINISTRY OF LABOUR & EMPLOYMENT - EPFO & ESIC REGISTRATION GUIDELINES
+
+EPFO Mandatory Registration Criteria:
+- Registration under EPF & MP Act, 1952 is mandatory for establishments employing 20 or more persons.
+- Auto-allotment of EPF Code Number is enabled for all newly incorporated companies via MCA AGILE-PRO-S form. Compliance obligations commence when employee strength reaches 20.
+
+ESIC Mandatory Registration Criteria:
+- Registration under ESI Act, 1948 is mandatory for non-seasonal factories / establishments employing 10 or more persons with wages up to Rs. 21,000 per month.

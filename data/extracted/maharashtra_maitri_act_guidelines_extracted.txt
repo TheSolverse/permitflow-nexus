@@ -1,0 +1,19 @@
+================================================================================
+SOURCE ID: SRC-MAH-013
+TITLE: Maharashtra Industry Trade and Investment Facilitation Cell (MAITRI) Act & Portal Guidelines
+AUTHORITY: Industry, Energy and Labour Department, Government of Maharashtra
+OFFICIAL URL: https://industry.maharashtra.gov.in/en/allied-offices/maharashtra-industry-trade-and-investment-facilitation-cell-maitri
+VERIFIED DATE: 2026-09-13
+================================================================================
+
+GOVERNMENT OF MAHARASHTRA - MAITRI SINGLE-WINDOW CLEARANCE ACT
+
+Section 3: MAITRI Single Window Framework
+Provides single-window clearance, monitoring, and grievance redressal for industrial and commercial permissions in Maharashtra.
+
+Industrial Permissions via MAITRI:
+- MPCB Consent to Establish / Operate
+- MIDC Land Allotment & Building Plan Sanction
+- DISH Factory License under Factories Act, 1948
+- MSEDCL Electricity Power Connection
+- Fire Department NOC from Maharashtra Fire Services

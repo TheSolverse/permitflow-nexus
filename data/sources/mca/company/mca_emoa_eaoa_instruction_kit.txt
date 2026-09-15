@@ -1,0 +1,8 @@
+MINISTRY OF CORPORATE AFFAIRS - e-MoA (INC-33) & e-AoA (INC-34) GUIDELINES
+
+1. Electronic MoA (INC-33) and e-AoA (INC-34) are mandatory for private limited companies, OPCs, and public companies having up to 7 subscribers who are Indian individuals with valid PAN/DIN.
+2. Physical MoA and AoA attachments are required in place of e-MoA/e-AoA if:
+   - Total subscribers exceed 7.
+   - Any subscriber is a Foreign Individual or Foreign Body Corporate.
+   - Any subscriber is an Indian Body Corporate without valid DIN/PAN digital signing integration.
+3. Every subscriber must digitally sign e-MoA and e-AoA using DSC or physical signature on subscriber sheet.

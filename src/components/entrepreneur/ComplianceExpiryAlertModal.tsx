@@ -34,60 +34,10 @@ export const ComplianceExpiryAlertModal: React.FC<ComplianceExpiryAlertModalProp
 
   const currentBusinessName = activeProject?.businessName || currentUser.organization || `${currentUser.name} Enterprise`;
 
-  // Get compliance tasks strictly for active project or generate statutory defaults for the user's enterprise
-  const projectTasks = complianceTasks.filter(
+  // Get compliance tasks strictly for active project
+  const displayTasks = complianceTasks.filter(
     t => activeProject?.id && t.projectId === activeProject.id
   );
-
-  const fallbackTasks: ComplianceTask[] = [
-    {
-      id: `task-f-1-${currentUser.id}`,
-      projectId: activeProject?.id || 'proj-default',
-      businessName: currentBusinessName,
-      title: 'Factory License Annual Renewal (Form 4)',
-      department: 'Directorate of Industrial Safety & Health (DISH)',
-      approvalName: 'Factory Registration & License',
-      dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
-      daysLeft: 30,
-      status: 'DUE_SOON',
-      renewalPeriodMonths: 12,
-      renewalFee: '₹8,500',
-      reminderSentDates: [],
-      actionRequired: 'Submit Form 4 annual compliance return and pay statutory renewal fee.'
-    },
-    {
-      id: `task-f-2-${currentUser.id}`,
-      projectId: activeProject?.id || 'proj-default',
-      businessName: currentBusinessName,
-      title: 'MPCB Consent to Operate (CTO) Annual Cess & Emission Audit',
-      department: 'Maharashtra Pollution Control Board (MPCB)',
-      approvalName: 'Consent to Operate (CTO)',
-      dueDate: new Date(Date.now() + 45 * 86400000).toISOString().split('T')[0],
-      daysLeft: 45,
-      status: 'DUE_SOON',
-      renewalPeriodMonths: 24,
-      renewalFee: '₹12,000',
-      reminderSentDates: [],
-      actionRequired: 'Submit quarterly stack emission report and annual water cess return.'
-    },
-    {
-      id: `task-f-3-${currentUser.id}`,
-      projectId: activeProject?.id || 'proj-default',
-      businessName: currentBusinessName,
-      title: 'Bi-annual Fire Safety Hydrant & Sprinkler Audit (Form B)',
-      department: 'Maharashtra Fire Services',
-      approvalName: 'Fire Safety NOC',
-      dueDate: new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0],
-      daysLeft: 15,
-      status: 'DUE_SOON',
-      renewalPeriodMonths: 6,
-      renewalFee: '₹5,000',
-      reminderSentDates: [],
-      actionRequired: 'Conduct physical pressure test on hydrant ring main and upload Form B certificate.'
-    }
-  ];
-
-  const displayTasks = projectTasks.length > 0 ? projectTasks : fallbackTasks;
 
   // Ensure top active alert tasks are highlighted
   const overdueTasks = displayTasks.filter(t => t.daysLeft < 0 || t.status === 'OVERDUE');

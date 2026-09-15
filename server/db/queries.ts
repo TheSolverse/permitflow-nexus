@@ -585,7 +585,7 @@ export async function getIncentives(): Promise<IncentiveScheme[]> {
 }
 
 // ================= NOTIFICATIONS =================
-export async function getNotifications(userId?: string): Promise<NotificationItem[]> {
+export async function getNotifications(userId?: string, projectId?: string): Promise<NotificationItem[]> {
   if (isDbConnected()) {
     try {
       let query = 'SELECT * FROM notifications';
@@ -593,21 +593,31 @@ export async function getNotifications(userId?: string): Promise<NotificationIte
       if (userId) {
         query += ' WHERE user_id = $1';
         params.push(userId);
+      } else if (projectId) {
+        query += ' WHERE project_id = $1';
+        params.push(projectId);
       }
       query += ' ORDER BY created_at DESC LIMIT 50';
       const res = await pool.query(query, params);
       return res.rows.map(r => ({
         id: r.id,
+        userId: r.user_id,
+        projectId: r.project_id,
         title: r.title,
         message: r.message,
         timestamp: r.timestamp,
         type: r.type,
         read: r.is_read,
-        link: r.link
+        channels: r.channels || ['IN_APP']
       }));
     } catch (e) {
       console.error('Error fetching notifications from DB:', e);
     }
+  }
+  if (userId || projectId) {
+    return memoryNotifications.filter(n => 
+      (n.userId && n.userId === userId) || (n.projectId && n.projectId === projectId)
+    );
   }
   return memoryNotifications;
 }

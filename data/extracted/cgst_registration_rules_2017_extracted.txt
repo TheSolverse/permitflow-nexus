@@ -1,0 +1,19 @@
+================================================================================
+SOURCE ID: SRC-GST-011
+TITLE: Central Goods and Services Tax Rules, 2017 - Chapter III: Registration Rules
+AUTHORITY: Central Board of Indirect Taxes and Customs (CBIC), Ministry of Finance
+OFFICIAL URL: https://www.gst.gov.in/
+VERIFIED DATE: 2026-09-13
+================================================================================
+
+CENTRAL GOODS AND SERVICES TAX RULES, 2017 - CHAPTER III: REGISTRATION
+
+Rule 8: Application for Registration
+(1) Every person liable to be registered under sub-section (1) of section 22 or section 24 shall apply online in Form GST REG-01.
+
+Threshold Exemption Limits:
+- Goods Supplier: Aggregate turnover in a financial year exceeds Rs. 40 Lakhs (Rs. 20 Lakhs for Special Category States).
+- Service Provider: Aggregate turnover exceeds Rs. 20 Lakhs (Rs. 10 Lakhs for Special Category States).
+
+Mandatory Registration (Section 24):
+- Inter-state taxable suppliers, e-commerce operators, reverse charge payers, and non-resident taxable persons must register irrespective of turnover threshold.

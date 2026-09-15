@@ -1,0 +1,23 @@
+================================================================================
+SOURCE ID: SRC-MCA-002
+TITLE: Companies (Incorporation) Rules, 2014 & SPICe+ Amendments
+AUTHORITY: Ministry of Corporate Affairs (MCA), Government of India
+OFFICIAL URL: https://www.mca.gov.in/content/mca/global/en/acts-rules/companies-act/rules.html
+VERIFIED DATE: 2026-09-13
+================================================================================
+
+MINISTRY OF CORPORATE AFFAIRS NOTIFICATION
+COMPANIES (INCORPORATION) RULES, 2014 (AS AMENDED BY SPICe+ RULES 2020)
+
+Rule 12: Application for Incorporation of Companies
+Application for incorporation of a company shall be filed in Form SPICe+ (INC-32) along with e-MOA (INC-33) and e-AOA (INC-34) or physical MOA and AOA as applicable.
+
+Rule 25: Registered Office Verification
+(1) The verification of registered office of the company shall be filed in Form INC-22 or integrated SPICe+ (INC-32) along with:
+  (a) Registered document of the title of the premises in the name of the company OR proof of ownership;
+  (b) The notarized copy of lease / rent agreement in the name of the company along with a copy of rent paid receipt not older than one month;
+  (c) No Objection Certificate (NOC) from the owner of the property for use of the premises as registered office;
+  (d) Copy of utility bill like telephone, gas, electricity, etc. bearing the address of the premises in the name of the owner/document holder, which is not older than two months.
+
+Rule 16: Particulars of Director/Subscriber
+Identity proof shall consist of Voter ID, Passport, Driving License, or Aadhaar Card for Indian citizens. For Foreign subscribers, valid Passport notarized and apostilled in the home country is mandatory.
