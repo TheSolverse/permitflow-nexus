@@ -503,7 +503,9 @@ app.get('/api/audit-logs', async (req, res) => {
 // ================= NOTIFICATIONS =================
 app.get('/api/notifications', async (req, res) => {
   try {
-    const notifs = await getNotifications();
+    const userId = req.query.userId as string | undefined;
+    const projectId = req.query.projectId as string | undefined;
+    const notifs = await getNotifications(userId, projectId);
     res.json(notifs);
   } catch (err: any) {
     res.status(500).json({ error: err.message });

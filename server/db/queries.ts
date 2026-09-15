@@ -590,12 +590,17 @@ export async function getNotifications(userId?: string, projectId?: string): Pro
     try {
       let query = 'SELECT * FROM notifications';
       const params: any[] = [];
+      const conditions: string[] = [];
       if (userId) {
-        query += ' WHERE user_id = $1';
         params.push(userId);
-      } else if (projectId) {
-        query += ' WHERE project_id = $1';
+        conditions.push(`user_id = $${params.length}`);
+      }
+      if (projectId) {
         params.push(projectId);
+        conditions.push(`project_id = $${params.length}`);
+      }
+      if (conditions.length > 0) {
+        query += ' WHERE ' + conditions.join(' AND ');
       }
       query += ' ORDER BY created_at DESC LIMIT 50';
       const res = await pool.query(query, params);
@@ -615,9 +620,12 @@ export async function getNotifications(userId?: string, projectId?: string): Pro
     }
   }
   if (userId || projectId) {
-    return memoryNotifications.filter(n => 
-      (n.userId && n.userId === userId) || (n.projectId && n.projectId === projectId)
-    );
+    return memoryNotifications.filter(n => {
+      if (userId && n.userId && n.userId !== userId) return false;
+      if (userId && !n.userId && n.projectId) return false;
+      if (projectId && n.projectId && n.projectId !== projectId) return false;
+      return true;
+    });
   }
   return memoryNotifications;
 }

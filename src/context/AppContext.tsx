@@ -554,6 +554,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications(prev => [
       {
         id: `notif-${Date.now()}`,
+        userId: currentUser.id,
+        projectId: activeProject.id,
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
         title: `Application ${newApp.appId} Submitted`,
         message: `Your application for ${approvalName} has been received by ${department}. Track progress in Application Tracker.`,
@@ -656,6 +658,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (status === 'Expired' || status === 'Name Mismatch' || status === 'Blurry / Unreadable') {
       const newNotif: NotificationItem = {
         id: `notif-${Date.now()}`,
+        userId: currentUser.id,
+        projectId: activeProject?.id,
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
         title: `⚠️ Action Required: Document Flagged`,
         message: `Department Officer ${currentUser.name} flagged "${targetDocName}" (${status}). Please review and re-upload in Document Centre.`,
@@ -682,6 +686,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } else if (status === 'Valid') {
       const newNotif: NotificationItem = {
         id: `notif-${Date.now()}`,
+        userId: currentUser.id,
+        projectId: activeProject?.id,
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
         title: `✓ Document Verified & Approved`,
         message: `Your proof document "${targetDocName}" has been successfully verified and accepted by ${currentUser.name}.`,
@@ -731,9 +737,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Persist query response to Supabase
     respondToApplicationQueryApi(queryId, responseText, responseDocName).catch(err => console.warn('Could not save query response to backend:', err));
 
-    setNotifications([
+    setNotifications(prev => [
       {
         id: `notif-${Date.now()}`,
+        userId: currentUser.id,
+        projectId: activeProject?.id,
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
         title: 'Query Response Submitted',
         message: 'Your query response has been sent to the Department Officer for re-audit.',
@@ -741,7 +749,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         read: false,
         channels: ['IN_APP']
       },
-      ...notifications
+      ...prev
     ]);
   };
 
@@ -992,6 +1000,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications(prev => [
       {
         id: `notif-${Date.now()}`,
+        userId: currentUser.id,
+        projectId: activeProject?.id,
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
         title: notifTitle,
         message: notifMsg,
@@ -1309,6 +1319,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications(prev => [
       {
         id: `notif-${Date.now()}`,
+        userId: currentUser.id,
+        projectId: targetProj.id,
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
         title: '⚡ Parallel Workflow Auto-Routed',
         message: `Project "${targetProj.businessName}" permissions automatically assigned to MPCB, Fire, DISH, MIDC, MSEDCL & FSSAI departments.`,
@@ -1396,6 +1408,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setNotifications(prev => [
         {
           id: `notif-${Date.now()}`,
+          userId: currentUser.id,
+          projectId: updatedTarget?.projectId,
           timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
           title: `Status Updated: ${updatedTarget?.approvalName}`,
           message: `${updatedTarget?.department} updated permission status to "${newStatus}".`,
@@ -1448,6 +1462,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications(prev => [
       {
         id: `notif-${Date.now()}`,
+        userId: currentUser.id,
+        projectId: activeProject?.id,
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
         title: '⚠️ Query Raised on Department Clearance',
         message: `Officer ${currentUser.name} raised query: "${queryCategory}". Action required before deadline.`,
@@ -1572,6 +1588,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications(prev => [
       {
         id: `notif-${Date.now()}`,
+        userId: currentUser.id,
+        projectId: activeProject?.id,
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
         title: '⚠️ Action Required: Document Requested',
         message: `Officer ${currentUser.name} requested "${documentName}". Please upload in Document Centre.`,
@@ -1628,6 +1646,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications(prev => [
       {
         id: `notif-${Date.now()}`,
+        userId: currentUser.id,
+        projectId: activeProject?.id,
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
         title: '📅 Site Inspection Scheduled',
         message: `Officer ${currentUser.name} scheduled inspection for ${inspectionDate}. Please keep site ready.`,
@@ -1683,6 +1703,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications(prev => [
       {
         id: `notif-${Date.now()}`,
+        userId: currentUser.id,
+        projectId: activeProject?.id,
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
         title: '🚨 Delay Flagged on Permission',
         message: `Permission delayed with ${currentUser.department || 'Department'}. Reason: ${delayReason}.`,

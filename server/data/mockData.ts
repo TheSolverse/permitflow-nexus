@@ -1151,6 +1151,8 @@ export const INITIAL_AUDIT_LOGS: AuditLogItem[] = [
 export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'notif-1',
+    userId: 'usr-1',
+    projectId: 'proj-1',
     timestamp: '2026-08-25 11:22:00',
     title: 'Department Query Raised on Pollution CTE',
     message: 'Dr. V. K. Patil (MPCB) has requested ETP revised design calculations for Application #PFN-2026-MPCB-0341. Response due by 2026-09-01.',
@@ -1160,6 +1162,8 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   },
   {
     id: 'notif-2',
+    userId: 'usr-1',
+    projectId: 'proj-1',
     timestamp: '2026-08-24 16:50:00',
     title: 'Joint Inspection Scheduled',
     message: 'Joint Department Site Inspection scheduled for Chakan MIDC factory on 2026-09-02 at 11:00 AM.',
@@ -1169,6 +1173,8 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   },
   {
     id: 'notif-3',
+    userId: 'usr-1',
+    projectId: 'proj-1',
     timestamp: '2026-08-20 09:00:00',
     title: 'Fire Safety Audit Overdue Alert',
     message: 'Your Fire Safety Annual Audit is overdue by 6 days. Upload Form B to avoid compliance notice.',
@@ -1178,6 +1184,8 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   },
   {
     id: 'notif-4',
+    userId: 'usr-1',
+    projectId: 'proj-1',
     timestamp: '2026-08-18 15:30:00',
     title: 'Incentive Scheme Match Identified!',
     message: 'Your business profile is eligible for ₹45,00,000 Capital Subsidy under Maharashtra PSI 2019 scheme.',

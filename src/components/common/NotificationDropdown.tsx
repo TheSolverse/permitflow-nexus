@@ -3,14 +3,40 @@ import { useApp } from '../../context/AppContext';
 import { Bell, Check, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
 
 export const NotificationDropdown: React.FC = () => {
-  const { currentUser, activeProject, notifications, markNotificationRead } = useApp();
+  const { currentUser, activeProject, projects, notifications, markNotificationRead } = useApp();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Scope notifications to current user and active project
-  const userNotifications = notifications.filter(n => 
-    (!n.userId || n.userId === currentUser.id) &&
-    (!n.projectId || (activeProject?.id && n.projectId === activeProject.id))
-  );
+  // Scope notifications strictly to current user and their active projects
+  const userNotifications = notifications.filter(n => {
+    // 1. If notification has a specific userId, it must match current logged-in user
+    if (n.userId && currentUser?.id && n.userId !== currentUser.id) {
+      return false;
+    }
+
+    // 2. If notification has a projectId:
+    if (n.projectId) {
+      // If user has no registered projects, do not display project-specific notifications
+      if (!projects || projects.length === 0) {
+        return false;
+      }
+      // Must belong to one of the user's projects
+      const hasMatchingProject = projects.some(p => p.id === n.projectId);
+      if (!hasMatchingProject) {
+        return false;
+      }
+      // Must match active project if one is selected
+      if (activeProject?.id && n.projectId !== activeProject.id) {
+        return false;
+      }
+    }
+
+    // 3. For new entrepreneur accounts with no projects/applications, do not show unassociated mock notifications
+    if (!n.userId && n.projectId && (!projects || projects.length === 0)) {
+      return false;
+    }
+
+    return true;
+  });
 
   const unreadCount = userNotifications.filter(n => !n.read).length;
 
