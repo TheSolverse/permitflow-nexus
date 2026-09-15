@@ -20,6 +20,9 @@ export interface User {
   organization?: string; // For Entrepreneur
   avatarUrl?: string;
   phone?: string;
+  designation?: string;
+  district?: string;
+  permissions?: string[];
 }
 
 export type Sector = 

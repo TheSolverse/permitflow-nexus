@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { pool, checkDbConnection, isDbConnected } from './db/pool';
+import { supabase } from './db/supabase';
 import { initDatabase } from './db/init';
 import {
   getUsers,
@@ -84,32 +85,53 @@ app.get('/api/db/status', async (req, res) => {
 app.post('/api/auth/signup', async (req, res) => {
   try {
     const { name, email, password, role, department, designation, district, permissions } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const newUser: any = {
-      id: `usr-${Date.now()}`,
-      name: name || 'New User',
-      email: email.trim().toLowerCase(),
-      password_hash: password || 'Password@123',
-      role: role || 'ENTREPRENEUR',
-      department: department || null,
-      designation: designation || null,
-      district: district || 'Pune',
-      permissions: permissions || []
-    };
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password;
 
-    if (isDbConnected()) {
-      await pool.query(
-        `INSERT INTO users (id, name, email, password_hash, role, department, designation, district, permissions)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, password_hash = EXCLUDED.password_hash`,
-        [newUser.id, newUser.name, newUser.email, newUser.password_hash, newUser.role, newUser.department, newUser.designation, newUser.district, JSON.stringify(newUser.permissions)]
-      );
+    // 1. Call supabase.auth.signUp FIRST
+    const { data: authData, error: authErr } = await supabase.auth.signUp({
+      email: cleanEmail,
+      password: cleanPassword,
+      options: {
+        data: {
+          name: name || 'New User',
+          role: role || 'ENTREPRENEUR'
+        }
+      }
+    });
+
+    if (authErr || !authData?.user) {
+      return res.status(400).json({ error: authErr?.message || 'Supabase Auth registration failed' });
     }
 
-    res.status(201).json({ success: true, user: newUser });
+    const authUser = authData.user;
+
+    // 2. Insert into public.users ONLY after successful Auth
+    const { data: dbUser, error: dbError } = await supabase
+      .from('users')
+      .upsert({
+        id: authUser.id,
+        name: name || cleanEmail.split('@')[0],
+        email: cleanEmail,
+        password_hash: null, // Do NOT manually store passwords
+        role: role || 'ENTREPRENEUR',
+        department: department || null,
+        designation: designation || null,
+        district: district || 'Pune',
+        permissions: permissions || []
+      }, { onConflict: 'id' })
+      .select()
+      .maybeSingle();
+
+    if (dbError) {
+      return res.status(500).json({ error: `User created in Auth, but DB profile failed: ${dbError.message}` });
+    }
+
+    res.status(201).json({ success: true, user: dbUser });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -118,32 +140,39 @@ app.post('/api/auth/signup', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password, role } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const user: any = await findUserByEmailAndRole(email.trim().toLowerCase(), role);
-    if (!user) {
-      return res.status(404).json({ 
-        error: `No registered account found for "${email}". Please sign up first.` 
-      });
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password;
+
+    // 1. Authenticate with Supabase Auth (signInWithPassword)
+    const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
+      email: cleanEmail,
+      password: cleanPassword
+    });
+
+    if (authErr || !authData?.user) {
+      return res.status(401).json({ error: authErr?.message || 'Invalid login credentials' });
     }
 
-    // Verify Password if user has a password_hash registered
-    const storedPassword = user.password_hash || user.password;
-    if (storedPassword && password) {
-      if (storedPassword !== password) {
-        return res.status(401).json({ 
-          error: 'Incorrect password! Please enter the valid password used during signup.' 
-        });
-      }
-    } else if (storedPassword && !password) {
-      return res.status(401).json({ 
-        error: 'Password is required to log in.' 
-      });
+    // 2. Load corresponding user profile from public.users table
+    const { data: userProfile, error: profileErr } = await supabase
+      .from('users')
+      .select('*')
+      .or(`id.eq.${authData.user.id},email.ilike.${cleanEmail}`)
+      .maybeSingle();
+
+    if (!userProfile) {
+      return res.status(404).json({ error: 'User authenticated, but profile record not found in database.' });
     }
 
-    res.json({ success: true, user });
+    if (role && userProfile.role !== role) {
+      return res.status(403).json({ error: `Account is registered as ${userProfile.role}, not ${role}.` });
+    }
+
+    res.json({ success: true, user: userProfile });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

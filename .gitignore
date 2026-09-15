@@ -21,6 +21,9 @@ dist-ssr
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
 .env
 .env*.local
+
+# Agents & Skills
+.agents/
+skills-lock.json

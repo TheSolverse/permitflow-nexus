@@ -36,6 +36,7 @@ import {
 } from '../data/mockData';
 import { generateSmartChecklist } from '../utils/rulesEngine';
 import { calculateRiskScore } from '../utils/riskCalculator';
+import { supabase } from '../utils/supabaseClient';
 import {
   fetchProjects,
   createProjectApi,
@@ -124,6 +125,7 @@ interface AppContextType {
   respondToNocQuery: (nocId: string, queryId: string, responseText: string, responseDocName?: string) => void;
   issueNocCertificate: (nocId: string, certType: 'PROVISIONAL' | 'FINAL') => void;
   deleteAccount: (userId?: string) => Promise<boolean>;
+  signOutUser: () => Promise<void>;
 
   // View state
   activeTab: string;
@@ -223,6 +225,81 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [activeTab, setActiveTab] = useState<string>('login');
   const [selectedAppDetail, setSelectedAppDetail] = useState<Application | null>(null);
+
+  // Synchronize user state with Supabase Auth session
+  useEffect(() => {
+    // 1. Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        syncProfileFromAuth(session.user);
+      }
+    });
+
+    // 2. Listen for Auth State changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        syncProfileFromAuth(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('pfn_user');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const syncProfileFromAuth = async (authUser: any) => {
+    try {
+      const email = authUser.email?.toLowerCase();
+      if (!email) return;
+
+      const { data: dbUser } = await supabase
+        .from('users')
+        .select('*')
+        .or(`id.eq.${authUser.id},email.ilike.${email}`)
+        .maybeSingle();
+
+      if (dbUser) {
+        const userObj: User = {
+          id: dbUser.id,
+          name: dbUser.name || authUser.user_metadata?.name || email.split('@')[0],
+          email: dbUser.email || email,
+          role: dbUser.role || (authUser.user_metadata?.role as Role) || 'ENTREPRENEUR',
+          department: dbUser.department || undefined,
+          designation: dbUser.designation || undefined,
+          district: dbUser.district || 'Pune',
+          organization: dbUser.role === 'ENTREPRENEUR' ? 'Maharashtra Enterprise' : (dbUser.department || 'Government of Maharashtra'),
+          permissions: dbUser.permissions || []
+        };
+        setCurrentUser(userObj);
+        localStorage.setItem('pfn_user', JSON.stringify(userObj));
+      } else {
+        // Auto-provision matching public.users row if not yet inserted
+        const role = (authUser.user_metadata?.role as Role) || 'ENTREPRENEUR';
+        const name = authUser.user_metadata?.name || email.split('@')[0];
+        const newRecord = {
+          id: authUser.id,
+          name,
+          email,
+          role,
+          district: 'Pune',
+          permissions: []
+        };
+        await supabase.from('users').upsert(newRecord);
+        const userObj: User = {
+          ...newRecord,
+          department: undefined,
+          designation: undefined,
+          organization: role === 'ENTREPRENEUR' ? 'Maharashtra Enterprise' : 'Government of Maharashtra'
+        };
+        setCurrentUser(userObj);
+        localStorage.setItem('pfn_user', JSON.stringify(userObj));
+      }
+    } catch (err) {
+      console.warn('[AppContext] syncProfileFromAuth error:', err);
+    }
+  };
 
   // Live Backend Hydration from Supabase with Strict User Isolation
   useEffect(() => {
@@ -1036,6 +1113,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return true;
   };
 
+  const signOutUser = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('[Supabase Auth] signOut notice:', err);
+    }
+    localStorage.removeItem('pfn_user');
+    setCurrentUser(INITIAL_USERS[0]);
+    setActiveTab('login');
+  };
+
   // ----------------------------------------------------
   // PARALLEL WORKFLOW COORDINATION LOGIC
   // ----------------------------------------------------
@@ -1667,6 +1755,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         respondToNocQuery,
         issueNocCertificate,
         deleteAccount,
+        signOutUser,
         activeTab,
         setActiveTab,
         selectedAppDetail,

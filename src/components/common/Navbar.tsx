@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { t } from '../../utils/translations';
 import { INITIAL_USERS } from '../../data/mockData';
+import { supabase } from '../../utils/supabaseClient';
 
 export const Navbar: React.FC = () => {
   const { 
@@ -27,7 +28,8 @@ export const Navbar: React.FC = () => {
     setActiveProjectId, 
     activeProject,
     setActiveTab,
-    deleteAccount
+    deleteAccount,
+    signOutUser
   } = useApp();
 
   const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
@@ -35,9 +37,34 @@ export const Navbar: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const switchRole = (role: 'ENTREPRENEUR' | 'OFFICER' | 'ADMIN') => {
+  const switchRole = async (role: 'ENTREPRENEUR' | 'OFFICER' | 'ADMIN') => {
     const target = INITIAL_USERS.find(u => u.role === role);
     if (target) {
+      try {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: target.email,
+          password: 'Password@123'
+        });
+        if (error && error.message.includes('Invalid login credentials')) {
+          await supabase.auth.signUp({
+            email: target.email,
+            password: 'Password@123',
+            options: {
+              data: {
+                name: target.name,
+                role: target.role
+              }
+            }
+          });
+          await supabase.auth.signInWithPassword({
+            email: target.email,
+            password: 'Password@123'
+          });
+        }
+      } catch (err) {
+        console.warn('[Navbar] switchRole Supabase Auth notice:', err);
+      }
+
       setCurrentUser(target);
       if (role === 'ENTREPRENEUR') setActiveTab('dashboard');
       else if (role === 'OFFICER') setActiveTab('officer-dashboard');
@@ -217,9 +244,9 @@ export const Navbar: React.FC = () => {
 
                   <div className="border-t border-slate-100 dark:border-slate-700 pt-1 space-y-0.5">
                     <button
-                      onClick={() => {
-                        setActiveTab('login');
+                      onClick={async () => {
                         setUserDropdownOpen(false);
+                        await signOutUser();
                       }}
                       className="w-full text-left px-4 py-2 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 font-bold cursor-pointer transition-colors"
                     >

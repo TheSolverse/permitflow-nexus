@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Role } from '../../types';
+import { Role, User } from '../../types';
 import { INITIAL_USERS } from '../../data/mockData';
 import { ShieldCheck, User as UserIcon, Lock, Mail, ArrowRight, UserPlus, AlertCircle } from 'lucide-react';
 import { LanguageSelector } from '../common/LanguageSelector';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { t } from '../../utils/translations';
 import { signupUser, loginUser } from '../../services/api';
+import { supabase } from '../../utils/supabaseClient';
 
 export const LoginPage: React.FC = () => {
   const { setCurrentUser, setActiveTab, language } = useApp();
@@ -27,44 +28,102 @@ export const LoginPage: React.FC = () => {
     setIsSubmitting(true);
 
     const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password;
 
-    try {
-      const res = await loginUser(cleanEmail, password, selectedRole);
-      if (res?.user) {
-        setCurrentUser(res.user);
-        setIsSubmitting(false);
-        if (selectedRole === 'ENTREPRENEUR') setActiveTab('dashboard');
-        else if (selectedRole === 'OFFICER') setActiveTab('officer-dashboard');
-        else setActiveTab('admin-dashboard');
-        return;
-      }
-      if (res?.error && res.error !== 'NetworkError' && !res.error.includes('Failed to fetch')) {
-        setAuthError(res.error);
-        setIsSubmitting(false);
-        return;
-      }
-    } catch (err: any) {
-      console.warn('Backend login unavailable, falling back to local session authentication:', err);
+    if (!cleanEmail || !cleanPassword) {
+      setAuthError('Please enter both email and password.');
+      setIsSubmitting(false);
+      return;
     }
 
-    // Local / Offline authentication fallback
-    const localUsers = JSON.parse(localStorage.getItem('pfn_registered_users') || '[]');
-    const matchedLocal = localUsers.find((u: any) => u.email.toLowerCase() === cleanEmail);
-    const matchedDemo = INITIAL_USERS.find(u => u.email.toLowerCase() === cleanEmail && u.role === selectedRole);
+    try {
+      // 1. Authenticate with Supabase Auth (signInWithPassword)
+      const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password: cleanPassword
+      });
 
-    const userToLogin = matchedLocal || matchedDemo || {
-      id: `usr-${Date.now()}`,
-      name: cleanEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Entrepreneur User',
-      email: cleanEmail,
-      role: selectedRole,
-      organization: selectedRole === 'ENTREPRENEUR' ? 'Maharashtra Enterprise' : selectedRole === 'OFFICER' ? 'Maharashtra Pollution Control Board (MPCB)' : 'Industry Directorate Admin'
-    };
+      if (authErr || !authData?.user) {
+        if (authErr?.message?.includes('Email not confirmed')) {
+          setAuthError('Email is not confirmed yet. Please check your inbox or confirm the user in Supabase Dashboard (Authentication -> Users).');
+        } else {
+          setAuthError(authErr?.message || 'Invalid login credentials. Please verify your email and password.');
+        }
+        setIsSubmitting(false);
+        return;
+      }
 
-    setCurrentUser(userToLogin);
-    setIsSubmitting(false);
-    if (selectedRole === 'ENTREPRENEUR') setActiveTab('dashboard');
-    else if (selectedRole === 'OFFICER') setActiveTab('officer-dashboard');
-    else setActiveTab('admin-dashboard');
+      const authUser = authData.user;
+
+      // 2. Load the corresponding user profile from public.users table
+      const { data: dbProfile, error: profileErr } = await supabase
+        .from('users')
+        .select('*')
+        .or(`id.eq.${authUser.id},email.ilike.${cleanEmail}`)
+        .maybeSingle();
+
+      if (profileErr) {
+        console.warn('[Supabase] Error loading profile from public.users:', profileErr.message);
+      }
+
+      let profile = dbProfile;
+
+      // If user exists in Auth but not in public.users, create their profile record using authUser.id
+      if (!profile) {
+        const defaultRole = (authUser.user_metadata?.role as Role) || selectedRole || 'ENTREPRENEUR';
+        const defaultName = authUser.user_metadata?.name || cleanEmail.split('@')[0];
+        
+        const { data: createdProfile } = await supabase
+          .from('users')
+          .upsert({
+            id: authUser.id,
+            name: defaultName,
+            email: cleanEmail,
+            password_hash: null,
+            role: defaultRole,
+            district: 'Pune',
+            permissions: []
+          }, { onConflict: 'id' })
+          .select()
+          .maybeSingle();
+
+        profile = createdProfile;
+      }
+
+      const roleToUse: Role = profile?.role || (authUser.user_metadata?.role as Role) || selectedRole;
+
+      // Enforce portal/role selection alignment
+      if (selectedRole && profile?.role && profile.role !== selectedRole) {
+        setAuthError(`This account is registered as ${profile.role}, not ${selectedRole}. Please select the ${profile.role} tab.`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const userToLogin: User = {
+        id: profile?.id || authUser.id,
+        name: profile?.name || authUser.user_metadata?.name || cleanEmail.split('@')[0],
+        email: profile?.email || cleanEmail,
+        role: roleToUse,
+        department: profile?.department || undefined,
+        designation: profile?.designation || undefined,
+        district: profile?.district || 'Pune',
+        organization: roleToUse === 'ENTREPRENEUR' ? 'Maharashtra Enterprise' : (profile?.department || 'Government of Maharashtra'),
+        permissions: profile?.permissions || []
+      };
+
+      setCurrentUser(userToLogin);
+      localStorage.setItem('pfn_user', JSON.stringify(userToLogin));
+      setIsSubmitting(false);
+
+      if (roleToUse === 'ENTREPRENEUR') setActiveTab('dashboard');
+      else if (roleToUse === 'OFFICER') setActiveTab('officer-dashboard');
+      else setActiveTab('admin-dashboard');
+
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setAuthError(err.message || 'An unexpected error occurred during login.');
+      setIsSubmitting(false);
+    }
   };
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
@@ -75,60 +134,175 @@ export const LoginPage: React.FC = () => {
     const cleanEmail = email.trim().toLowerCase();
     const cleanName = name.trim() || 'New Entrepreneur';
     const cleanBusiness = businessName.trim() || `${cleanName}'s Enterprise`;
+    const cleanPassword = password;
 
-    const userData = {
-      name: cleanName,
-      email: cleanEmail,
-      password: password,
-      role: 'ENTREPRENEUR',
-      district: 'Pune'
-    };
-
-    let userCreated: any = null;
-
-    try {
-      const res = await signupUser(userData);
-      if (res?.user) {
-        userCreated = res.user;
-      }
-    } catch (err: any) {
-      console.warn('Backend signup offline, creating local user account:', err);
+    if (!cleanEmail) {
+      setAuthError('Email address is required.');
+      setIsSubmitting(false);
+      return;
     }
 
-    if (!userCreated) {
-      userCreated = {
-        id: `usr-${Date.now()}`,
+    if (!cleanPassword || cleanPassword.length < 6) {
+      setAuthError('Password must be at least 6 characters long.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      // 1. Call supabase.auth.signUp FIRST (Creates Auth user in auth.users)
+      const { data: authData, error: authErr } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password: cleanPassword,
+        options: {
+          data: {
+            name: cleanName,
+            role: 'ENTREPRENEUR',
+            businessName: cleanBusiness
+          }
+        }
+      });
+
+      // 2. Verify Supabase Auth returned a valid user; STOP if failed
+      if (authErr || !authData?.user) {
+        setAuthError(authErr?.message || 'Supabase Auth registration failed. Please check your credentials.');
+        setIsSubmitting(false);
+        return; // DO NOT create public.users record
+      }
+
+      const authUser = authData.user;
+
+      // 3. ONLY after successful Supabase Auth signup, insert user profile into existing public.users table using authUser.id
+      const { data: dbUser, error: dbError } = await supabase
+        .from('users')
+        .upsert({
+          id: authUser.id,
+          name: cleanName,
+          email: cleanEmail,
+          password_hash: null, // Do NOT manually store passwords
+          role: 'ENTREPRENEUR',
+          department: null,
+          designation: null,
+          district: 'Pune',
+          permissions: []
+        }, { onConflict: 'id' })
+        .select()
+        .maybeSingle();
+
+      if (dbError) {
+        console.error('[Supabase] public.users profile insertion failed:', dbError.message);
+        setAuthError(`Auth user created, but database profile creation failed: ${dbError.message}`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 4. Create initial business project in public.business_projects linked to the new auth user id
+      try {
+        const projectId = `proj-${Date.now()}`;
+        await supabase.from('business_projects').upsert({
+          id: projectId,
+          user_id: authUser.id,
+          business_name: cleanBusiness,
+          sector: 'Food Processing & Agro',
+          investment_range: '₹5Cr - ₹10Cr',
+          district: 'Pune',
+          project_stage: 'PLANNING'
+        });
+      } catch (projErr) {
+        console.warn('[Supabase] Business project creation notice:', projErr);
+      }
+
+      const createdUserObj: User = {
+        id: authUser.id,
         name: cleanName,
         email: cleanEmail,
         role: 'ENTREPRENEUR',
+        district: 'Pune',
         organization: cleanBusiness,
-        phone: '+91 98765 43210'
+        permissions: []
       };
+
+      // 5. Check if Supabase signUp returned an active session
+      if (authData.session) {
+        // Auto-authenticate: set user state and redirect to logged-in area
+        setCurrentUser(createdUserObj);
+        localStorage.setItem('pfn_user', JSON.stringify(createdUserObj));
+        setIsSubmitting(false);
+        setActiveTab('new-project');
+      } else {
+        // Fallback when email confirmation is required (no session returned)
+        setIsSubmitting(false);
+        setAuthError('Account created! Please check your email to confirm your account, then sign in.');
+      }
+
+    } catch (err: any) {
+      console.error('Signup error:', err);
+      setAuthError(err.message || 'An unexpected error occurred during signup.');
+      setIsSubmitting(false);
     }
-
-    // Cache locally
-    const localUsers = JSON.parse(localStorage.getItem('pfn_registered_users') || '[]');
-    localStorage.setItem('pfn_registered_users', JSON.stringify([...localUsers.filter((u: any) => u.email !== cleanEmail), userCreated]));
-
-    setCurrentUser(userCreated);
-    setIsSubmitting(false);
-    setActiveTab('new-project');
   };
 
   const loginAsDemo = async (role: Role) => {
     setAuthError('');
     const demoUser = INITIAL_USERS.find(u => u.role === role);
     if (demoUser) {
-      setCurrentUser(demoUser);
-      await signupUser({
-        name: demoUser.name,
-        email: demoUser.email,
-        password: 'Password@123',
-        role: demoUser.role
-      }).catch(() => {});
-      if (role === 'ENTREPRENEUR') setActiveTab('dashboard');
-      else if (role === 'OFFICER') setActiveTab('officer-dashboard');
-      else setActiveTab('admin-dashboard');
+      try {
+        let authUserId = demoUser.id;
+        const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+          email: demoUser.email,
+          password: 'Password@123'
+        });
+
+        if (signInData?.user) {
+          authUserId = signInData.user.id;
+        } else if (signInErr && signInErr.message.includes('Invalid login credentials')) {
+          const { data: signUpData } = await supabase.auth.signUp({
+            email: demoUser.email,
+            password: 'Password@123',
+            options: {
+              data: {
+                name: demoUser.name,
+                role: demoUser.role
+              }
+            }
+          });
+
+          if (signUpData?.user) {
+            authUserId = signUpData.user.id;
+          }
+        }
+
+        // Ensure user profile in public.users table with authUserId
+        await supabase.from('users').upsert({
+          id: authUserId,
+          name: demoUser.name,
+          email: demoUser.email,
+          password_hash: null,
+          role: demoUser.role,
+          department: demoUser.department || null,
+          designation: demoUser.designation || null,
+          district: demoUser.district || 'Pune',
+          permissions: demoUser.permissions || []
+        }, { onConflict: 'email' });
+
+        const userObj: User = {
+          ...demoUser,
+          id: authUserId
+        };
+
+        setCurrentUser(userObj);
+        localStorage.setItem('pfn_user', JSON.stringify(userObj));
+
+        if (role === 'ENTREPRENEUR') setActiveTab('dashboard');
+        else if (role === 'OFFICER') setActiveTab('officer-dashboard');
+        else setActiveTab('admin-dashboard');
+
+      } catch (err) {
+        console.warn('[Demo Login] Notice:', err);
+        setCurrentUser(demoUser);
+        if (role === 'ENTREPRENEUR') setActiveTab('dashboard');
+        else if (role === 'OFFICER') setActiveTab('officer-dashboard');
+        else setActiveTab('admin-dashboard');
+      }
     }
   };
 
