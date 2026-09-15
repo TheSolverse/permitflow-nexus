@@ -406,29 +406,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('pfn_joint_inspections', JSON.stringify(jointInspections));
   }, [jointInspections]);
 
-  const activeProject: BusinessProject = projects.find(p => p.id === activeProjectId) || projects[0] || {
-    id: `proj-${currentUser?.id || 'default'}`,
-    userId: currentUser?.id || 'usr-1',
-    businessName: `${currentUser?.name || 'My'} Enterprise`,
-    businessType: 'Industrial Manufacturing',
-    projectType: 'New Setup',
-    entityType: 'Private Limited',
-    sector: 'Manufacturing',
-    subSector: 'Textiles (spinning, weaving, garment manufacturing)',
-    investmentRange: '₹5 Cr - ₹15 Cr',
-    employeeCount: 35,
-    businessActivity: 'Manufacturing and commercial production operations',
-    projectStage: 'Planning',
-    hasConstruction: true,
-    hasHazardousMaterials: false,
-    district: 'Pune',
-    cityTaluka: 'Chakan / Khed',
-    pincode: '410501',
-    midcArea: 'Chakan MIDC Phase II',
-    landType: 'MIDC Allotted',
-    address: 'Plot No. C-45, Phase II, Chakan MIDC Industrial Area, Pune - 410501',
-    createdAt: new Date().toISOString().split('T')[0]
-  };
+  const userProjects = currentUser?.role === 'ENTREPRENEUR'
+    ? projects.filter(p => !p.userId || p.userId === currentUser.id)
+    : projects;
+
+  const activeProject: BusinessProject = 
+    projects.find(p => p.id === activeProjectId && (currentUser?.role === 'OFFICER' || p.userId === currentUser?.id)) ||
+    (userProjects.length > 0 ? userProjects[0] : {
+      id: '',
+      userId: currentUser?.id || '',
+      businessName: '',
+      businessType: 'Industrial Manufacturing',
+      projectType: 'New Setup',
+      entityType: 'Private Limited',
+      sector: 'Manufacturing',
+      subSector: '',
+      investmentRange: '',
+      employeeCount: 0,
+      businessActivity: '',
+      projectStage: 'Planning',
+      hasConstruction: false,
+      hasHazardousMaterials: false,
+      district: '',
+      cityTaluka: '',
+      pincode: '',
+      midcArea: '',
+      landType: 'MIDC Allotted',
+      address: '',
+      createdAt: ''
+    });
 
   const addProject = (projData: Omit<BusinessProject, 'id' | 'createdAt' | 'userId'>): BusinessProject => {
     const newProj: BusinessProject = {

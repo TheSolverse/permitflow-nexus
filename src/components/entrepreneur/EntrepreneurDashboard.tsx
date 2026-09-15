@@ -93,6 +93,35 @@ export const EntrepreneurDashboard: React.FC = () => {
     (s.tags && s.tags.includes(activeProject?.sector)) || s.eligibilityStatus === 'ELIGIBLE'
   );
 
+  const hasProject = Boolean(activeProject && activeProject.id && activeProject.id.trim().length > 0);
+
+  if (!hasProject) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-12 border border-slate-200 dark:border-slate-800 shadow-xl text-center space-y-6 max-w-3xl mx-auto my-8 animate-in fade-in duration-200">
+          <div className="w-16 h-16 rounded-full bg-[#E8F7ED] dark:bg-[#1E3326] border border-[#68BA7F]/40 flex items-center justify-center mx-auto text-[#2E6F40] dark:text-[#68BA7F]">
+            <Building2 className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">
+              Welcome to PermitFlow Nexus!
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 text-sm max-w-lg mx-auto">
+              To begin tracking government clearances, filing application permits, and viewing single-window analytics, please create your business project profile.
+            </p>
+          </div>
+          <button
+            onClick={() => setActiveTab('new-project')}
+            className="px-6 py-3 rounded-xl bg-[#2E6F40] hover:bg-[#235833] text-white font-extrabold text-sm transition-all shadow-md inline-flex items-center gap-2 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-[#CFFFDC]" />
+            <span>+ Create New Business Project</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       

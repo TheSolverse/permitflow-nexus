@@ -37,7 +37,8 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
     activeProject, 
     documents, 
     uploadDocument, 
-    applyForApproval 
+    applyForApproval,
+    setActiveTab
   } = useApp();
 
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, { file: File | null; dataUrl?: string; docId?: string; name: string; size: string }>>({});
@@ -50,6 +51,39 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
   const [directorResidency, setDirectorResidency] = useState<'INDIAN' | 'FOREIGN'>('INDIAN');
 
   if (!isOpen || !approvalItem) return null;
+
+  if (!activeProject || !activeProject.id || activeProject.id.trim().length === 0) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 text-center space-y-4 border border-slate-200 dark:border-slate-800 shadow-2xl">
+          <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center mx-auto">
+            <Building2 className="w-6 h-6" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Business Project Required</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            You must create a Business Project profile before applying for government clearances.
+          </p>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                onClose();
+                setActiveTab('new-project');
+              }}
+              className="px-4 py-2 rounded-xl bg-[#2E6F40] text-white font-bold text-xs shadow-sm hover:bg-[#235833]"
+            >
+              + Create Project Profile
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const isMcaCompany = approvalItem.id === 'appr-1' || approvalItem.name.toLowerCase().includes('company incorporation') || approvalItem.name.toLowerCase().includes('spice+');
   const isMcaLlp = approvalItem.id === 'appr-1-llp' || approvalItem.name.toLowerCase().includes('llp incorporation') || approvalItem.name.toLowerCase().includes('fillip');
