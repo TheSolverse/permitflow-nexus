@@ -5,11 +5,11 @@ import { MASTER_SECTOR_DATA } from '../../data/sectorData';
 import { Building2, Layers, MapPin, CheckCircle2, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
 
 export const NewProjectForm: React.FC = () => {
-  const { addProject, setActiveTab, currentUser } = useApp();
+  const { addProject, setActiveTab } = useApp();
   const [currentStep, setCurrentStep] = useState(1);
 
-  // Form State - Clean initial states without dummy data
-  const [businessName, setBusinessName] = useState(currentUser?.organization || '');
+  // Form State - Clean initial states without dummy or autofilled data
+  const [businessName, setBusinessName] = useState('');
   const [businessType, setBusinessType] = useState('');
   const [projectType, setProjectType] = useState<ProjectType>('New Setup');
   const [entityType, setEntityType] = useState<EntityType>('Private Limited');
@@ -144,6 +144,7 @@ export const NewProjectForm: React.FC = () => {
                 <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Business Name</label>
                 <input
                   type="text"
+                  autoComplete="off"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
                   placeholder="e.g. Apex Agro Processing Hub"
@@ -155,6 +156,7 @@ export const NewProjectForm: React.FC = () => {
                 <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Business Type</label>
                 <input
                   type="text"
+                  autoComplete="off"
                   value={businessType}
                   onChange={(e) => setBusinessType(e.target.value)}
                   placeholder="e.g. Food Processing & Spice Extraction"
@@ -286,6 +288,7 @@ export const NewProjectForm: React.FC = () => {
                 <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Estimated Employees / Workers</label>
                 <input
                   type="number"
+                  autoComplete="off"
                   value={employeeCount}
                   onChange={(e) => setEmployeeCount(e.target.value === '' ? '' : Number(e.target.value))}
                   placeholder="e.g. 25"
@@ -312,6 +315,7 @@ export const NewProjectForm: React.FC = () => {
                 <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Primary Business Activity Description</label>
                 <textarea
                   rows={2}
+                  autoComplete="off"
                   value={businessActivity}
                   onChange={(e) => setBusinessActivity(e.target.value)}
                   placeholder="Describe your manufacturing, processing, or core business operations..."
@@ -395,6 +399,7 @@ export const NewProjectForm: React.FC = () => {
                 <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">City / Taluka</label>
                 <input
                   type="text"
+                  autoComplete="off"
                   value={cityTaluka}
                   onChange={(e) => setCityTaluka(e.target.value)}
                   placeholder="e.g. Khed / Chakan"
@@ -406,6 +411,7 @@ export const NewProjectForm: React.FC = () => {
                 <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Pincode</label>
                 <input
                   type="text"
+                  autoComplete="off"
                   value={pincode}
                   onChange={(e) => setPincode(e.target.value)}
                   placeholder="410501"
@@ -443,6 +449,7 @@ export const NewProjectForm: React.FC = () => {
                 <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Plot Number & Full Address</label>
                 <textarea
                   rows={2}
+                  autoComplete="off"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="e.g. Plot No. C-42, Industrial Area Phase II, Taluka, District, PIN"
