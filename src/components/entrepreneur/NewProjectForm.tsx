@@ -5,30 +5,32 @@ import { MASTER_SECTOR_DATA } from '../../data/sectorData';
 import { Building2, Layers, MapPin, CheckCircle2, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
 
 export const NewProjectForm: React.FC = () => {
-  const { addProject, setActiveTab } = useApp();
+  const { addProject, setActiveTab, currentUser } = useApp();
   const [currentStep, setCurrentStep] = useState(1);
 
-  // Form State
-  const [businessName, setBusinessName] = useState('Sahyadri Food Extracts & Spices');
-  const [businessType, setBusinessType] = useState('Spice Milling, Extraction & Export Packaging');
+  // Form State - Clean initial states without dummy data
+  const [businessName, setBusinessName] = useState(currentUser?.organization || '');
+  const [businessType, setBusinessType] = useState('');
   const [projectType, setProjectType] = useState<ProjectType>('New Setup');
   const [entityType, setEntityType] = useState<EntityType>('Private Limited');
   const [sector, setSector] = useState<Sector>('Food Processing');
-  const [subSector, setSubSector] = useState<string>('Edible oil and spices (processing, refining, packaging)');
+  const [subSector, setSubSector] = useState<string>(
+    MASTER_SECTOR_DATA.find(s => s.id === 'Food Processing')?.subSectors[0]?.name || ''
+  );
 
-  const [investmentRange, setInvestmentRange] = useState('₹5 Cr - ₹15 Cr');
-  const [employeeCount, setEmployeeCount] = useState(35);
-  const [businessActivity, setBusinessActivity] = useState('Automated spice washing, grinding, quality testing and cold storage unit');
-  const [projectStage, setProjectStage] = useState<ProjectStage>('Construction');
-  const [hasConstruction, setHasConstruction] = useState(true);
+  const [investmentRange, setInvestmentRange] = useState('₹50 Lakhs - ₹1 Cr');
+  const [employeeCount, setEmployeeCount] = useState<number | ''>('');
+  const [businessActivity, setBusinessActivity] = useState('');
+  const [projectStage, setProjectStage] = useState<ProjectStage>('Planning');
+  const [hasConstruction, setHasConstruction] = useState(false);
   const [hasHazardousMaterials, setHasHazardousMaterials] = useState(false);
 
   const [district, setDistrict] = useState('Pune');
-  const [cityTaluka, setCityTaluka] = useState('Khed / Chakan');
-  const [pincode, setPincode] = useState('410501');
-  const [midcArea, setMidcArea] = useState('Chakan Phase II Industrial Area');
+  const [cityTaluka, setCityTaluka] = useState('');
+  const [pincode, setPincode] = useState('');
+  const [midcArea, setMidcArea] = useState('Chakan MIDC Phase II (Pune)');
   const [landType, setLandType] = useState<LandType>('MIDC Allotted');
-  const [address, setAddress] = useState('Plot No. C-42, Chakan Industrial Area, Phase II, Pune');
+  const [address, setAddress] = useState('');
 
   const maharashtraDistricts = [
     'Pune', 'Thane', 'Chhatrapati Sambhajinagar', 'Palghar', 'Nagpur', 'Nashik', 
@@ -48,24 +50,24 @@ export const NewProjectForm: React.FC = () => {
 
   const handleComplete = () => {
     addProject({
-      businessName,
-      businessType,
+      businessName: businessName.trim() || 'New Business Project',
+      businessType: businessType.trim() || `${sector} Enterprise`,
       projectType,
       entityType,
       sector,
       subSector,
       investmentRange,
-      employeeCount: Number(employeeCount),
-      businessActivity,
+      employeeCount: employeeCount === '' ? 0 : Number(employeeCount),
+      businessActivity: businessActivity.trim() || 'General Operations',
       projectStage,
       hasConstruction,
       hasHazardousMaterials,
       district,
-      cityTaluka,
-      pincode,
+      cityTaluka: cityTaluka.trim() || district,
+      pincode: pincode.trim(),
       midcArea,
       landType,
-      address
+      address: address.trim() || `${district}, Maharashtra`
     });
 
     setActiveTab('checklist');
@@ -285,8 +287,8 @@ export const NewProjectForm: React.FC = () => {
                 <input
                   type="number"
                   value={employeeCount}
-                  onChange={(e) => setEmployeeCount(Number(e.target.value))}
-                  placeholder="35"
+                  onChange={(e) => setEmployeeCount(e.target.value === '' ? '' : Number(e.target.value))}
+                  placeholder="e.g. 25"
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 />
               </div>
@@ -312,6 +314,7 @@ export const NewProjectForm: React.FC = () => {
                   rows={2}
                   value={businessActivity}
                   onChange={(e) => setBusinessActivity(e.target.value)}
+                  placeholder="Describe your manufacturing, processing, or core business operations..."
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 />
               </div>
@@ -442,6 +445,7 @@ export const NewProjectForm: React.FC = () => {
                   rows={2}
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
+                  placeholder="e.g. Plot No. C-42, Industrial Area Phase II, Taluka, District, PIN"
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#2E6F40]"
                 />
               </div>
@@ -480,7 +484,7 @@ export const NewProjectForm: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <span className="text-slate-400 font-medium">Business Name:</span>
-                  <div className="font-extrabold text-slate-900 dark:text-white">{businessName}</div>
+                  <div className="font-extrabold text-slate-900 dark:text-white">{businessName || 'New Business Project'}</div>
                 </div>
                 <div>
                   <span className="text-slate-400 font-medium">Sector & Scale:</span>
@@ -488,11 +492,11 @@ export const NewProjectForm: React.FC = () => {
                 </div>
                 <div>
                   <span className="text-slate-400 font-medium">Entity & Workers:</span>
-                  <div className="font-extrabold text-slate-900 dark:text-white">{entityType} ({employeeCount} Workers)</div>
+                  <div className="font-extrabold text-slate-900 dark:text-white">{entityType} ({employeeCount || 0} Workers)</div>
                 </div>
                 <div>
                   <span className="text-slate-400 font-medium">Location:</span>
-                  <div className="font-extrabold text-slate-900 dark:text-white">{district} ({midcArea})</div>
+                  <div className="font-extrabold text-slate-900 dark:text-white">{district} {midcArea ? `(${midcArea})` : ''}</div>
                 </div>
                 <div>
                   <span className="text-slate-400 font-medium">Construction Needed:</span>
