@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SmartChecklistItem } from '../../types';
-import { apiPreValidateChecklist } from '../../services/api';
+import { performRealOcr } from '../../utils/realOcrAnalyzer';
+import { apiPreValidateChecklist, apiAnalyzeDocumentOCR } from '../../services/api';
 import { 
   X, 
   UploadCloud, 
@@ -41,7 +42,15 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
     setActiveTab
   } = useApp();
 
-  const [uploadedFiles, setUploadedFiles] = useState<Record<string, { file: File | null; dataUrl?: string; docId?: string; name: string; size: string }>>({});
+  const [uploadedFiles, setUploadedFiles] = useState<Record<string, { 
+    file: File | null; 
+    dataUrl?: string; 
+    docId?: string; 
+    name: string; 
+    size: string;
+    ocrResult?: any;
+  }>>({});
+  const [scanningDocNames, setScanningDocNames] = useState<Record<string, boolean>>({});
   const [applicantRemarks, setApplicantRemarks] = useState('');
   const [declarationChecked, setDeclarationChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -129,22 +138,71 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
       : ['PAN Card / Identity Proof', 'Address Proof / Lease Deed', 'Site Layout / Floor Plan'];
   }
 
-  const handleFileChange = (docName: string, file: File | null) => {
+  const handleFileChange = async (docName: string, file: File | null) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      setUploadedFiles(prev => ({
-        ...prev,
-        [docName]: {
-          file,
-          dataUrl,
-          name: file.name,
-          size: `${Math.round(file.size / 1024)} KB`
+    setScanningDocNames(prev => ({ ...prev, [docName]: true }));
+
+    let dataUrl: string | undefined = undefined;
+    try {
+      dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = () => resolve(URL.createObjectURL(file));
+        reader.readAsDataURL(file);
+      });
+    } catch {
+      dataUrl = URL.createObjectURL(file);
+    }
+
+    let ocrRes: any = undefined;
+    try {
+      // Run real OCR document verification (same as Document Centre)
+      ocrRes = await performRealOcr(file, docName, docName, {
+        businessName: activeProject.businessName,
+        applicantName: currentUser?.name || 'Rajesh V. Patil',
+        district: activeProject.district
+      });
+    } catch (err) {
+      console.warn('Local OCR check notice:', err);
+      try {
+        const serverOcr = await apiAnalyzeDocumentOCR({
+          docName,
+          category: docName,
+          projectProfile: {
+            businessName: activeProject.businessName,
+            sector: activeProject.sector,
+            district: activeProject.district,
+            entityType: activeProject.entityType
+          }
+        });
+        if (serverOcr) {
+          ocrRes = {
+            confidence: serverOcr.confidence,
+            issues: serverOcr.issues,
+            recommendations: serverOcr.recommendations,
+            extractedName: serverOcr.extractedName,
+            extractedRegNo: serverOcr.extractedRegNo,
+            extractedExpiry: serverOcr.extractedExpiry,
+            status: serverOcr.status,
+            extractedRawText: '',
+            isAuthenticGovDoc: serverOcr.status === 'Valid'
+          };
         }
-      }));
-    };
-    reader.readAsDataURL(file);
+      } catch {}
+    } finally {
+      setScanningDocNames(prev => ({ ...prev, [docName]: false }));
+    }
+
+    setUploadedFiles(prev => ({
+      ...prev,
+      [docName]: {
+        file,
+        dataUrl,
+        name: file.name,
+        size: `${Math.round(file.size / 1024)} KB`,
+        ocrResult: ocrRes
+      }
+    }));
   };
 
   const handleRemoveFile = (docName: string) => {
@@ -156,13 +214,15 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
   };
 
   const handleSelectExistingDoc = (docName: string, docId: string, docTitle: string, docSize: string) => {
+    const existing = documents.find(d => d.id === docId);
     setUploadedFiles(prev => ({
       ...prev,
       [docName]: {
         file: null,
         docId,
         name: docTitle,
-        size: docSize
+        size: docSize,
+        ocrResult: existing?.aiValidationResult ? { ...existing.aiValidationResult, status: existing.status } : undefined
       }
     }));
   };
@@ -179,14 +239,14 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
     try {
       const finalDocIds: string[] = [];
 
-      // 1. Upload new files
+      // 1. Upload new files with AI OCR diagnostics
       for (const [docName, fileData] of Object.entries(uploadedFiles)) {
         if (fileData.file || fileData.dataUrl) {
           const newDoc = uploadDocument(
             docName, 
             docName, 
             fileData.file, 
-            undefined, 
+            fileData.ocrResult, 
             fileData.dataUrl
           );
           finalDocIds.push(newDoc.id);
@@ -431,6 +491,76 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
                         )}
                       </div>
                     </div>
+
+                    {/* Scanning State */}
+                    {scanningDocNames[docName] && (
+                      <div className="mt-3 p-3 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-xs text-purple-900 dark:text-purple-200 flex items-center gap-2.5 animate-pulse">
+                        <Loader2 className="w-4 h-4 text-purple-600 dark:text-purple-400 animate-spin shrink-0" />
+                        <div>
+                          <span className="font-extrabold">PermitFlow AI OCR Scanner: Validating document authenticity & entity match...</span>
+                          <p className="text-[11px] text-purple-700 dark:text-purple-300">Checking seals, authority stamps, and project alignment ({activeProject.businessName}).</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* AI OCR Verification Findings Card (Identical to Document Center) */}
+                    {attached?.ocrResult && !scanningDocNames[docName] && (
+                      <div className={`mt-3 p-3 rounded-xl border text-xs space-y-2 ${
+                        attached.ocrResult.status === 'Valid'
+                          ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200'
+                          : 'bg-amber-50/70 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200'
+                      }`}>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 font-extrabold">
+                            {attached.ocrResult.status === 'Valid' ? (
+                              <>
+                                <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                <span>AI OCR Verified: Authentic Statutory Document</span>
+                              </>
+                            ) : (
+                              <>
+                                <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                <span>AI OCR Notice: {attached.ocrResult.status}</span>
+                              </>
+                            )}
+                          </div>
+
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${
+                            attached.ocrResult.status === 'Valid'
+                              ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
+                              : 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700'
+                          }`}>
+                            Confidence: {attached.ocrResult.confidence || 95}%
+                          </span>
+                        </div>
+
+                        {/* Extracted Details Pill */}
+                        {(attached.ocrResult.extractedName || attached.ocrResult.extractedRegNo) && (
+                          <div className="flex flex-wrap gap-3 text-[11px] pt-1 text-slate-700 dark:text-slate-300 font-medium">
+                            {attached.ocrResult.extractedName && (
+                              <span>Entity/Holder: <strong className="text-slate-900 dark:text-white">{attached.ocrResult.extractedName}</strong></span>
+                            )}
+                            {attached.ocrResult.extractedRegNo && (
+                              <span>Ref/Reg No: <strong className="text-slate-900 dark:text-white">{attached.ocrResult.extractedRegNo}</strong></span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Issues or Verified Summary */}
+                        {attached.ocrResult.issues && attached.ocrResult.issues.length > 0 ? (
+                          <div className="space-y-1 text-[11px] pt-1">
+                            {attached.ocrResult.issues.map((issue: string, i: number) => (
+                              <div key={i} className="text-amber-900 dark:text-amber-300 font-semibold">• {issue}</div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>Document structure, authority seal, and applicant details match project clearance requirements.</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
