@@ -145,6 +145,8 @@ export interface SmartChecklistItem extends ApprovalType {
   applicationId?: string;
   canApply: boolean; // Computed based on dependencies
   prerequisiteBadge?: string;
+  phaseNumber?: number;
+  phaseLockReason?: string;
 }
 
 export type DocumentValidationStatus = 

@@ -153,6 +153,22 @@ const APPROVAL_ORDER: Record<string, number> = {
   'appr-stpi': 300 // STPI Export Registration
 };
 
+export function getPhaseNumber(id: string): number {
+  if (id === 'appr-1' || id === 'appr-1-llp' || id === 'appr-2' || id === 'appr-3' || id === 'appr-11' || id === 'appr-4') {
+    return 1;
+  }
+  if (id === 'appr-5') {
+    return 2;
+  }
+  if (id === 'appr-6' || id === 'appr-8' || id === 'appr-13') {
+    return 3;
+  }
+  if (id === 'appr-7' || id === 'appr-10' || id === 'appr-14' || id === 'appr-15' || id === 'appr-labour-epfo-esic') {
+    return 4;
+  }
+  return 5;
+}
+
 export function generateSmartChecklist(
   project: BusinessProject, 
   currentApplications: { approvalId: string; status: ApprovalStatus; id: string; projectId?: string; approvalName?: string }[] = []
@@ -166,7 +182,7 @@ export function generateSmartChecklist(
     }
   };
 
-  // 1. Universal Base Registrations required for every Indian business entity
+  // 1. Phase 1: Universal Base Legal & Tax Registrations
   if (project.entityType === 'LLP') {
     addAppr('appr-1-llp'); // LLP Incorporation (FiLLiP)
   } else {
@@ -176,12 +192,20 @@ export function generateSmartChecklist(
   addAppr('appr-3');  // Udyam MSME Registration
   addAppr('appr-11'); // Professional Tax Registration
 
-  // 2. Add MIDC Building Plan Sanction if project involves construction/land
-  if (project.hasConstruction || project.landType === 'MIDC Allotted') {
-    addAppr('appr-5');
-  }
+  // 2. Phase 2: Building & Infrastructure
+  addAppr('appr-5');  // MIDC Building Plan Sanction
 
-  // 3. Ingest Sector & Sub-Sector Specific Approvals
+  // 3. Phase 3: Pre-Establishment Clearances
+  addAppr('appr-6');  // Fire NOC (Provisional Safety Clearance)
+  addAppr('appr-8');  // Pollution Consent to Establish (MPCB CTE)
+
+  // 4. Phase 4: Factory Setup & Utilities
+  addAppr('appr-7');   // Factory Licence (DISH Form 1)
+  addAppr('appr-10');  // Industrial Power Connection (MSEDCL)
+  addAppr('appr-14');  // Industrial Water Connection (MIDC Water)
+  addAppr('appr-15');  // Electrical Inspectorate Safety NOC
+
+  // 5. Phase 5: Ingest Sector & Sub-Sector Specific Operating Clearances
   const sectorConfig = MASTER_SECTOR_DATA.find(s => s.id === project.sector || s.name === project.sector);
   if (sectorConfig) {
     let subConfig = sectorConfig.subSectors.find(sub => sub.name === project.subSector || sub.id === project.subSector);
@@ -191,13 +215,15 @@ export function generateSmartChecklist(
     if (subConfig) {
       subConfig.requiredApprovalIds.forEach(id => addAppr(id));
     }
+  } else {
+    addAppr('appr-12'); // Default to FSSAI
   }
 
-  // Strictly filter current applications TO THIS SPECIFIC PROJECT ONLY!
+  // Filter current applications TO THIS SPECIFIC PROJECT ONLY!
   const projectApps = currentApplications.filter(app => app.projectId === project.id);
 
-  // Build checklist items with status & dependency readiness
-  const checklist: SmartChecklistItem[] = selectedApprovals.map(appr => {
+  // Map initial items
+  let rawChecklist: SmartChecklistItem[] = selectedApprovals.map(appr => {
     const appMatch = projectApps.find(app => 
       app.approvalId === appr.id ||
       (appr.id === 'appr-8' && app.approvalId === 'mpcb-cte') ||
@@ -210,22 +236,8 @@ export function generateSmartChecklist(
     );
     const status: ApprovalStatus = appMatch ? appMatch.status : 'Not Started';
     const applicationId = appMatch ? appMatch.id : undefined;
+    const phaseNumber = getPhaseNumber(appr.id);
 
-    // Determine dependency readiness within THIS project's applications
-    let canApply = true;
-    if (appr.dependencies && appr.dependencies.length > 0) {
-      for (const depId of appr.dependencies) {
-        const depMatch = projectApps.find(app => app.approvalId === depId);
-        if (depId !== 'appr-1' && depId !== 'appr-2' && depId !== 'appr-5') {
-          if (!depMatch || depMatch.status !== 'Approved') {
-            canApply = false;
-            break;
-          }
-        }
-      }
-    }
-
-    // Compute prerequisite badge text
     let prerequisiteBadge: string | undefined = undefined;
     if (appr.id === 'appr-6') {
       prerequisiteBadge = 'Prerequisite for Building Plan & Factory Licence';
@@ -241,8 +253,41 @@ export function generateSmartChecklist(
       ...appr,
       status,
       applicationId,
-      canApply,
+      canApply: true,
+      phaseNumber,
       prerequisiteBadge
+    };
+  });
+
+  // Calculate Phase Completion Flags for Interlocking Lock Rules
+  const isPhase1Complete = rawChecklist.filter(i => i.phaseNumber === 1).every(i => i.status === 'Approved');
+  const isPhase2Complete = isPhase1Complete && rawChecklist.filter(i => i.phaseNumber === 2).every(i => i.status === 'Approved');
+  const isPhase3Complete = isPhase2Complete && rawChecklist.filter(i => i.phaseNumber === 3).every(i => i.status === 'Approved');
+  const isPhase4Complete = isPhase3Complete && rawChecklist.filter(i => i.phaseNumber === 4).every(i => i.status === 'Approved');
+
+  // Enforce Interlocking Phase Readiness Lock Rules
+  const checklist = rawChecklist.map(item => {
+    let canApply = true;
+    let phaseLockReason: string | undefined = undefined;
+
+    if (item.phaseNumber === 2 && !isPhase1Complete) {
+      canApply = false;
+      phaseLockReason = 'Phase 2 Locked: Complete and get approval for all Phase 1 Legal & Tax Registrations first.';
+    } else if (item.phaseNumber === 3 && !isPhase2Complete) {
+      canApply = false;
+      phaseLockReason = 'Phase 3 Locked: Complete and get approval for Phase 2 Building & Infrastructure Plan first.';
+    } else if (item.phaseNumber === 4 && !isPhase3Complete) {
+      canApply = false;
+      phaseLockReason = 'Phase 4 Locked: Complete and get approval for all Phase 3 Pre-Establishment Clearances first.';
+    } else if (item.phaseNumber === 5 && !isPhase4Complete) {
+      canApply = false;
+      phaseLockReason = 'Phase 5 Locked: Complete and get approval for all Phase 4 Factory & Utilities Clearances first.';
+    }
+
+    return {
+      ...item,
+      canApply,
+      phaseLockReason
     };
   });
 
