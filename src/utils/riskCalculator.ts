@@ -1,29 +1,34 @@
 import { BusinessProject, DocumentItem, ComplianceTask, RiskScoreDetails } from '../types';
 
 export function calculateRiskScore(
-  project: BusinessProject,
-  documents: DocumentItem[],
-  complianceTasks: ComplianceTask[]
+  project?: Partial<BusinessProject> | null,
+  documents: DocumentItem[] = [],
+  complianceTasks: ComplianceTask[] = []
 ): RiskScoreDetails {
+  const safeProject = project || {};
+  const safeDocs = Array.isArray(documents) ? documents : [];
+  const safeTasks = Array.isArray(complianceTasks) ? complianceTasks : [];
+
   // 1. Sector Risk (30% weight, max 30)
   let sectorScore = 10;
   let sectorExplanation = 'Low risk service or light manufacturing sector.';
   
-  if (project.sector === 'Chemical') {
+  const sectorStr = (safeProject.sector || 'Manufacturing') as string;
+  if (sectorStr === 'Chemical') {
     sectorScore = 28;
     sectorExplanation = 'High chemical hazardous waste & environmental impact potential.';
-  } else if (project.sector === 'Pharmaceutical') {
+  } else if (sectorStr === 'Pharmaceutical') {
     sectorScore = 24;
     sectorExplanation = 'Medium-High bio-chemical safety and bio-effluent monitoring requirement.';
-  } else if (project.sector === 'Food Processing') {
+  } else if (sectorStr === 'Food Processing' || sectorStr === 'Food Processing & Agro') {
     sectorScore = 18;
     sectorExplanation = 'Moderate food hygiene, water discharge & perishability factors.';
-  } else if (project.sector === 'Textile') {
+  } else if (sectorStr === 'Textile') {
     sectorScore = 20;
     sectorExplanation = 'Moderate dye effluent and water consumption risk.';
   }
 
-  if (project.hasHazardousMaterials) {
+  if (safeProject.hasHazardousMaterials) {
     sectorScore = Math.min(30, sectorScore + 5);
     sectorExplanation += ' (+5 for hazardous material handling)';
   }
@@ -32,13 +37,16 @@ export function calculateRiskScore(
   let locationScore = 6;
   let locationExplanation = 'Standard industrial zone with established infrastructure.';
 
-  if (project.landType === 'Agricultural Conversion') {
+  const landStatus = (safeProject.landType || '') as string;
+  const midcArea = safeProject.midcArea || '';
+
+  if (landStatus === 'Agricultural Conversion') {
     locationScore = 18;
     locationExplanation = 'Non-industrial land conversion requires additional revenue & environmental NOCs.';
-  } else if (project.midcArea.includes('Tarapur') || project.midcArea.includes('Waluj')) {
+  } else if (midcArea.includes('Tarapur') || midcArea.includes('Waluj')) {
     locationScore = 12;
     locationExplanation = 'High-density industrial zone subject to strict MPCB environmental audits.';
-  } else if (project.midcArea.includes('Chakan')) {
+  } else if (midcArea.includes('Chakan')) {
     locationScore = 8;
     locationExplanation = 'Developed MIDC industrial cluster with streamlined infrastructure.';
   }
@@ -47,9 +55,11 @@ export function calculateRiskScore(
   let complianceScore = 5;
   let complianceExplanation = 'Good compliance history with minimal delayed filings.';
 
-  const projectTasks = complianceTasks.filter(t => !project?.id || t.projectId === project.id);
-  const overdueCount = projectTasks.filter(t => t.status === 'OVERDUE').length;
-  const dueSoonCount = projectTasks.filter(t => t.status === 'DUE_SOON').length;
+  const projectTasks = safeProject.id 
+    ? safeTasks.filter(t => t && t.projectId === safeProject.id)
+    : safeTasks;
+  const overdueCount = projectTasks.filter(t => t && t.status === 'OVERDUE').length;
+  const dueSoonCount = projectTasks.filter(t => t && t.status === 'DUE_SOON').length;
 
   if (overdueCount > 0) {
     complianceScore += overdueCount * 8;
@@ -65,9 +75,11 @@ export function calculateRiskScore(
   let docScore = 4;
   let docExplanation = 'Most uploaded documents are valid and verified.';
 
-  const projectDocs = documents.filter(d => !project?.id || d.projectId === project.id);
-  const missingDocs = projectDocs.filter(d => d.status === 'Missing').length;
-  const invalidDocs = projectDocs.filter(d => d.status === 'Expired' || d.status === 'Name Mismatch' || d.status === 'Blurry / Unreadable').length;
+  const projectDocs = safeProject.id
+    ? safeDocs.filter(d => d && d.projectId === safeProject.id)
+    : safeDocs;
+  const missingDocs = projectDocs.filter(d => d && d.status === 'Missing').length;
+  const invalidDocs = projectDocs.filter(d => d && (d.status === 'Expired' || d.status === 'Name Mismatch' || d.status === 'Blurry / Unreadable')).length;
 
   if (missingDocs > 0) {
     docScore += missingDocs * 6;
@@ -99,7 +111,7 @@ export function calculateRiskScore(
   if (overdueCount > 0) {
     improvements.push('Complete overdue compliance tasks immediately (e.g. Annual Fire Safety Audit).');
   }
-  if (project.hasHazardousMaterials) {
+  if (safeProject.hasHazardousMaterials) {
     improvements.push('Obtain certified Hazardous Waste Management Authorization from MPCB to lower sector risk.');
   }
   if (improvements.length === 0) {
