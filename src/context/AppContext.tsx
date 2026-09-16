@@ -136,25 +136,43 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const safeSetStorage = (key: string, value: any) => {
+  try {
+    localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+  } catch (err) {
+    console.warn(`[LocalStorage] Skipped cache save for key "${key}" (Quota/Storage Limit):`, err);
+  }
+};
+
+const safeGetStorage = <T,>(key: string, fallback: T): T => {
+  try {
+    const saved = localStorage.getItem(key);
+    if (!saved) return fallback;
+    return JSON.parse(saved) as T;
+  } catch (err) {
+    console.warn(`[LocalStorage] Skipped cache read for key "${key}":`, err);
+    return fallback;
+  }
+};
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Saved state from LocalStorage or Initial Seed
   const [currentUser, setCurrentUser] = useState<User>(() => {
-    const saved = localStorage.getItem('pfn_user');
-    return saved ? JSON.parse(saved) : INITIAL_USERS[0];
+    return safeGetStorage('pfn_user', INITIAL_USERS[0]);
   });
 
   const [language, setLanguage] = useState<Language>(() => {
-    const saved = localStorage.getItem('pfn_language') as Language;
+    const saved = safeGetStorage<string>('pfn_language', 'en') as Language;
     return (saved === 'en' || saved === 'mr' || saved === 'hi') ? saved : 'en';
   });
 
   useEffect(() => {
-    localStorage.setItem('pfn_language', language);
+    safeSetStorage('pfn_language', language);
   }, [language]);
   const [darkMode, setDarkMode] = useState<boolean>(() => {
-    const saved = localStorage.getItem('pfn_dark_mode');
+    const saved = safeGetStorage<boolean | null>('pfn_dark_mode', null);
     if (saved !== null) {
-      return JSON.parse(saved);
+      return saved;
     }
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
@@ -165,58 +183,49 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } else {
       document.documentElement.classList.remove('dark');
     }
-    localStorage.setItem('pfn_dark_mode', JSON.stringify(darkMode));
+    safeSetStorage('pfn_dark_mode', darkMode);
   }, [darkMode]);
 
   const [projects, setProjects] = useState<BusinessProject[]>(() => {
-    const saved = localStorage.getItem('pfn_projects');
-    return saved ? JSON.parse(saved) : INITIAL_PROJECTS;
+    return safeGetStorage('pfn_projects', INITIAL_PROJECTS);
   });
 
   const [activeProjectId, setActiveProjectId] = useState<string>(projects[0]?.id || 'proj-1');
 
   const [applications, setApplications] = useState<Application[]>(() => {
-    const saved = localStorage.getItem('pfn_applications');
-    return saved ? JSON.parse(saved) : INITIAL_APPLICATIONS;
+    return safeGetStorage('pfn_applications', INITIAL_APPLICATIONS);
   });
 
   const [documents, setDocuments] = useState<DocumentItem[]>(() => {
-    const saved = localStorage.getItem('pfn_documents');
-    return saved ? JSON.parse(saved) : INITIAL_DOCUMENTS;
+    return safeGetStorage('pfn_documents', INITIAL_DOCUMENTS);
   });
 
   const [inspections, setInspections] = useState<InspectionItem[]>(() => {
-    const saved = localStorage.getItem('pfn_inspections');
-    return saved ? JSON.parse(saved) : INITIAL_INSPECTIONS;
+    return safeGetStorage('pfn_inspections', INITIAL_INSPECTIONS);
   });
 
   const [complianceTasks, setComplianceTasks] = useState<ComplianceTask[]>(() => {
-    const saved = localStorage.getItem('pfn_compliance');
-    return saved ? JSON.parse(saved) : INITIAL_COMPLIANCE_TASKS;
+    return safeGetStorage('pfn_compliance', INITIAL_COMPLIANCE_TASKS);
   });
 
   const [incentiveSchemes, setIncentiveSchemes] = useState<IncentiveScheme[]>(() => {
-    const saved = localStorage.getItem('pfn_incentive_schemes');
-    return saved ? JSON.parse(saved) : INITIAL_INCENTIVE_SCHEMES;
+    return safeGetStorage('pfn_incentive_schemes', INITIAL_INCENTIVE_SCHEMES);
   });
 
   const [nocApplications, setNocApplications] = useState<NocApplication[]>(() => {
-    const saved = localStorage.getItem('pfn_noc_applications');
-    return saved ? JSON.parse(saved) : INITIAL_NOC_APPLICATIONS;
+    return safeGetStorage('pfn_noc_applications', INITIAL_NOC_APPLICATIONS);
   });
 
   const [jointInspections, setJointInspections] = useState<JointInspection[]>(() => {
-    const saved = localStorage.getItem('pfn_joint_inspections');
-    return saved ? JSON.parse(saved) : INITIAL_JOINT_INSPECTIONS;
+    return safeGetStorage('pfn_joint_inspections', INITIAL_JOINT_INSPECTIONS);
   });
 
   const [parallelPermissions, setParallelPermissions] = useState<ParallelPermissionItem[]>(() => {
-    const saved = localStorage.getItem('pfn_parallel_permissions');
-    return saved ? JSON.parse(saved) : INITIAL_PARALLEL_PERMISSIONS;
+    return safeGetStorage('pfn_parallel_permissions', INITIAL_PARALLEL_PERMISSIONS);
   });
 
   useEffect(() => {
-    localStorage.setItem('pfn_parallel_permissions', JSON.stringify(parallelPermissions));
+    safeSetStorage('pfn_parallel_permissions', parallelPermissions);
   }, [parallelPermissions]);
 
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
@@ -377,33 +386,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   }, [activeProjectId, currentUser?.id]);
 
-  // Sync to LocalStorage as fallback cache
+  // Sync to LocalStorage as fallback cache (safely guarded against quota limits)
   useEffect(() => {
-    localStorage.setItem('pfn_user', JSON.stringify(currentUser));
+    safeSetStorage('pfn_user', currentUser);
   }, [currentUser]);
 
   useEffect(() => {
-    localStorage.setItem('pfn_projects', JSON.stringify(projects));
+    safeSetStorage('pfn_projects', projects);
   }, [projects]);
 
   useEffect(() => {
-    localStorage.setItem('pfn_applications', JSON.stringify(applications));
+    safeSetStorage('pfn_applications', applications);
   }, [applications]);
 
   useEffect(() => {
-    localStorage.setItem('pfn_documents', JSON.stringify(documents));
+    safeSetStorage('pfn_documents', documents);
   }, [documents]);
 
   useEffect(() => {
-    localStorage.setItem('pfn_incentive_schemes', JSON.stringify(incentiveSchemes));
+    safeSetStorage('pfn_incentive_schemes', incentiveSchemes);
   }, [incentiveSchemes]);
 
   useEffect(() => {
-    localStorage.setItem('pfn_noc_applications', JSON.stringify(nocApplications));
+    safeSetStorage('pfn_noc_applications', nocApplications);
   }, [nocApplications]);
 
   useEffect(() => {
-    localStorage.setItem('pfn_joint_inspections', JSON.stringify(jointInspections));
+    safeSetStorage('pfn_joint_inspections', jointInspections);
   }, [jointInspections]);
 
   const userProjects = currentUser?.role === 'ENTREPRENEUR'

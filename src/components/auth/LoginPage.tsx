@@ -112,7 +112,7 @@ export const LoginPage: React.FC = () => {
       };
 
       setCurrentUser(userToLogin);
-      localStorage.setItem('pfn_user', JSON.stringify(userToLogin));
+      try { localStorage.setItem('pfn_user', JSON.stringify(userToLogin)); } catch (e) {}
       setIsSubmitting(false);
 
       if (roleToUse === 'ENTREPRENEUR') setActiveTab('dashboard');
@@ -225,7 +225,7 @@ export const LoginPage: React.FC = () => {
       if (authData.session) {
         // Auto-authenticate: set user state and redirect to logged-in area
         setCurrentUser(createdUserObj);
-        localStorage.setItem('pfn_user', JSON.stringify(createdUserObj));
+        try { localStorage.setItem('pfn_user', JSON.stringify(createdUserObj)); } catch (e) {}
         setIsSubmitting(false);
         setActiveTab('new-project');
       } else {
@@ -290,7 +290,7 @@ export const LoginPage: React.FC = () => {
         };
 
         setCurrentUser(userObj);
-        localStorage.setItem('pfn_user', JSON.stringify(userObj));
+        try { localStorage.setItem('pfn_user', JSON.stringify(userObj)); } catch (e) {}
 
         if (role === 'ENTREPRENEUR') setActiveTab('dashboard');
         else if (role === 'OFFICER') setActiveTab('officer-dashboard');
