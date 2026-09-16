@@ -1,4 +1,5 @@
 import { pool, isDbConnected } from './pool';
+import { supabase } from './supabase';
 import { 
   INITIAL_USERS, 
   INITIAL_PROJECTS, 
@@ -51,6 +52,14 @@ export async function getUsers() {
       console.error('Error fetching users from DB:', e);
     }
   }
+  try {
+    const { data, error } = await supabase.from('users').select('*').order('name', { ascending: true });
+    if (!error && data && data.length > 0) {
+      return data;
+    }
+  } catch (e) {
+    console.error('Error fetching users from Supabase:', e);
+  }
   return memoryUsers;
 }
 
@@ -69,21 +78,35 @@ export async function findUserByEmailAndRole(email: string, role?: string) {
       console.error('Error finding user in DB:', e);
     }
   }
+  try {
+    let q = supabase.from('users').select('*').ilike('email', email);
+    if (role) q = q.eq('role', role);
+    const { data, error } = await q;
+    if (!error && data && data.length > 0) {
+      return data[0];
+    }
+  } catch (e) {
+    console.error('Error finding user in Supabase:', e);
+  }
   return memoryUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && (!role || u.role === role)) || null;
 }
 
 export async function deleteUser(userId: string) {
   if (isDbConnected()) {
     try {
-      // 1. Delete user's business projects (cascades to applications, documents, compliance tasks)
       await pool.query('DELETE FROM business_projects WHERE user_id = $1', [userId]);
-      // 2. Delete user row
       await pool.query('DELETE FROM users WHERE id = $1', [userId]);
       return { success: true };
     } catch (e) {
       console.error('Error deleting user from DB:', e);
       throw e;
     }
+  }
+  try {
+    await supabase.from('business_projects').delete().eq('user_id', userId);
+    await supabase.from('users').delete().eq('id', userId);
+  } catch (e) {
+    console.error('Error deleting user from Supabase:', e);
   }
   memoryUsers = memoryUsers.filter(u => u.id !== userId);
   memoryProjects = memoryProjects.filter(p => p.userId !== userId);
@@ -125,6 +148,36 @@ export async function getProjects(userId?: string): Promise<BusinessProject[]> {
       console.error('Error fetching projects from DB:', e);
     }
   }
+
+  try {
+    let q = supabase.from('business_projects').select('*').order('created_at', { ascending: false });
+    if (userId) q = q.eq('user_id', userId);
+    const { data, error } = await q;
+    if (!error && data && data.length > 0) {
+      return data.map((r: any) => ({
+        id: r.id,
+        userId: r.user_id,
+        businessName: r.business_name,
+        sector: r.sector,
+        subSector: r.sub_sector,
+        investmentRange: r.investment_range,
+        estimatedInvestmentCr: parseFloat(r.estimated_investment_cr) || undefined,
+        proposedEmployees: r.proposed_employees || undefined,
+        landStatus: r.land_status,
+        midcArea: r.midc_area,
+        district: r.district,
+        taluka: r.taluka,
+        powerRequirementKW: parseFloat(r.power_requirement_kw) || undefined,
+        waterRequirementLPD: parseFloat(r.water_requirement_lpd) || undefined,
+        hazardousMaterials: r.hazardous_materials,
+        projectStage: r.project_stage,
+        createdAt: r.created_at ? new Date(r.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+      }));
+    }
+  } catch (e) {
+    console.error('Error fetching projects from Supabase:', e);
+  }
+
   if (userId) return memoryProjects.filter(p => p.userId === userId);
   return memoryProjects;
 }
@@ -184,6 +237,30 @@ export async function createProject(projectData: Partial<BusinessProject>): Prom
     }
   }
 
+  try {
+    await supabase.from('business_projects').insert([{
+      id: newProject.id,
+      user_id: newProject.userId,
+      business_name: newProject.businessName,
+      sector: newProject.sector,
+      sub_sector: newProject.subSector || null,
+      investment_range: newProject.investmentRange,
+      estimated_investment_cr: newProject.estimatedInvestmentCr || null,
+      proposed_employees: newProject.proposedEmployees || null,
+      land_status: newProject.landStatus || null,
+      midc_area: newProject.midcArea || null,
+      district: newProject.district || null,
+      taluka: newProject.taluka || null,
+      power_requirement_kw: newProject.powerRequirementKW || null,
+      water_requirement_lpd: newProject.waterRequirementLPD || null,
+      hazardous_materials: newProject.hazardousMaterials,
+      project_stage: newProject.projectStage,
+      created_at: newProject.createdAt
+    }]);
+  } catch (e) {
+    console.error('Error inserting project into Supabase:', e);
+  }
+
   memoryProjects.unshift(newProject);
   return newProject;
 }
@@ -237,6 +314,37 @@ export async function getApplications(filters?: { userId?: string; projectId?: s
     } catch (e) {
       console.error('Error fetching applications from DB:', e);
     }
+  }
+
+  try {
+    let q = supabase.from('applications').select('*').order('created_at', { ascending: false });
+    if (filters?.projectId) q = q.eq('project_id', filters.projectId);
+    if (filters?.status) q = q.eq('status', filters.status);
+    if (filters?.department) q = q.ilike('department', `%${filters.department}%`);
+    const { data, error } = await q;
+    if (!error && data && data.length > 0) {
+      return data.map((r: any) => ({
+        id: r.id,
+        appId: r.app_id,
+        projectId: r.project_id,
+        businessName: r.business_name,
+        approvalId: r.approval_id,
+        approvalName: r.approval_name,
+        department: r.department,
+        submissionDate: r.submission_date,
+        slaDeadlineDate: r.sla_deadline_date,
+        slaDaysRemaining: r.sla_days_remaining,
+        status: r.status,
+        officerAssigned: r.officer_assigned,
+        riskScore: r.risk_score,
+        remarks: r.remarks,
+        timeline: typeof r.timeline === 'string' ? JSON.parse(r.timeline) : (r.timeline || []),
+        queries: typeof r.queries === 'string' ? JSON.parse(r.queries) : (r.queries || []),
+        documentIds: typeof r.document_ids === 'string' ? JSON.parse(r.document_ids) : (r.document_ids || [])
+      }));
+    }
+  } catch (e) {
+    console.error('Error fetching applications from Supabase:', e);
   }
 
   let list = [...memoryApplications];
@@ -305,6 +413,28 @@ export async function createApplication(data: Partial<Application>): Promise<App
     }
   }
 
+  try {
+    await supabase.from('applications').insert([{
+      id: newApp.id,
+      app_id: newApp.appId,
+      project_id: newApp.projectId,
+      business_name: newApp.businessName,
+      approval_id: newApp.approvalId,
+      approval_name: newApp.approvalName,
+      department: newApp.department,
+      submission_date: newApp.submissionDate,
+      sla_deadline_date: newApp.slaDeadlineDate,
+      sla_days_remaining: newApp.slaDaysRemaining,
+      status: newApp.status,
+      risk_score: newApp.riskScore,
+      timeline: JSON.stringify(newApp.timeline),
+      queries: JSON.stringify(newApp.queries),
+      document_ids: JSON.stringify(newApp.documentIds)
+    }]);
+  } catch (e) {
+    console.error('Error inserting application into Supabase:', e);
+  }
+
   memoryApplications.unshift(newApp);
   return newApp;
 }
@@ -343,6 +473,29 @@ export async function getDocuments(projectId?: string, userId?: string): Promise
       console.error('Error fetching documents from DB:', e);
     }
   }
+
+  try {
+    let q = supabase.from('documents').select('*').order('created_at', { ascending: false });
+    if (projectId) q = q.eq('project_id', projectId);
+    const { data, error } = await q;
+    if (!error && data && data.length > 0) {
+      return data.map((r: any) => ({
+        id: r.id,
+        projectId: r.project_id,
+        docName: r.doc_name,
+        category: r.category,
+        fileUrl: r.file_url,
+        fileSize: r.file_size,
+        uploadDate: r.upload_date,
+        status: r.status,
+        expiryDate: r.expiry_date,
+        aiValidationResult: typeof r.ai_validation_result === 'string' ? JSON.parse(r.ai_validation_result) : r.ai_validation_result
+      }));
+    }
+  } catch (e) {
+    console.error('Error fetching documents from Supabase:', e);
+  }
+
   if (projectId) return memoryDocuments.filter(d => d.projectId === projectId);
   return memoryDocuments;
 }
@@ -386,7 +539,22 @@ export async function createDocument(docData: Partial<DocumentItem>): Promise<Do
     }
   }
 
-  // Update memory store
+  try {
+    await supabase.from('documents').upsert([{
+      id: newDoc.id,
+      project_id: newDoc.projectId,
+      doc_name: newDoc.docName,
+      category: newDoc.category,
+      file_url: newDoc.fileUrl,
+      file_size: newDoc.fileSize,
+      upload_date: newDoc.uploadDate,
+      status: newDoc.status,
+      ai_validation_result: JSON.stringify(newDoc.aiValidationResult)
+    }]);
+  } catch (e) {
+    console.error('Error inserting document into Supabase:', e);
+  }
+
   const existingIdx = memoryDocuments.findIndex(d => d.id === newDoc.id);
   if (existingIdx >= 0) {
     memoryDocuments[existingIdx] = newDoc;
@@ -404,6 +572,11 @@ export async function deleteDocument(docId: string): Promise<{ success: boolean 
     } catch (e) {
       console.error('Error deleting document from DB:', e);
     }
+  }
+  try {
+    await supabase.from('documents').delete().eq('id', docId);
+  } catch (e) {
+    console.error('Error deleting document from Supabase:', e);
   }
   memoryDocuments = memoryDocuments.filter(d => d.id !== docId);
   return { success: true };
@@ -458,6 +631,38 @@ export async function getNocApplications(filters?: { userId?: string; projectId?
     } catch (e) {
       console.error('Error fetching NOC applications from DB:', e);
     }
+  }
+
+  try {
+    let q = supabase.from('noc_applications').select('*').order('created_at', { ascending: false });
+    if (filters?.projectId) q = q.eq('project_id', filters.projectId);
+    if (filters?.status) q = q.eq('status', filters.status);
+    if (filters?.nocType) q = q.eq('noc_type', filters.nocType);
+    const { data, error } = await q;
+    if (!error && data && data.length > 0) {
+      return data.map((r: any) => ({
+        id: r.id,
+        projectId: r.project_id,
+        businessName: r.business_name,
+        nocType: r.noc_type,
+        nocName: r.noc_name,
+        department: r.department,
+        appliedDate: r.applied_date,
+        status: r.status,
+        urgency: r.urgency,
+        slaDaysLeft: r.sla_days_left,
+        technicalParameters: typeof r.technical_parameters === 'string' ? JSON.parse(r.technical_parameters) : (r.technical_parameters || {}),
+        documents: typeof r.documents === 'string' ? JSON.parse(r.documents) : (r.documents || []),
+        queries: typeof r.queries === 'string' ? JSON.parse(r.queries) : (r.queries || []),
+        provisionalCertUrl: r.provisional_cert_url,
+        finalCertUrl: r.final_cert_url,
+        qrCodeData: r.qr_code_data,
+        issuedDate: r.issued_date,
+        certificateId: r.certificate_id
+      }));
+    }
+  } catch (e) {
+    console.error('Error fetching NOC applications from Supabase:', e);
   }
 
   let list = [...memoryNoc];
