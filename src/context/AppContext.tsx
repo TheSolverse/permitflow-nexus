@@ -612,6 +612,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const resolvedFileUrl = customFileUrl || (file ? URL.createObjectURL(file) : '/mock_documents/sample.pdf');
 
+    const structuredAnalysis = ocrResult?.structuredAnalysis;
+
     const newDoc: DocumentItem = {
       id: `doc-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       projectId: projId,
@@ -620,14 +622,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       fileUrl: resolvedFileUrl,
       fileSize: file ? `${Math.round(file.size / 1024)} KB` : '1.2 MB',
       uploadDate: new Date().toISOString().split('T')[0],
+      expiryDate: ocrResult?.extractedExpiry,
       status,
+      structuredAnalysis,
       aiValidationResult: {
         confidence: ocrResult?.confidence ?? (status === 'Valid' ? 96 : 48),
         issues,
         recommendations,
-        extractedName: ocrResult?.extractedName || (status === 'Name Mismatch' ? 'Alternate Unit' : currentBusinessName),
+        extractedName: ocrResult?.extractedName,
         extractedRegNo: ocrResult?.extractedRegNo,
-        extractedExpiry: ocrResult?.extractedExpiry
+        extractedExpiry: ocrResult?.extractedExpiry,
+        structuredAnalysis
       }
     };
 

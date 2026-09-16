@@ -149,13 +149,77 @@ export interface SmartChecklistItem extends ApprovalType {
   phaseLockReason?: string;
 }
 
-export type DocumentValidationStatus = 
-  | 'Valid'
-  | 'Missing'
-  | 'Expired'
-  | 'Name Mismatch'
-  | 'Blurry / Unreadable'
-  | 'Pending Review';
+export type DocumentValidationStatus = 'Valid' | 'Expired' | 'Name Mismatch' | 'Blurry / Unreadable' | 'Pending Review' | 'Missing';
+export type VerificationFinalStatus = 'VERIFIED' | 'NEEDS_REVIEW' | 'INVALID' | 'INCOMPLETE';
+export type DocumentQualityGrade = 'GOOD' | 'FAIR' | 'POOR';
+export type MatchResult = 'MATCH' | 'POSSIBLE_MATCH' | 'MISMATCH' | 'NOT_ENOUGH_DATA';
+export type DetectedDocumentType = 
+  | 'PAN'
+  | 'AADHAAR'
+  | 'IDENTITY_PROOF'
+  | 'GST'
+  | 'UTILITY_BILL'
+  | 'LEASE_AGREEMENT'
+  | 'OWNER_NOC'
+  | 'DSC'
+  | 'FIRE_NOC'
+  | 'MPCB'
+  | 'DISH'
+  | 'OTHER'
+  | 'UNKNOWN';
+
+export interface FieldExtractionResult {
+  value: string | null;
+  confidence: number;
+  displayValue?: string;
+}
+
+export interface RuleCheckResult {
+  rule: string;
+  status: 'PASS' | 'FAIL' | 'REVIEW';
+  message: string;
+}
+
+export interface CrossDocumentCheckResult {
+  field: string;
+  sourceDoc: string;
+  targetDoc: string;
+  status: MatchResult;
+  message: string;
+}
+
+export interface StructuredOcrAnalysis {
+  documentType: DetectedDocumentType;
+  expectedDocumentType: string;
+  documentQuality: DocumentQualityGrade;
+  ocrStatus: 'COMPLETED' | 'FAILED' | 'PARTIAL';
+  confidence: {
+    overall: number;       // Actual Tesseract OCR confidence
+    ocr: number;
+    documentType: number;  // Document classification confidence
+  };
+  fields: {
+    name?: FieldExtractionResult;
+    documentNumber?: FieldExtractionResult;
+    dateOfBirth?: FieldExtractionResult;
+    issueDate?: FieldExtractionResult;
+    expiryDate?: FieldExtractionResult;
+    address?: FieldExtractionResult;
+    issuingAuthority?: FieldExtractionResult;
+  };
+  validationRules: RuleCheckResult[];
+  crossDocumentChecks: CrossDocumentCheckResult[];
+  risk: {
+    level: 'LOW' | 'MEDIUM' | 'HIGH';
+    score: number; // PermitFlow Nexus Internal Risk Score
+    reasons: string[];
+  };
+  status: VerificationFinalStatus;
+  legacyStatus: DocumentValidationStatus;
+  extractedRawText: string;
+  issues: string[];
+  recommendations: string[];
+}
 
 export interface DocumentItem {
   id: string;
@@ -167,6 +231,7 @@ export interface DocumentItem {
   uploadDate?: string;
   expiryDate?: string;
   status: DocumentValidationStatus;
+  structuredAnalysis?: StructuredOcrAnalysis;
   aiValidationResult?: {
     confidence: number;
     issues: string[];
@@ -174,6 +239,7 @@ export interface DocumentItem {
     extractedName?: string;
     extractedRegNo?: string;
     extractedExpiry?: string;
+    structuredAnalysis?: StructuredOcrAnalysis;
   };
 }
 
