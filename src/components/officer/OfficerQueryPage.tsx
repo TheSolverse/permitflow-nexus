@@ -4,9 +4,30 @@ import { MessageSquareText, Send, CheckCircle2, Clock, FileText, User } from 'lu
 
 export const OfficerQueryPage: React.FC = () => {
   const { applications, currentUser } = useApp();
-  const [selectedAppId, setSelectedAppId] = useState(applications[2]?.id || applications[0]?.id);
 
-  const selectedApp = applications.find(a => a.id === selectedAppId) || applications[0];
+  const userDept = currentUser.department || '';
+  const isMpcb = currentUser.role === 'OFFICER_MPCB' || userDept.includes('Pollution') || userDept.includes('MPCB');
+  const isFire = currentUser.role === 'OFFICER_FIRE' || userDept.includes('Fire');
+  const isDish = currentUser.role === 'OFFICER_DISH' || userDept.includes('Safety') || userDept.includes('DISH');
+  const isMidc = currentUser.role === 'OFFICER_MIDC' || userDept.includes('MIDC') || userDept.includes('Infrastructure');
+  const isMsedcl = currentUser.role === 'OFFICER_MSEDCL' || userDept.includes('Electricity') || userDept.includes('MSEDCL');
+  const isFssai = currentUser.role === 'OFFICER_FSSAI' || userDept.includes('Food') || userDept.includes('FSSAI');
+
+  const scopedApps = applications.filter(app => {
+    if (currentUser.role === 'ADMIN') return true;
+    const dept = (app.department || '').toLowerCase();
+    if (isMpcb && (dept.includes('pollution') || dept.includes('mpcb'))) return true;
+    if (isFire && dept.includes('fire')) return true;
+    if (isDish && (dept.includes('safety') || dept.includes('dish') || dept.includes('labour'))) return true;
+    if (isMidc && dept.includes('midc')) return true;
+    if (isMsedcl && (dept.includes('electricity') || dept.includes('msedcl'))) return true;
+    if (isFssai && (dept.includes('food') || dept.includes('fssai'))) return true;
+    if (currentUser.department && dept.includes(currentUser.department.toLowerCase())) return true;
+    return false;
+  });
+
+  const [selectedAppId, setSelectedAppId] = useState<string>(scopedApps[0]?.id || '');
+  const selectedApp = scopedApps.find(a => a.id === selectedAppId) || scopedApps[0];
 
   return (
     <div className="space-y-6">
@@ -18,34 +39,40 @@ export const OfficerQueryPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left: Applications List */}
-        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-2">
-          <h3 className="font-bold text-xs text-slate-500 uppercase tracking-wider px-2">Applications Queue</h3>
-          {applications.map(app => (
-            <button
-              key={app.id}
-              onClick={() => setSelectedAppId(app.id)}
-              className={`w-full text-left p-3 rounded-xl border text-xs transition-all ${
-                app.id === selectedAppId
-                  ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-500 font-semibold text-amber-950 dark:text-amber-200 shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              <div className="font-bold">{app.appId}</div>
-              <div className="truncate text-slate-500">{app.approvalName}</div>
-              <div className="text-[10px] text-amber-600 mt-1 font-semibold">Queries: {app.queries.length}</div>
-            </button>
-          ))}
+      {scopedApps.length === 0 ? (
+        <div className="bg-white dark:bg-slate-800 p-12 rounded-2xl border border-slate-200 dark:border-slate-700 text-center text-slate-500 text-xs">
+          No applications currently assigned to your department.
         </div>
-
-        {/* Right: Selected Application Query History & Controls */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-6">
-          <div className="border-b border-slate-100 dark:border-slate-700 pb-3">
-            <h2 className="font-extrabold text-base text-slate-900 dark:text-white">{selectedApp.approvalName}</h2>
-            <p className="text-xs text-slate-500">Applicant: {selectedApp.businessName} • ID: {selectedApp.appId}</p>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Left: Applications List */}
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-2">
+            <h3 className="font-bold text-xs text-slate-500 uppercase tracking-wider px-2">Department Applications ({scopedApps.length})</h3>
+            {scopedApps.map(app => (
+              <button
+                key={app.id}
+                onClick={() => setSelectedAppId(app.id)}
+                className={`w-full text-left p-3 rounded-xl border text-xs transition-all cursor-pointer ${
+                  app.id === selectedAppId
+                    ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-500 font-semibold text-amber-950 dark:text-amber-200 shadow-xs'
+                    : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                }`}
+              >
+                <div className="font-bold">{app.appId}</div>
+                <div className="truncate text-slate-500">{app.approvalName}</div>
+                <div className="text-[10px] text-slate-400 mt-0.5 truncate">{app.businessName}</div>
+                <div className="text-[10px] text-amber-600 mt-1 font-semibold">Queries: {app.queries?.length || 0}</div>
+              </button>
+            ))}
           </div>
+
+          {/* Right: Selected Application Query History & Controls */}
+          <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-6">
+            <div className="border-b border-slate-100 dark:border-slate-700 pb-3">
+              <h2 className="font-extrabold text-base text-slate-900 dark:text-white">{selectedApp?.approvalName}</h2>
+              <p className="text-xs text-slate-500">Applicant: {selectedApp?.businessName} • ID: {selectedApp?.appId}</p>
+            </div>
 
           {/* Active Query Section */}
           <div className="space-y-3 text-xs">
@@ -80,6 +107,7 @@ export const OfficerQueryPage: React.FC = () => {
         </div>
 
       </div>
+      )}
 
     </div>
   );

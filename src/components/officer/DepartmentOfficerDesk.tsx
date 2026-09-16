@@ -27,6 +27,7 @@ export const DepartmentOfficerDesk: React.FC = () => {
     parallelPermissions, 
     applications,
     documents,
+    projects,
     officerApprovePermission, 
     officerRejectPermission, 
     officerRequestDocument, 
@@ -37,6 +38,7 @@ export const DepartmentOfficerDesk: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [projectFilter, setProjectFilter] = useState('ALL');
   const [selectedItem, setSelectedItem] = useState<ParallelPermissionItem | null>(null);
   const [reviewingApp, setReviewingApp] = useState<Application | null>(null);
 
@@ -76,15 +78,25 @@ export const DepartmentOfficerDesk: React.FC = () => {
     return false;
   });
 
-  const filteredPermissions = scopedPermissions.filter(item => {
+  // Deduplicate permissions by unique combination of (projectId + approvalId)
+  const uniqueScopedPermissions = Array.from(
+    new Map(scopedPermissions.map(item => [`${item.projectId}_${item.approvalId}`, item])).values()
+  );
+
+  const filteredPermissions = uniqueScopedPermissions.filter(item => {
     const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
+    const matchesProject = projectFilter === 'ALL' || item.projectId === projectFilter;
+    const targetProj = projects.find(p => p.id === item.projectId);
+    const businessName = targetProj?.businessName || '';
     const matchesSearch = searchQuery === '' || 
       item.approvalName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.assignedOfficer.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
+    return matchesStatus && matchesProject && matchesSearch;
   });
 
   const handleViewDocs = (item: ParallelPermissionItem) => {
+    const targetProj = projects.find(p => p.id === item.projectId);
     const existingApp = applications.find(a => 
       a.projectId === item.projectId && 
       (a.approvalId === item.approvalId || a.approvalName.toLowerCase().includes(item.approvalName.toLowerCase()))
@@ -100,7 +112,7 @@ export const DepartmentOfficerDesk: React.FC = () => {
         id: item.id,
         appId: `PFN-2026-${item.department.substring(0, 4).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
         projectId: item.projectId,
-        businessName: 'Applicant Enterprise',
+        businessName: targetProj?.businessName || 'Applicant Enterprise',
         approvalId: item.approvalId,
         approvalName: item.approvalName,
         department: item.department,
@@ -196,23 +208,42 @@ export const DepartmentOfficerDesk: React.FC = () => {
           />
         </div>
 
-        <div className="flex items-center gap-2 text-xs">
-          <Filter className="w-3.5 h-3.5 text-gray-500" />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            aria-label="Filter by status"
-            className="bg-[#F4FAF6] dark:bg-[#1A2E22] border border-[#D4EEDC] dark:border-[#253D2C] rounded-xl px-3 py-2 text-xs font-bold text-[#253D2C] dark:text-white cursor-pointer"
-          >
-            <option value="ALL">All Statuses ({scopedPermissions.length})</option>
-            <option value="Submitted">Submitted</option>
-            <option value="Under Review">Under Review</option>
-            <option value="More Information Needed">More Info Needed</option>
-            <option value="Inspection Pending">Inspection Pending</option>
-            <option value="Approved">Approved</option>
-            <option value="Delayed">Delayed</option>
-            <option value="Rejected">Rejected</option>
-          </select>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {projects.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              <Building className="w-3.5 h-3.5 text-gray-500" />
+              <select
+                value={projectFilter}
+                onChange={(e) => setProjectFilter(e.target.value)}
+                aria-label="Filter by project"
+                className="bg-[#F4FAF6] dark:bg-[#1A2E22] border border-[#D4EEDC] dark:border-[#253D2C] rounded-xl px-3 py-2 text-xs font-bold text-[#253D2C] dark:text-white cursor-pointer"
+              >
+                <option value="ALL">All Enterprises / Projects</option>
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.businessName}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="flex items-center gap-1.5">
+            <Filter className="w-3.5 h-3.5 text-gray-500" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              aria-label="Filter by status"
+              className="bg-[#F4FAF6] dark:bg-[#1A2E22] border border-[#D4EEDC] dark:border-[#253D2C] rounded-xl px-3 py-2 text-xs font-bold text-[#253D2C] dark:text-white cursor-pointer"
+            >
+              <option value="ALL">All Statuses ({uniqueScopedPermissions.length})</option>
+              <option value="Submitted">Submitted</option>
+              <option value="Under Review">Under Review</option>
+              <option value="More Information Needed">More Info Needed</option>
+              <option value="Inspection Pending">Inspection Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Delayed">Delayed</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -229,25 +260,33 @@ export const DepartmentOfficerDesk: React.FC = () => {
               No permissions found in your department queue matching selected filters.
             </div>
           ) : (
-            filteredPermissions.map(item => (
-              <div key={item.id} className="p-5 hover:bg-[#F4FAF6] dark:hover:bg-[#1A2E22] transition-colors space-y-3">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-sm text-[#253D2C] dark:text-white">{item.approvalName}</span>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
-                        {item.status}
-                      </span>
-                    </div>
+            filteredPermissions.map(item => {
+              const targetProj = projects.find(p => p.id === item.projectId);
+              const businessName = targetProj?.businessName || 'Applicant Enterprise';
 
-                    <div className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-3 font-medium">
-                      <span>Assigned Officer: <strong className="text-gray-800 dark:text-gray-200">{item.assignedOfficer}</strong></span>
-                      <span>•</span>
-                      <span>SLA Deadline: <strong className="text-gray-800 dark:text-gray-200">{item.slaDeadlineDate}</strong></span>
-                      <span>•</span>
-                      <span>Pending With: <strong className="text-amber-700 dark:text-amber-400">{item.pendingWith || 'Department'}</strong></span>
+              return (
+                <div key={item.id} className="p-5 hover:bg-[#F4FAF6] dark:hover:bg-[#1A2E22] transition-colors space-y-3">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-extrabold text-sm text-[#253D2C] dark:text-white">{item.approvalName}</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                          {item.status}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                          <Building className="w-3 h-3" />
+                          <span>{businessName}</span>
+                        </span>
+                      </div>
+
+                      <div className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-3 font-medium">
+                        <span>Assigned Officer: <strong className="text-gray-800 dark:text-gray-200">{item.assignedOfficer}</strong></span>
+                        <span>•</span>
+                        <span>SLA Deadline: <strong className="text-gray-800 dark:text-gray-200">{item.slaDeadlineDate}</strong></span>
+                        <span>•</span>
+                        <span>Pending With: <strong className="text-amber-700 dark:text-amber-400">{item.pendingWith || 'Department'}</strong></span>
+                      </div>
                     </div>
-                  </div>
 
                   {/* Officer Action Menu Buttons */}
                   <div className="flex flex-wrap items-center gap-2">
@@ -308,10 +347,11 @@ export const DepartmentOfficerDesk: React.FC = () => {
                   </div>
                 )}
               </div>
-            ))
-          )}
-        </div>
+            );
+          })
+        )}
       </div>
+    </div>
 
       {/* OFFICER ACTION MODAL */}
       {activeModal && selectedItem && (

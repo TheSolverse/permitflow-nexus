@@ -94,7 +94,7 @@ interface AppContextType {
   // Dynamic state helpers
   addProject: (projData: Omit<BusinessProject, 'id' | 'createdAt' | 'userId'>) => BusinessProject;
   applyForApproval: (approvalId: string, approvalName: string, department: string, documentIds?: string[], remarks?: string) => Application;
-  uploadDocument: (docName: string, category: string, file: File | null, ocrResult?: any, customFileUrl?: string) => DocumentItem;
+  uploadDocument: (docName: string, category: string, file: File | null, ocrResult?: any, customFileUrl?: string, targetProjectId?: string) => DocumentItem;
   deleteDocument: (docId: string) => Promise<boolean>;
   updateDocumentStatus: (docId: string, status: DocumentItem['status']) => void;
   respondToQuery: (queryId: string, responseText: string, responseDocName?: string) => void;
@@ -503,13 +503,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       ],
       queries: [],
-      documentIds: documentIds && documentIds.length > 0 ? documentIds : documents.map(d => d.id)
+      documentIds: documentIds && documentIds.length > 0 ? documentIds : documents.filter(d => d.projectId === activeProject.id).map(d => d.id)
     };
 
     setApplications(prev => [newApp, ...prev.filter(a => a.id !== newApp.id)]);
 
     // Also sync parallelPermissions so department officers see the uploaded documents
-    const attachedDocNames = documents.filter(d => newApp.documentIds.includes(d.id)).map(d => d.docName);
+    const attachedDocNames = documents.filter(d => d.projectId === activeProject.id && newApp.documentIds.includes(d.id)).map(d => d.docName);
     setParallelPermissions(prev => {
       const exists = prev.some(p => p.projectId === activeProject.id && (p.approvalId === approvalId || p.approvalName.toLowerCase().includes(approvalName.toLowerCase())));
       if (exists) {
@@ -534,21 +534,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     createApplicationApi(newApp).catch(err => console.warn('Could not save application to backend:', err));
 
     // Audit log
-    setAuditLogs(prev => [
-      {
-        id: `log-${Date.now()}`,
-        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
-        user: currentUser.name,
-        role: currentUser.role,
-        action: 'Submitted Approval Application',
-        applicationId: newApp.appId,
-        previousStatus: 'Not Started',
-        newStatus: 'Submitted',
-        ipAddress: '192.168.1.45',
-        details: `Submitted ${approvalName} to ${department}.`
-      },
-      ...prev
-    ]);
+    const log: AuditLogItem = {
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      user: currentUser.name,
+      role: currentUser.role,
+      action: 'Submitted Approval Application',
+      applicationId: newApp.appId,
+      previousStatus: 'Not Started',
+      newStatus: 'Submitted',
+      ipAddress: '192.168.1.45',
+      details: `Submitted ${approvalName} to ${department}.`
+    };
+    setAuditLogs([log, ...auditLogs]);
 
     // Notification
     setNotifications(prev => [
@@ -574,8 +572,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     category: string, 
     file: File | null, 
     ocrResult?: any, 
-    customFileUrl?: string
+    customFileUrl?: string,
+    targetProjectId?: string
   ): DocumentItem => {
+    const projId = targetProjectId || activeProject.id;
+    const currentBusinessName = projects.find(p => p.id === projId)?.businessName || activeProject.businessName;
+
     let status: DocumentItem['status'] = ocrResult?.status || 'Valid';
     let issues: string[] = ocrResult?.issues || [];
     let recommendations: string[] = ocrResult?.recommendations || [];
@@ -588,7 +590,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         recommendations.push('Upload a renewed version from issuing authority.');
       } else if (fileNameLower.includes('mismatch') || fileNameLower.includes('unit1')) {
         status = 'Name Mismatch';
-        issues.push(`Name on document does not match project "${activeProject.businessName}".`);
+        issues.push(`Name on document does not match project "${currentBusinessName}".`);
         recommendations.push('Upload a corrected document or name change affidavit.');
       } else if (fileNameLower.includes('blurry') || fileNameLower.includes('low_res')) {
         status = 'Blurry / Unreadable';
@@ -603,7 +605,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const newDoc: DocumentItem = {
       id: `doc-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      projectId: activeProject.id,
+      projectId: projId,
       docName,
       category,
       fileUrl: resolvedFileUrl,
@@ -614,7 +616,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         confidence: ocrResult?.confidence ?? (status === 'Valid' ? 96 : 48),
         issues,
         recommendations,
-        extractedName: ocrResult?.extractedName || (status === 'Name Mismatch' ? 'Alternate Unit' : activeProject.businessName),
+        extractedName: ocrResult?.extractedName || (status === 'Name Mismatch' ? 'Alternate Unit' : currentBusinessName),
         extractedRegNo: ocrResult?.extractedRegNo,
         extractedExpiry: ocrResult?.extractedExpiry
       }
@@ -1163,151 +1165,206 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const nowStr = new Date().toLocaleString();
     const todayStr = new Date().toISOString().split('T')[0];
 
+    // Check if entrepreneur has uploaded any documents for this project
+    const projDocs = documents.filter(d => d.projectId === targetProj.id);
+    const hasDocs = projDocs.length > 0;
+    const attachedDocIds = projDocs.map(d => d.id);
+
+    const isFoodSector = targetProj.sector === 'Food Processing' || targetProj.businessType?.toLowerCase().includes('food') || targetProj.businessName?.toLowerCase().includes('kadai') || targetProj.businessName?.toLowerCase().includes('food');
+
     const newPermissions: ParallelPermissionItem[] = [
       {
         id: `perm-${Date.now()}-1`,
         projectId: targetProj.id,
-        approvalId: 'mpcb-cte',
+        approvalId: 'appr-8',
         approvalName: 'Pollution Consent (MPCB CTE)',
         department: 'Maharashtra Pollution Control Board (MPCB)',
         category: 'Environmental',
         assignedOfficer: 'Dr. V. K. Patil',
         officerEmail: 'vk.patil@mpcb.gov.in',
-        status: 'Submitted',
-        pendingWith: 'MPCB Officer',
-        pendingAction: 'Technical scrutiny of stack height & emission controls',
+        status: hasDocs ? 'Submitted' : 'Documents Needed',
+        pendingWith: hasDocs ? 'MPCB Officer' : 'Entrepreneur',
+        pendingAction: hasDocs ? 'Technical scrutiny of stack height & emission controls' : 'Upload Pollution Abatement & Topo Layout documents',
         dateReceived: todayStr,
         lastUpdatedDateTime: nowStr,
-        pendingDocs: [],
+        pendingDocs: hasDocs ? [] : ['Pollution Abatement & Effluent Treatment Scheme', 'Site Plan / Topo Layout', 'Manufacturing Process Flow Diagram'],
+        documentIds: hasDocs ? attachedDocIds : [],
         queriesCount: 0,
         slaDeadlineDate: new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0],
         slaDaysRemaining: 15,
         dependencies: [],
         submittedDate: todayStr,
         lastUpdatedDate: todayStr,
-        remarks: 'Automatically routed to MPCB for preliminary environmental scrutiny.',
-        activityHistory: [{ id: 'a-1', timestamp: nowStr, actor: currentUser.name, department: 'System', action: 'Auto-Routed to MPCB', notes: 'Consent to Establish assigned to Dr. V. K. Patil' }]
+        remarks: hasDocs ? 'Automatically routed to MPCB with attached documents.' : 'Auto-routed to MPCB: Pending mandatory project document uploads from entrepreneur.',
+        activityHistory: [{ 
+          id: `a-1-${Date.now()}`, 
+          timestamp: nowStr, 
+          actor: currentUser.name, 
+          department: 'System', 
+          action: hasDocs ? 'Auto-Routed to MPCB' : 'Auto-Registered (Documents Needed)', 
+          notes: hasDocs ? 'Consent to Establish assigned to Dr. V. K. Patil' : 'Awaiting pollution control & site layout document uploads' 
+        }]
       },
       {
         id: `perm-${Date.now()}-2`,
         projectId: targetProj.id,
-        approvalId: 'midc-bldg',
+        approvalId: 'appr-5',
         approvalName: 'Industrial Permission (MIDC Building Plan)',
         department: 'MIDC Infrastructure & Planning',
         category: 'Clearance',
         assignedOfficer: 'Er. Suresh Shinde',
         officerEmail: 'suresh.shinde@midcindia.org',
-        status: 'Submitted',
-        pendingWith: 'MIDC Officer',
-        pendingAction: 'Architectural blueprint review',
+        status: hasDocs ? 'Submitted' : 'Documents Needed',
+        pendingWith: hasDocs ? 'MIDC Officer' : 'Entrepreneur',
+        pendingAction: hasDocs ? 'Architectural blueprint review' : 'Upload Architectural Blueprint & Structural Stability Certificate',
         dateReceived: todayStr,
         lastUpdatedDateTime: nowStr,
-        pendingDocs: [],
+        pendingDocs: hasDocs ? [] : ['Architectural Blueprint Drawings', 'Structural Stability Certificate', 'MIDC Land Allotment Letter'],
+        documentIds: hasDocs ? attachedDocIds : [],
         queriesCount: 0,
         slaDeadlineDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
         slaDaysRemaining: 14,
         dependencies: [],
         submittedDate: todayStr,
         lastUpdatedDate: todayStr,
-        remarks: 'Architectural blueprint drawings routed to MIDC Civil Planning team.',
-        activityHistory: [{ id: 'a-2', timestamp: nowStr, actor: currentUser.name, department: 'System', action: 'Auto-Routed to MIDC', notes: 'Building plan assigned to Er. Suresh Shinde' }]
+        remarks: hasDocs ? 'Architectural blueprint drawings routed to MIDC Civil Planning team.' : 'Auto-routed to MIDC: Awaiting architectural drawing uploads.',
+        activityHistory: [{ 
+          id: `a-2-${Date.now()}`, 
+          timestamp: nowStr, 
+          actor: currentUser.name, 
+          department: 'System', 
+          action: hasDocs ? 'Auto-Routed to MIDC' : 'Auto-Registered (Documents Needed)', 
+          notes: hasDocs ? 'Building plan assigned to Er. Suresh Shinde' : 'Awaiting architectural blueprint & structural stability cert' 
+        }]
       },
       {
         id: `perm-${Date.now()}-3`,
         projectId: targetProj.id,
-        approvalId: 'fire-noc',
+        approvalId: 'appr-6',
         approvalName: 'Fire NOC (Provisional Safety Clearance)',
         department: 'Maharashtra Fire Services',
         category: 'Safety',
         assignedOfficer: 'Officer Sunita Rane',
         officerEmail: 'sunita.rane@mahfire.gov.in',
-        status: 'Submitted',
-        pendingWith: 'Fire Officer',
-        pendingAction: 'Fire fighting equipment layout review',
+        status: hasDocs ? 'Submitted' : 'Documents Needed',
+        pendingWith: hasDocs ? 'Fire Officer' : 'Entrepreneur',
+        pendingAction: hasDocs ? 'Fire fighting equipment layout review' : 'Upload Fire Fighting Equipment Layout & Water Tank Plan',
         dateReceived: todayStr,
         lastUpdatedDateTime: nowStr,
-        pendingDocs: [],
+        pendingDocs: hasDocs ? [] : ['Fire Fighting Equipment Layout', 'Building Section Elevations', 'Water Storage Tank Plan'],
+        documentIds: hasDocs ? attachedDocIds : [],
         queriesCount: 0,
         slaDeadlineDate: new Date(Date.now() + 10 * 86400000).toISOString().split('T')[0],
         slaDaysRemaining: 10,
         dependencies: [],
         submittedDate: todayStr,
         lastUpdatedDate: todayStr,
-        remarks: 'Fire Fighting Equipment layout under review by Fire Inspectorate.',
-        activityHistory: [{ id: 'a-3', timestamp: nowStr, actor: currentUser.name, department: 'System', action: 'Auto-Routed to Fire Dept', notes: 'Provisional Fire NOC assigned to Officer Sunita Rane' }]
+        remarks: hasDocs ? 'Fire Fighting Equipment layout under review by Fire Inspectorate.' : 'Auto-routed to Fire Services: Pending fire layout drawings.',
+        activityHistory: [{ 
+          id: `a-3-${Date.now()}`, 
+          timestamp: nowStr, 
+          actor: currentUser.name, 
+          department: 'System', 
+          action: hasDocs ? 'Auto-Routed to Fire Dept' : 'Auto-Registered (Documents Needed)', 
+          notes: hasDocs ? 'Provisional Fire NOC assigned to Officer Sunita Rane' : 'Awaiting fire safety layout drawings' 
+        }]
       },
       {
         id: `perm-${Date.now()}-4`,
         projectId: targetProj.id,
-        approvalId: 'dish-factory',
+        approvalId: 'appr-7',
         approvalName: 'Factory / Labour Licence (DISH Safety Clearance)',
         department: 'Directorate of Industrial Safety & Health (DISH)',
         category: 'Safety',
         assignedOfficer: 'Inspector A. B. Kadam',
         officerEmail: 'ab.kadam@dish.maharashtra.gov.in',
         status: 'Blocked by Dependency',
-        pendingWith: 'MPCB Department',
-        pendingAction: 'Waiting for prerequisite MPCB Pollution Consent approval',
+        pendingWith: 'MPCB & Fire Departments',
+        pendingAction: 'Waiting for prerequisite MPCB Pollution Consent & Fire NOC approvals',
         dateReceived: todayStr,
         lastUpdatedDateTime: nowStr,
-        pendingDocs: [],
+        pendingDocs: ['Factory Form 1 Application', 'Machine Layout Plan', 'Prerequisite MPCB CTE & Fire NOC'],
+        documentIds: hasDocs ? attachedDocIds : [],
         queriesCount: 0,
         slaDeadlineDate: new Date(Date.now() + 25 * 86400000).toISOString().split('T')[0],
         slaDaysRemaining: 25,
-        dependencies: ['mpcb-cte', 'fire-noc'],
+        dependencies: ['appr-8', 'appr-6', 'mpcb-cte', 'fire-noc'],
         blockedBy: ['MPCB Consent to Establish (CTE)', 'Provisional Fire Safety NOC'],
         submittedDate: todayStr,
         lastUpdatedDate: todayStr,
         remarks: 'Auto-blocked: Awaiting prerequisite MPCB CTE & Fire NOC approvals.',
-        activityHistory: [{ id: 'a-4', timestamp: nowStr, actor: currentUser.name, department: 'System', action: 'Auto-Routed (Gated)', notes: 'DISH Factory Licence waiting for MPCB CTE approval' }]
+        activityHistory: [{ 
+          id: `a-4-${Date.now()}`, 
+          timestamp: nowStr, 
+          actor: currentUser.name, 
+          department: 'System', 
+          action: 'Auto-Routed (Gated)', 
+          notes: 'DISH Factory Licence waiting for MPCB CTE and Fire NOC approvals' 
+        }]
       },
       {
         id: `perm-${Date.now()}-5`,
         projectId: targetProj.id,
-        approvalId: 'msedcl-power',
+        approvalId: 'appr-10',
         approvalName: 'Electricity Connection (MSEDCL 11kV Load)',
         department: 'Maharashtra State Electricity Distribution Co Ltd (MSEDCL)',
         category: 'Utility',
         assignedOfficer: 'Er. R. N. Deshpande',
         officerEmail: 'rn.deshpande@mahadiscom.in',
-        status: 'Submitted',
-        pendingWith: 'MSEDCL Officer',
-        pendingAction: 'Transformer load sanction review',
+        status: hasDocs ? 'Submitted' : 'Documents Needed',
+        pendingWith: hasDocs ? 'MSEDCL Officer' : 'Entrepreneur',
+        pendingAction: hasDocs ? 'Transformer load sanction review' : 'Upload Single Line Diagram (SLD) & Connected Load Test Report',
         dateReceived: todayStr,
         lastUpdatedDateTime: nowStr,
-        pendingDocs: [],
+        pendingDocs: hasDocs ? [] : ['Transformer Single Line Diagram (SLD)', 'Connected Electrical Load Sanction Test Report'],
+        documentIds: hasDocs ? attachedDocIds : [],
         queriesCount: 0,
         slaDeadlineDate: new Date(Date.now() + 12 * 86400000).toISOString().split('T')[0],
         slaDaysRemaining: 12,
         dependencies: [],
         submittedDate: todayStr,
         lastUpdatedDate: todayStr,
-        remarks: 'Load sanction application routed to MSEDCL Substation Engineer.',
-        activityHistory: [{ id: 'a-5', timestamp: nowStr, actor: currentUser.name, department: 'System', action: 'Auto-Routed to MSEDCL', notes: 'Grid Load connection assigned to Er. R. N. Deshpande' }]
+        remarks: hasDocs ? 'Load sanction application routed to MSEDCL Substation Engineer.' : 'Auto-routed to MSEDCL: Awaiting electrical SLD & load sanction docs.',
+        activityHistory: [{ 
+          id: `a-5-${Date.now()}`, 
+          timestamp: nowStr, 
+          actor: currentUser.name, 
+          department: 'System', 
+          action: hasDocs ? 'Auto-Routed to MSEDCL' : 'Auto-Registered (Documents Needed)', 
+          notes: hasDocs ? 'Grid Load connection assigned to Er. R. N. Deshpande' : 'Awaiting electrical Single Line Diagram' 
+        }]
       },
       {
         id: `perm-${Date.now()}-6`,
         projectId: targetProj.id,
-        approvalId: 'fssai-licence',
+        approvalId: 'appr-12',
         approvalName: 'Food Licence (Central FSSAI Processing Licence)',
         department: 'Food Safety & Standards Authority (FSSAI)',
         category: 'Registration',
         assignedOfficer: 'Officer Meena Thorat',
         officerEmail: 'm.thorat@fssai.gov.in',
-        status: targetProj.sector === 'Food Processing' ? 'Submitted' : 'Not Started',
-        pendingWith: 'FSSAI Officer',
-        pendingAction: 'Hygiene & food safety scrutiny',
+        status: isFoodSector ? (hasDocs ? 'Submitted' : 'Documents Needed') : 'Not Started',
+        pendingWith: isFoodSector ? (hasDocs ? 'FSSAI Officer' : 'Entrepreneur') : 'Not Started',
+        pendingAction: isFoodSector ? (hasDocs ? 'Hygiene & food safety scrutiny' : 'Upload FSMS Plan & NABL Water Test Lab Report') : 'Sector clearance',
         dateReceived: todayStr,
         lastUpdatedDateTime: nowStr,
-        pendingDocs: [],
+        pendingDocs: isFoodSector ? (hasDocs ? [] : ['Food Safety Management System (FSMS) Plan', 'NABL Water Quality Lab Report']) : [],
+        documentIds: hasDocs ? attachedDocIds : [],
         queriesCount: 0,
         slaDeadlineDate: new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0],
         slaDaysRemaining: 15,
         dependencies: [],
         submittedDate: todayStr,
         lastUpdatedDate: todayStr,
-        remarks: 'Food hygiene compliance protocol submitted.',
-        activityHistory: [{ id: 'a-6', timestamp: nowStr, actor: currentUser.name, department: 'System', action: 'Auto-Routed to FSSAI', notes: 'Food licence assigned to Officer Meena Thorat' }]
+        remarks: hasDocs ? 'Food hygiene compliance protocol submitted.' : 'Auto-routed to FSSAI: Awaiting FSMS plan & NABL water test report.',
+        activityHistory: [{ 
+          id: `a-6-${Date.now()}`, 
+          timestamp: nowStr, 
+          actor: currentUser.name, 
+          department: 'System', 
+          action: isFoodSector ? (hasDocs ? 'Auto-Routed to FSSAI' : 'Auto-Registered (Documents Needed)') : 'Not Required', 
+          notes: isFoodSector ? (hasDocs ? 'Food licence assigned to Officer Meena Thorat' : 'Awaiting FSMS & water report') : 'Non-food sector' 
+        }]
       }
     ];
 
@@ -1316,15 +1373,62 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...prev.filter(p => p.projectId !== targetProj.id)
     ]);
 
+    // SYNC WITH APPLICATIONS STATE (Powers the Smart Approval Checklist)
+    const newApplications: Application[] = newPermissions.map((perm, idx) => {
+      const deptCode = perm.department.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '');
+      return {
+        id: `app-${Date.now()}-${idx}`,
+        appId: `PFN-2026-${deptCode}-${Math.floor(100 + Math.random() * 900)}`,
+        projectId: targetProj.id,
+        businessName: targetProj.businessName,
+        approvalId: perm.approvalId,
+        approvalName: perm.approvalName,
+        department: perm.department,
+        submissionDate: todayStr,
+        slaDeadlineDate: perm.slaDeadlineDate,
+        slaDaysRemaining: perm.slaDaysRemaining,
+        status: perm.status,
+        riskScore: Math.floor(15 + Math.random() * 20),
+        remarks: perm.remarks,
+        officerAssigned: perm.assignedOfficer,
+        timeline: [
+          {
+            id: `t-${Date.now()}-${idx}`,
+            title: perm.status === 'Documents Needed' ? 'Auto-Routed (Awaiting Mandatory Documents)' : 'Auto-Routed to Department Officer',
+            description: perm.status === 'Documents Needed' 
+              ? `Application registered for ${perm.approvalName}. Please upload the required documents.` 
+              : `Application for ${perm.approvalName} automatically assigned to ${perm.assignedOfficer}.`,
+            timestamp: nowStr,
+            actor: currentUser.name,
+            role: currentUser.role
+          }
+        ],
+        queries: [],
+        documentIds: perm.documentIds || []
+      };
+    });
+
+    setApplications(prev => [
+      ...newApplications,
+      ...prev.filter(a => a.projectId !== targetProj.id || !newPermissions.some(np => np.approvalId === a.approvalId))
+    ]);
+
+    // Persist new applications in background
+    newApplications.forEach(app => {
+      createApplicationApi(app).catch(err => console.warn('Could not persist auto-routed app to database:', err));
+    });
+
     setNotifications(prev => [
       {
         id: `notif-${Date.now()}`,
         userId: currentUser.id,
         projectId: targetProj.id,
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
-        title: '⚡ Parallel Workflow Auto-Routed',
-        message: `Project "${targetProj.businessName}" permissions automatically assigned to MPCB, Fire, DISH, MIDC, MSEDCL & FSSAI departments.`,
-        type: 'SUCCESS',
+        title: hasDocs ? '⚡ Parallel Workflow Auto-Routed' : '⚡ Clearance Applications Initiated',
+        message: hasDocs 
+          ? `Project "${targetProj.businessName}" permissions submitted with documents to MPCB, Fire, DISH, MIDC, MSEDCL & FSSAI.` 
+          : `Project "${targetProj.businessName}" clearances initiated. Please upload mandatory documents to complete departmental submission.`,
+        type: hasDocs ? 'SUCCESS' : 'WARNING',
         read: false,
         channels: ['IN_APP', 'EMAIL']
       },

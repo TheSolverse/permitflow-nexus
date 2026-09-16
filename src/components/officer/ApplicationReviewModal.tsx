@@ -214,48 +214,20 @@ export const ApplicationReviewModal: React.FC<Props> = ({ app, onClose }) => {
                 return s ? JSON.parse(s) : [];
               } catch { return []; }
             })();
-            // documents (React State) MUST be last in array so it overrides static/cached lists
-            const combinedPool = Array.from(
-              new Map([...INITIAL_DOCUMENTS, ...localSaved, ...documents].map(d => [d.id, d])).values()
-            );
+            
+            // Strictly scope documents pool to live documents and project ID
+            const pool = documents.length > 0 ? documents : localSaved;
+            const projectScopedPool = pool.filter(d => !app.projectId || !d.projectId || d.projectId === app.projectId);
 
             // 1. Direct matched documents strictly linked to this specific application
-            let displayDocs = combinedPool.filter(d => 
+            let displayDocs = projectScopedPool.filter(d => 
               app.documentIds && app.documentIds.length > 0 && app.documentIds.includes(d.id)
             );
 
-            // 2. If no explicit documentIds are linked to this application, show relevant category documents
+            // 2. If no explicit documentIds are matched, show documents uploaded for THIS project only
             if (displayDocs.length === 0) {
-              const appL = (app.approvalName || '').toLowerCase();
-              const matchedCategoryDocs = combinedPool.filter(d => {
-                if (d.projectId && app.projectId && d.projectId !== app.projectId) return false;
-                const nameL = (d.docName || '').toLowerCase();
-                const catL = (d.category || '').toLowerCase();
-
-                if (appL.includes('company') || appL.includes('incorporation') || appL.includes('llp')) {
-                  return nameL.includes('incorporation') || nameL.includes('pan') || catL.includes('pan') || nameL.includes('mca');
-                }
-                if (appL.includes('udyam') || appL.includes('msme')) {
-                  return nameL.includes('udyam') || nameL.includes('msme') || nameL.includes('aadhaar');
-                }
-                if (appL.includes('gst')) {
-                  return nameL.includes('gst') || catL.includes('gst');
-                }
-                if (appL.includes('pollution') || appL.includes('cte') || appL.includes('cto')) {
-                  return nameL.includes('pollution') || nameL.includes('etp') || nameL.includes('effluent') || nameL.includes('water');
-                }
-                if (appL.includes('fire')) {
-                  return nameL.includes('fire') || nameL.includes('layout') || nameL.includes('hydrant');
-                }
-                if (appL.includes('midc') || appL.includes('land') || appL.includes('building')) {
-                  return nameL.includes('midc') || nameL.includes('land') || nameL.includes('lease');
-                }
-                return false;
-              });
-
-              displayDocs = matchedCategoryDocs.length > 0 
-                ? matchedCategoryDocs 
-                : combinedPool.filter(d => d.projectId === app.projectId).slice(0, 2);
+              const matchedProjDocs = projectScopedPool.filter(d => d.projectId === app.projectId);
+              displayDocs = matchedProjDocs;
             }
 
             return (

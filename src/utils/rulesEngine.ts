@@ -155,7 +155,7 @@ const APPROVAL_ORDER: Record<string, number> = {
 
 export function generateSmartChecklist(
   project: BusinessProject, 
-  currentApplications: { approvalId: string; status: ApprovalStatus; id: string; projectId?: string }[] = []
+  currentApplications: { approvalId: string; status: ApprovalStatus; id: string; projectId?: string; approvalName?: string }[] = []
 ): SmartChecklistItem[] {
   const selectedApprovals: ApprovalType[] = [];
 
@@ -198,7 +198,16 @@ export function generateSmartChecklist(
 
   // Build checklist items with status & dependency readiness
   const checklist: SmartChecklistItem[] = selectedApprovals.map(appr => {
-    const appMatch = projectApps.find(app => app.approvalId === appr.id);
+    const appMatch = projectApps.find(app => 
+      app.approvalId === appr.id ||
+      (appr.id === 'appr-8' && app.approvalId === 'mpcb-cte') ||
+      (appr.id === 'appr-5' && app.approvalId === 'midc-bldg') ||
+      (appr.id === 'appr-6' && app.approvalId === 'fire-noc') ||
+      (appr.id === 'appr-7' && app.approvalId === 'dish-factory') ||
+      (appr.id === 'appr-10' && app.approvalId === 'msedcl-power') ||
+      (appr.id === 'appr-12' && app.approvalId === 'fssai-licence') ||
+      (app.approvalName && appr.name && app.approvalName.toLowerCase().trim() === appr.name.toLowerCase().trim())
+    );
     const status: ApprovalStatus = appMatch ? appMatch.status : 'Not Started';
     const applicationId = appMatch ? appMatch.id : undefined;
 

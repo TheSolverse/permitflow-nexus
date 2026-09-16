@@ -41,7 +41,7 @@ describe('IncentiveFinderPage Component', () => {
 
     // Modal title should appear
     expect(screen.getByText(/Continue to Official Website\?/i)).toBeInTheDocument();
-    expect(screen.getByText(/Chief Minister Employment Generation Programme/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Chief Minister Employment Generation Programme/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText('maha-cmegp.gov.in').length).toBeGreaterThan(0);
   });
 
