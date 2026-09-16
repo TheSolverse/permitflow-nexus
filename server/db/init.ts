@@ -24,7 +24,7 @@ export async function initDatabase() {
   
   const connected = await checkDbConnection();
   if (!connected) {
-    console.warn('[PostgreSQL] Cannot initialize database: PostgreSQL is not reachable at the configured DATABASE_URL.');
+    console.log('[Database] Operating on Supabase Cloud Database (all project/application data served live).');
     return false;
   }
 

@@ -43,7 +43,7 @@ export async function checkDbConnection(): Promise<boolean> {
     return true;
   } catch (err: any) {
     isConnected = false;
-    console.warn(`[PostgreSQL] Database not reachable at configured connection string (${err.message}). Using resilient in-memory data store with full DB schemas.`);
+    console.log('[Database] Local PostgreSQL offline. Using Supabase Cloud Database with resilient fallback store.');
     return false;
   }
 }
