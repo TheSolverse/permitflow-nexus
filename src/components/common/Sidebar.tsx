@@ -30,7 +30,6 @@ export const Sidebar: React.FC = () => {
 
   const entrepreneurNav = [
     { id: 'dashboard', label: t('dashboard', language), icon: LayoutDashboard },
-    { id: 'parallel-workflow', label: t('parallelWorkflow', language), icon: GitMerge },
     { id: 'new-project', label: t('newProject', language), icon: PlusCircle },
     { id: 'checklist', label: t('checklist', language), icon: CheckSquare },
     { id: 'documents', label: t('documents', language), icon: FileText },
@@ -44,7 +43,6 @@ export const Sidebar: React.FC = () => {
 
   const officerNav = [
     { id: 'officer-dashboard', label: t('officerDashboard', language), icon: LayoutDashboard },
-    { id: 'parallel-workflow', label: t('parallelWorkflow', language), icon: GitMerge },
     { id: 'officer-nocs', label: t('nocJointInspections', language), icon: ShieldCheck },
     { id: 'officer-app-review', label: t('appReview', language), icon: ClipboardCheck },
     { id: 'officer-queries', label: t('queryMgmt', language), icon: MessageSquareText },
@@ -54,7 +52,6 @@ export const Sidebar: React.FC = () => {
 
   const adminNav = [
     { id: 'admin-dashboard', label: t('adminDashboard', language), icon: LayoutDashboard },
-    { id: 'parallel-workflow', label: t('parallelWorkflow', language), icon: GitMerge },
     { id: 'admin-rules', label: t('rulesEngine', language), icon: Sliders },
     { id: 'admin-notifications', label: t('notifications', language), icon: Bell },
     { id: 'admin-audit', label: t('auditLogs', language), icon: Activity },
