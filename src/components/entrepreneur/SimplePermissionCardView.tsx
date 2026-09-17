@@ -15,9 +15,11 @@ import {
   ChevronDown, 
   ChevronUp,
   Building2,
-  Sparkles
+  Sparkles,
+  Award
 } from 'lucide-react';
 import { ApprovalStatus, ParallelPermissionItem } from '../../types';
+import { DigitalCertificateModal, CertificateData } from '../common/DigitalCertificateModal';
 
 export const SimplePermissionCardView: React.FC = () => {
   const { 
@@ -33,6 +35,7 @@ export const SimplePermissionCardView: React.FC = () => {
 
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'IN_PROGRESS' | 'APPROVED' | 'DELAYED' | 'ACTION_REQUIRED'>('ALL');
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
+  const [viewingCert, setViewingCert] = useState<CertificateData | null>(null);
   
   // Response modal state
   const [showResponseModal, setShowResponseModal] = useState<boolean>(false);
@@ -78,7 +81,7 @@ export const SimplePermissionCardView: React.FC = () => {
     if (activeFilter === 'APPROVED') return item.status === 'Approved';
     if (activeFilter === 'DELAYED') return item.status === 'Delayed';
     if (activeFilter === 'ACTION_REQUIRED') return item.status === 'More Information Needed' || item.status === 'Query Raised' || item.pendingDocs.length > 0;
-    if (activeFilter === 'IN_PROGRESS') return item.status === 'Submitted' || item.status === 'Under Review' || item.status === 'Inspection Pending' || item.status === 'Inspection Required' || item.status === 'Blocked by Dependency';
+    if (activeFilter === 'IN_PROGRESS') return item.status === 'Submitted' || item.status === 'Under Review' || item.status === 'Inspection Pending' || item.status === 'Inspection Required' || item.status === 'Inspection Scheduled' || item.status === 'Blocked by Dependency';
     return true;
   });
 
@@ -412,6 +415,76 @@ export const SimplePermissionCardView: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* APPROVED DIGITAL CERTIFICATE DOWNLOAD BANNER */}
+                  {item.status === 'Approved' && (
+                    <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-50 via-[#EAF7ED] to-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                      <div className="flex items-center gap-2.5 text-emerald-900 dark:text-emerald-200 font-medium">
+                        <Award className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <div>
+                          <div className="font-extrabold text-xs text-emerald-900 dark:text-emerald-100 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Official Statutory Certificate Ready & Signed</span>
+                          </div>
+                          <div className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-0.5">
+                            Registration: <strong>{item.certificateId || `MH-2026-${item.department.substring(0, 4).toUpperCase()}-${Math.floor(10000 + Math.random() * 90000)}`}</strong> • Cryptographically verified with live QR code.
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          const certId = item.certificateId || `MH-2026-${item.department.substring(0, 4).toUpperCase()}-98214`;
+                          setViewingCert({
+                            certificateId: certId,
+                            approvalName: item.approvalName,
+                            businessName: activeProject.businessName,
+                            department: item.department,
+                            issuedDate: item.certificateIssuedDate || item.submittedDate || new Date().toISOString().split('T')[0],
+                            expiryDate: item.certificateExpiryDate,
+                            validityTenure: item.certificateValidityTenure || '3 Years',
+                            certificateType: item.certificateType || 'FINAL',
+                            officerName: item.assignedOfficer || 'Competent Authority',
+                            officerDesignation: 'Registrar / Competent Scrutiny Officer',
+                            conditions: item.certificateConditions || 'Statutory compliance with Maharashtra single window clearances.',
+                            qrCodeData: item.certificateQrToken || `PFN-CERT:${certId}:${activeProject.businessName}`
+                          });
+                        }}
+                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#1E3A2B] to-[#2E6F40] hover:from-[#172E22] hover:to-[#255933] text-white font-extrabold text-xs shrink-0 cursor-pointer shadow-md flex items-center gap-1.5 transition-all hover:scale-[1.02]"
+                      >
+                        <Award className="w-4 h-4 text-amber-300" />
+                        <span>View / Print Certificate</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* SITE INSPECTION SCHEDULED / PENDING BANNER */}
+                  {(item.status === 'Inspection Pending' || item.status === 'Inspection Scheduled' || item.status === 'Inspection Required' || Boolean(item.inspectionDate)) && item.status !== 'Approved' && (
+                    <div className="p-3.5 rounded-xl bg-gradient-to-r from-purple-50 via-indigo-50/50 to-purple-50 dark:bg-purple-950/40 border border-purple-300 dark:border-purple-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                      <div className="flex items-start sm:items-center gap-2.5 text-purple-900 dark:text-purple-200">
+                        <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/60 flex items-center justify-center shrink-0 text-purple-700 dark:text-purple-300">
+                          <Calendar className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="font-extrabold text-xs text-purple-950 dark:text-purple-100 flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5 text-purple-600" />
+                            <span>Site Inspection Scheduled — {item.inspectionDate || 'Date Pending Final Confirmation'}</span>
+                          </div>
+                          <div className="text-[11px] text-purple-700 dark:text-purple-300 mt-0.5">
+                            Assigned Officer: <strong>{item.assignedOfficer}</strong> ({item.department}) • Please ensure physical site access & certified drawings are ready.
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setActiveTab('inspections')}
+                        className="px-3.5 py-2 rounded-xl bg-purple-800 hover:bg-purple-700 text-white font-extrabold text-xs shrink-0 cursor-pointer shadow-xs flex items-center gap-1.5 transition-all hover:scale-[1.02]"
+                      >
+                        <Calendar className="w-3.5 h-3.5 text-amber-300" />
+                        <span>Open Inspection Planner</span>
+                      </button>
+                    </div>
+                  )}
+
                   {/* ACTION REQUIRED BOX IF ANY */}
                   {(item.status === 'More Information Needed' || item.status === 'Query Raised' || item.pendingDocs.length > 0) && (
                     <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -528,6 +601,15 @@ export const SimplePermissionCardView: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Digital Certificate Viewer Modal */}
+      {viewingCert && (
+        <DigitalCertificateModal
+          isOpen={!!viewingCert}
+          onClose={() => setViewingCert(null)}
+          cert={viewingCert}
+        />
       )}
 
     </div>

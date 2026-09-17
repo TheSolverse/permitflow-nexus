@@ -18,6 +18,7 @@ import {
   Check,
   FileCheck
 } from 'lucide-react';
+import { StatutoryPreAuditModal } from './StatutoryPreAuditModal';
 
 export const getStatusBadgeStyle = (status?: string) => {
   switch (status) {
@@ -48,12 +49,14 @@ export const getStatusDisplayLabel = (status?: string): string => {
       return '🟡 NEEDS REVIEW';
     case 'INVALID':
     case 'Name Mismatch':
+      return '🔴 NAME MISMATCH';
     case 'Expired':
-      return '🔴 INVALID';
+      return '🔴 EXPIRED';
     case 'INCOMPLETE':
     case 'Blurry / Unreadable':
+      return '⚪ BLURRY / RESCAN';
     default:
-      return '○ INCOMPLETE';
+      return status ? `🔘 ${status.toUpperCase()}` : '⚪ PENDING';
   }
 };
 
@@ -63,6 +66,7 @@ export const DocumentCentrePage: React.FC = () => {
   const [uploadDocName, setUploadDocName] = useState('');
   const [uploadDocCategory, setUploadDocCategory] = useState('PAN Card');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showPreAuditModal, setShowPreAuditModal] = useState<boolean>(false);
   
   // Scope documents strictly to the active project
   const projectDocs = documents.filter(d => d.projectId === activeProject?.id);
@@ -141,13 +145,12 @@ export const DocumentCentrePage: React.FC = () => {
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadDocName && !selectedFile) return;
-    const finalDocName = uploadDocName.trim() || (selectedFile ? selectedFile.name.replace(/\.[^/.]+$/, "") : 'Uploaded Document');
+
     setIsScanning(true);
-
     try {
-      let ocrRes: any;
-      let persistentFileUrl: string | undefined = undefined;
+      const finalDocName = uploadDocName || (selectedFile ? selectedFile.name.replace(/\.[^/.]+$/, "") : uploadDocCategory);
 
+      let persistentFileUrl = '/mock_documents/sample.pdf';
       if (selectedFile) {
         try {
           persistentFileUrl = await new Promise<string>((resolve) => {
@@ -159,39 +162,13 @@ export const DocumentCentrePage: React.FC = () => {
         } catch {
           persistentFileUrl = URL.createObjectURL(selectedFile);
         }
-
-        // Run Real Tesseract.js OCR with field extraction
-        ocrRes = await performRealOcr(selectedFile, uploadDocCategory, finalDocName, {
-          businessName: activeProject.businessName,
-          applicantName: currentUser?.name || 'Applicant',
-          district: activeProject.district
-        });
-      } else {
-        // Fallback to backend analysis
-        const serverOcr = await apiAnalyzeDocumentOCR({
-          docName: finalDocName,
-          category: uploadDocCategory,
-          projectProfile: {
-            businessName: activeProject.businessName,
-            sector: activeProject.sector,
-            district: activeProject.district,
-            entityType: activeProject.entityType
-          }
-        });
-        if (serverOcr) {
-          ocrRes = {
-            confidence: serverOcr.confidence,
-            issues: serverOcr.issues,
-            recommendations: serverOcr.recommendations,
-            extractedName: serverOcr.extractedName,
-            extractedRegNo: serverOcr.extractedRegNo,
-            extractedExpiry: serverOcr.extractedExpiry,
-            status: serverOcr.status,
-            extractedRawText: '',
-            isAuthenticGovDoc: serverOcr.status === 'Valid'
-          };
-        }
       }
+
+      const ocrRes = await performRealOcr(selectedFile || 'sample.pdf', uploadDocCategory, finalDocName, {
+        businessName: activeProject.businessName,
+        applicantName: currentUser?.name || 'Applicant',
+        district: activeProject.district
+      });
 
       const uploadedDoc = uploadDocument(
         finalDocName,
@@ -218,6 +195,15 @@ export const DocumentCentrePage: React.FC = () => {
   return (
     <div className="space-y-6 pb-12">
       
+      {/* Statutory Pre-Audit Modal */}
+      {showPreAuditModal && (
+        <StatutoryPreAuditModal
+          isOpen={showPreAuditModal}
+          onClose={() => setShowPreAuditModal(false)}
+          onNavigateToDocumentCentre={() => setShowPreAuditModal(false)}
+        />
+      )}
+
       {/* Header Banner */}
       <div className="bg-white dark:bg-[#16261C] p-6 rounded-3xl border border-slate-200 dark:border-[#253D2C] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -233,12 +219,20 @@ export const DocumentCentrePage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-right min-w-[140px]">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => setShowPreAuditModal(true)}
+            className="px-4 py-3 rounded-2xl bg-gradient-to-r from-[#1E3A2B] to-[#2E6F40] hover:from-[#172E22] hover:to-[#255933] text-white font-extrabold text-xs flex items-center gap-2 shadow-md cursor-pointer transition-all hover:scale-[1.02]"
+          >
+            <Sparkles className="w-4 h-4 text-emerald-300 animate-pulse" />
+            <span>AI Statutory Pre-Audit</span>
+          </button>
+
+          <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-right min-w-[120px]">
             <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Documents</span>
             <span className="text-xl font-extrabold text-slate-900 dark:text-white">{projectDocs.length}</span>
           </div>
-          <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-right min-w-[140px]">
+          <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-right min-w-[120px]">
             <span className="text-[10px] uppercase font-bold text-amber-500 block">Needs Attention</span>
             <span className="text-xl font-extrabold text-amber-600 dark:text-amber-400">{flaggedDocs.length}</span>
           </div>

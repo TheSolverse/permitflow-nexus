@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { 
   User, 
   Role, 
@@ -27,15 +27,11 @@ import {
   INITIAL_INSPECTIONS, 
   INITIAL_COMPLIANCE_TASKS, 
   INITIAL_INCENTIVE_SCHEMES, 
-  INITIAL_AUDIT_LOGS, 
-  INITIAL_NOTIFICATIONS, 
   INITIAL_RULES,
   INITIAL_NOC_APPLICATIONS,
   INITIAL_JOINT_INSPECTIONS,
   INITIAL_PARALLEL_PERMISSIONS
 } from '../data/mockData';
-import { generateSmartChecklist } from '../utils/rulesEngine';
-import { calculateRiskScore } from '../utils/riskCalculator';
 import { supabase } from '../utils/supabaseClient';
 import {
   fetchProjects,
@@ -47,8 +43,6 @@ import {
   respondToApplicationQueryApi,
   fetchNocApplications,
   createNocApplicationApi,
-  raiseNocQueryApi,
-  respondToNocQueryApi,
   issueNocCertificateApi,
   fetchDocuments,
   uploadDocumentApi,
@@ -116,6 +110,7 @@ interface AppContextType {
   officerRequestDocument: (permId: string, documentName: string, instructions?: string) => void;
   officerScheduleInspection: (permId: string, inspectionDate: string, location?: string) => void;
   officerMarkDelayed: (permId: string, delayReason: string, remarks?: string) => void;
+  issueDigitalCertificate: (itemId: string, certType?: 'PROVISIONAL' | 'FINAL', tenureYears?: number, conditions?: string) => { certificateId: string; qrToken: string };
   
   // NOC helpers
   submitNocApplication: (data: Partial<NocApplication> & { nocType: NocApplication['nocType']; nocName: string; department: string }) => NocApplication;
@@ -235,30 +230,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeTab, setActiveTab] = useState<string>('login');
   const [selectedAppDetail, setSelectedAppDetail] = useState<Application | null>(null);
 
-  // Synchronize user state with Supabase Auth session
-  useEffect(() => {
-    // 1. Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        syncProfileFromAuth(session.user);
-      }
-    });
-
-    // 2. Listen for Auth State changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        syncProfileFromAuth(session.user);
-      } else if (event === 'SIGNED_OUT') {
-        localStorage.removeItem('pfn_user');
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const syncProfileFromAuth = async (authUser: any) => {
+  const syncProfileFromAuth = useCallback(async (authUser: any) => {
     try {
       const email = authUser.email?.toLowerCase();
       if (!email) return;
@@ -308,7 +280,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       console.warn('[AppContext] syncProfileFromAuth error:', err);
     }
-  };
+  }, []);
+
+  // Synchronize user state with Supabase Auth session
+  useEffect(() => {
+    // 1. Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        syncProfileFromAuth(session.user);
+      }
+    });
+
+    // 2. Listen for Auth State changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        syncProfileFromAuth(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('pfn_user');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [syncProfileFromAuth]);
 
   // Live Backend Hydration from Supabase with Strict User Isolation
   useEffect(() => {
@@ -370,7 +365,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     fetchRules().then(data => {
       if (data) setRules(data);
     });
-  }, [currentUser?.id, currentUser?.role]);
+  }, [currentUser?.id, currentUser?.role, currentUser?.department]);
 
   // Sync Project-Specific Records on Active Project Change
   useEffect(() => {
@@ -1494,33 +1489,122 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     permId: string, 
     newStatus: ApprovalStatus, 
     remarks?: string, 
-    inspectionDate?: string
+    inspectionDate?: string,
+    delayReason?: string
   ) => {
     let updatedTarget: ParallelPermissionItem | undefined;
+    let targetProjectId = activeProject?.id;
+    let targetApprovalName = '';
 
+    // 1. Synchronize applications state
+    setApplications(prev => prev.map(app => {
+      const isMatch = app.id === permId || 
+        app.approvalId === permId || 
+        (app.approvalName && app.approvalName.toLowerCase() === permId.toLowerCase());
+      
+      if (isMatch) {
+        targetProjectId = app.projectId;
+        targetApprovalName = app.approvalName;
+        return {
+          ...app,
+          status: newStatus,
+          remarks: remarks || app.remarks,
+          inspectionDate: inspectionDate || (app as any).inspectionDate,
+          timeline: [
+            ...app.timeline,
+            {
+              id: `t-${Date.now()}`,
+              title: newStatus === 'Inspection Pending' ? 'Site Inspection Scheduled' : `Status set to ${newStatus}`,
+              description: remarks || `Officer ${currentUser.name} updated status to ${newStatus}.`,
+              timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+              actor: currentUser.name,
+              role: currentUser.role
+            }
+          ]
+        };
+      }
+      return app;
+    }));
+
+    // 2. Synchronize parallelPermissions state
     setParallelPermissions(prevPermissions => {
-      const target = prevPermissions.find(p => p.id === permId);
-      if (!target) return prevPermissions;
+      const exists = prevPermissions.some(p => 
+        p.id === permId || 
+        p.approvalId === permId || 
+        (targetApprovalName && p.approvalName.toLowerCase() === targetApprovalName.toLowerCase() && (!targetProjectId || p.projectId === targetProjectId))
+      );
 
-      updatedTarget = {
-        ...target,
-        status: newStatus,
-        remarks: remarks || target.remarks,
-        inspectionDate: inspectionDate || target.inspectionDate,
-        lastUpdatedDate: new Date().toISOString().split('T')[0]
-      };
+      if (!exists) {
+        const matchedApp = applications.find(a => 
+          a.id === permId || 
+          a.approvalId === permId || 
+          (targetApprovalName && a.approvalName.toLowerCase() === targetApprovalName.toLowerCase())
+        );
+        if (matchedApp) {
+          const newP: ParallelPermissionItem = {
+            id: permId,
+            projectId: matchedApp.projectId,
+            approvalId: matchedApp.approvalId,
+            approvalName: matchedApp.approvalName,
+            department: matchedApp.department,
+            category: 'Registration',
+            assignedOfficer: currentUser.name,
+            officerEmail: currentUser.email,
+            status: newStatus,
+            delayReason: delayReason,
+            pendingWith: newStatus === 'Approved' ? 'Completed' : (newStatus === 'Inspection Pending' ? 'Field Inspector & Entrepreneur' : 'Department Officer'),
+            pendingAction: newStatus === 'Approved' ? 'Permission Issued' : (newStatus === 'Inspection Pending' ? `Prepare site for audit on ${inspectionDate || 'scheduled date'}` : 'Officer Processing'),
+            dateReceived: matchedApp.submissionDate || new Date().toISOString().split('T')[0],
+            lastUpdatedDateTime: new Date().toLocaleString(),
+            pendingDocs: [],
+            queriesCount: 0,
+            slaDeadlineDate: matchedApp.slaDeadlineDate,
+            slaDaysRemaining: matchedApp.slaDaysRemaining || 15,
+            dependencies: [],
+            submittedDate: matchedApp.submissionDate,
+            lastUpdatedDate: new Date().toISOString().split('T')[0],
+            documentIds: matchedApp.documentIds,
+            inspectionDate: inspectionDate,
+            remarks: remarks || `Permission status set to ${newStatus}`
+          };
+          updatedTarget = newP;
+          return [newP, ...prevPermissions];
+        }
+        return prevPermissions;
+      }
 
-      const updatedList = prevPermissions.map(p => p.id === permId ? updatedTarget! : p);
+      const updatedList = prevPermissions.map(p => {
+        const isMatch = p.id === permId || 
+          p.approvalId === permId || 
+          (targetApprovalName && p.approvalName.toLowerCase() === targetApprovalName.toLowerCase() && (!targetProjectId || p.projectId === targetProjectId));
+        
+        if (isMatch) {
+          const updated: ParallelPermissionItem = {
+            ...p,
+            status: newStatus,
+            delayReason: delayReason !== undefined ? delayReason : p.delayReason,
+            remarks: remarks || p.remarks,
+            inspectionDate: inspectionDate || p.inspectionDate,
+            pendingWith: newStatus === 'Approved' ? 'Completed' : (newStatus === 'Inspection Pending' ? 'Field Inspector & Entrepreneur' : (newStatus === 'Delayed' ? currentUser.department || 'Department Officer' : p.pendingWith)),
+            pendingAction: newStatus === 'Approved' ? 'Permission Issued' : (newStatus === 'Inspection Pending' ? `Prepare site for audit on ${inspectionDate || p.inspectionDate || 'scheduled date'}` : (newStatus === 'Delayed' ? 'Expedite technical scrutiny' : p.pendingAction)),
+            lastUpdatedDate: new Date().toISOString().split('T')[0],
+            lastUpdatedDateTime: new Date().toLocaleString()
+          };
+          updatedTarget = updated;
+          return updated;
+        }
+        return p;
+      });
 
-      if (newStatus === 'Approved') {
+      if (newStatus === 'Approved' && updatedTarget) {
         const approvedApprovalIds = new Set(
           updatedList
-            .filter(p => p.projectId === target.projectId && p.status === 'Approved')
+            .filter(p => p.projectId === updatedTarget!.projectId && p.status === 'Approved')
             .map(p => p.approvalId)
         );
 
         return updatedList.map(p => {
-          if (p.projectId === target.projectId && p.status === 'Blocked by Dependency' && p.dependencies.length > 0) {
+          if (p.projectId === updatedTarget!.projectId && p.status === 'Blocked by Dependency' && p.dependencies.length > 0) {
             const allSatisfied = p.dependencies.every(depId => approvedApprovalIds.has(depId));
             if (allSatisfied) {
               return {
@@ -1533,7 +1617,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               const remainingBlocked = p.dependencies
                 .filter(depId => !approvedApprovalIds.has(depId))
                 .map(depId => {
-                  const depItem = updatedList.find(i => i.projectId === target.projectId && i.approvalId === depId);
+                  const depItem = updatedList.find(i => i.projectId === updatedTarget!.projectId && i.approvalId === depId);
                   return depItem ? depItem.approvalName : depId;
                 });
               return {
@@ -1548,6 +1632,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       return updatedList;
     });
+
+    // 3. Persist to Backend Database
+    updateApplicationStatusApi(permId, newStatus, remarks, currentUser.name).catch(err =>
+      console.warn('Could not persist status to backend API:', err)
+    );
 
     if (updatedTarget) {
       setNotifications(prev => [
@@ -1703,8 +1792,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const officerRequestDocument = (permId: string, documentName: string, instructions?: string) => {
     const nowStr = new Date().toLocaleString();
+    updateParallelPermissionStatus(permId, 'More Information Needed', instructions || `Requested document: ${documentName}`);
     setParallelPermissions(prev => prev.map(p => {
-      if (p.id === permId) {
+      if (p.id === permId || p.approvalId === permId) {
         const updatedDocs = Array.from(new Set([...p.pendingDocs, documentName]));
         const newAct = {
           id: `act-${Date.now()}`,
@@ -1763,15 +1853,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const officerScheduleInspection = (permId: string, inspectionDate: string, location?: string) => {
     const nowStr = new Date().toLocaleString();
+    
+    // Find target permission and project
+    const targetItem = parallelPermissions.find(p => p.id === permId || p.approvalId === permId) || 
+      applications.find(a => a.id === permId || a.approvalId === permId);
+    
+    const targetProjectId = targetItem?.projectId || activeProject?.id || 'proj-1';
+    const targetProj = projects.find(p => p.id === targetProjectId) || activeProject;
+    const approvalName = targetItem?.approvalName || 'Department Clearance';
+    const departmentName = targetItem?.department || currentUser.department || 'Statutory Department';
+
+    updateParallelPermissionStatus(permId, 'Inspection Pending', `Inspection scheduled on ${inspectionDate}`, inspectionDate);
+    
     setParallelPermissions(prev => prev.map(p => {
-      if (p.id === permId) {
+      if (p.id === permId || p.approvalId === permId || (p.approvalName && p.approvalName.toLowerCase() === approvalName.toLowerCase() && p.projectId === targetProjectId)) {
         const newAct = {
           id: `act-${Date.now()}`,
           timestamp: nowStr,
           actor: currentUser.name,
           department: currentUser.department || 'Department Officer',
           action: 'Scheduled Site Inspection',
-          notes: `Inspection scheduled for ${inspectionDate} at ${location || 'Factory site'}`
+          notes: `Inspection scheduled for ${inspectionDate} at ${location || targetProj?.midcArea || 'Factory site'}`
         };
         return {
           ...p,
@@ -1788,17 +1890,86 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return p;
     }));
 
+    // Synchronize into individual inspections state list
+    const inspectionType = (approvalName.toLowerCase().includes('fire') ? 'Fire Safety Compliance' 
+      : approvalName.toLowerCase().includes('pollution') || approvalName.toLowerCase().includes('mpcb') ? 'Pollution Emission Audit'
+      : approvalName.toLowerCase().includes('dish') || approvalName.toLowerCase().includes('factory') ? 'DISH Factory Safety Check'
+      : approvalName.toLowerCase().includes('food') || approvalName.toLowerCase().includes('fssai') ? 'FSSAI Hygiene Inspection'
+      : 'Pre-Setup Site Audit');
+
+    const newInspItem: InspectionItem = {
+      id: `insp-${Date.now()}`,
+      applicationId: permId,
+      approvalName: approvalName,
+      businessName: targetProj?.businessName || 'Industrial Enterprise',
+      department: departmentName,
+      inspectionType: inspectionType as any,
+      scheduledDate: inspectionDate,
+      location: location || targetProj?.midcArea || 'Plot Premises / Industrial Zone',
+      officerDetails: {
+        name: currentUser.name,
+        designation: 'Scrutiny Officer / Field Inspector',
+        contact: '+91 22 2202 5555'
+      },
+      requiredDocs: [
+        'Certified Site Master Plan Blueprint',
+        'Building Safety & Egress Layout',
+        'Environmental & Waste Discharge Plan',
+        'Equipment & Machinery Schedule'
+      ],
+      status: 'SCHEDULED',
+      isJointInspection: false,
+      participatingDepts: [departmentName]
+    };
+    (newInspItem as any).projectId = targetProjectId;
+
+    setInspections(prev => [newInspItem, ...prev.filter(i => i.applicationId !== permId && i.id !== permId)]);
+
+    // Also synchronize into jointInspections state list
+    const newJointInsp: JointInspection = {
+      id: `joint-insp-${Date.now()}`,
+      nocApplicationId: permId,
+      projectId: targetProjectId,
+      businessName: targetProj?.businessName || 'Industrial Enterprise',
+      scheduledDate: inspectionDate.split(' ')[0] || new Date().toISOString().split('T')[0],
+      scheduledTime: inspectionDate.split(' ')[1] ? inspectionDate.split(' ').slice(1).join(' ') : '11:00 AM',
+      attendingDepartments: [departmentName, 'MIDC Field Cell', 'Industrial Safety Inspectorate'],
+      officerNames: [currentUser.name, 'Zonal Field Inspector'],
+      inspectionLocation: location || targetProj?.midcArea || 'Industrial Plot Site',
+      rubricChecklist: [
+        { criterion: 'Boundary setbacks, access roads, and plot demarcation verified as per master plan', compliant: null, notes: 'Scheduled for physical audit' },
+        { criterion: 'Emergency fire exits, hydrant pressure ring, and unobstructed egress points', compliant: null, notes: 'Pressure & flow testing pending' },
+        { criterion: 'Effluent treatment plant / environmental discharge manifold and air filters', compliant: null, notes: 'Inspection scheduled' },
+        { criterion: 'Occupational safety guardrails, ventilation, and statutory electrical earthing', compliant: null, notes: 'Field checklist ready' }
+      ],
+      status: 'SCHEDULED',
+      remarks: `Inspection scheduled by Officer ${currentUser.name} on ${nowStr}`
+    };
+
+    setJointInspections(prev => [newJointInsp, ...prev.filter(j => j.nocApplicationId !== permId)]);
+
+    // Dispatch notifications to BOTH Entrepreneur and Officer
+    const notifPayload = {
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      title: '📅 Site Inspection Scheduled',
+      message: `Officer ${currentUser.name} (${departmentName}) scheduled a site inspection for "${approvalName}" on ${inspectionDate}. Please keep physical site and drawings ready.`,
+      type: 'INFO' as const,
+      read: false,
+      channels: ['IN_APP' as const, 'EMAIL' as const, 'SMS' as const]
+    };
+
     setNotifications(prev => [
       {
-        id: `notif-${Date.now()}`,
+        ...notifPayload,
+        id: `notif-ent-${Date.now()}`,
+        userId: targetProj?.userId || 'user_1',
+        projectId: targetProjectId
+      },
+      {
+        ...notifPayload,
+        id: `notif-off-${Date.now() + 1}`,
         userId: currentUser.id,
-        projectId: activeProject?.id,
-        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
-        title: '📅 Site Inspection Scheduled',
-        message: `Officer ${currentUser.name} scheduled inspection for ${inspectionDate}. Please keep site ready.`,
-        type: 'INFO',
-        read: false,
-        channels: ['IN_APP', 'EMAIL', 'SMS']
+        projectId: targetProjectId
       },
       ...prev
     ]);
@@ -1812,7 +1983,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         action: 'Scheduled Site Inspection',
         newStatus: 'Inspection Pending',
         ipAddress: '10.240.12.91',
-        details: `Scheduled inspection on ${inspectionDate} for permission ${permId}.`
+        details: `Scheduled inspection on ${inspectionDate} for "${approvalName}" (${permId}).`
       },
       ...prev
     ]);
@@ -1820,8 +1991,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const officerMarkDelayed = (permId: string, delayReason: string, remarks?: string) => {
     const nowStr = new Date().toLocaleString();
+    updateParallelPermissionStatus(permId, 'Delayed', remarks, undefined, delayReason);
     setParallelPermissions(prev => prev.map(p => {
-      if (p.id === permId) {
+      if (p.id === permId || p.approvalId === permId) {
         const newAct = {
           id: `act-${Date.now()}`,
           timestamp: nowStr,
@@ -1867,12 +2039,123 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         user: currentUser.name,
         role: currentUser.role,
         action: 'Flagged Permission Delay',
+        previousStatus: 'Under Review',
         newStatus: 'Delayed',
         ipAddress: '10.240.12.91',
-        details: `Reason: ${delayReason}. Remarks: ${remarks || 'None'}.`
+        details: `Flagged delay: "${delayReason}". Remarks: ${remarks || 'None'}`
       },
       ...prev
     ]);
+  };
+
+  const issueDigitalCertificate = (
+    itemId: string, 
+    certType: 'PROVISIONAL' | 'FINAL' = 'FINAL', 
+    tenureYears: number = 3, 
+    conditions?: string
+  ) => {
+    const certId = `MH-2026-${(currentUser.department || 'STAT').substring(0, 4).toUpperCase()}-${Math.floor(10000 + Math.random() * 90000)}`;
+    const issuedDate = new Date().toISOString().split('T')[0];
+    const expiryDate = tenureYears > 0 
+      ? new Date(Date.now() + tenureYears * 365 * 86400000).toISOString().split('T')[0]
+      : undefined;
+    const validityTenure = tenureYears === 0 ? 'Permanent' : `${tenureYears} Year${tenureYears > 1 ? 's' : ''}`;
+    const qrToken = `PFN-CERT:${certId}:${certType}:${issuedDate}`;
+    const sig = `Digitally Signed by ${currentUser.name}, ${currentUser.department || 'Competent Authority'}`;
+
+    // 1. Update applications
+    setApplications(prev => prev.map(app => {
+      if (app.id === itemId || app.approvalId === itemId || (app.approvalName && app.approvalName.toLowerCase().includes(itemId.toLowerCase()))) {
+        return {
+          ...app,
+          status: 'Approved' as ApprovalStatus,
+          certificateId: certId,
+          certificateIssuedDate: issuedDate,
+          certificateExpiryDate: expiryDate,
+          certificateValidityTenure: validityTenure,
+          certificateQrToken: qrToken,
+          certificateType: certType,
+          certificateConditions: conditions,
+          certificateOfficerSignature: sig,
+          timeline: [
+            ...app.timeline,
+            {
+              id: `t-${Date.now()}`,
+              title: `Digital Certificate Issued (${certType})`,
+              description: `Officer ${currentUser.name} issued ${certType} Certificate ${certId} with ${validityTenure} validity.`,
+              timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+              actor: currentUser.name,
+              role: currentUser.role
+            }
+          ]
+        };
+      }
+      return app;
+    }));
+
+    // 2. Update parallelPermissions
+    setParallelPermissions(prev => prev.map(p => {
+      if (p.id === itemId || p.approvalId === itemId || (p.approvalName && p.approvalName.toLowerCase().includes(itemId.toLowerCase()))) {
+        const nowStr = new Date().toLocaleString();
+        const newAct = {
+          id: `act-${Date.now()}`,
+          timestamp: nowStr,
+          actor: currentUser.name,
+          department: currentUser.department || 'Department Officer',
+          action: `Issued Digital ${certType} Certificate`,
+          notes: `Certificate ID: ${certId} (${validityTenure})`
+        };
+        return {
+          ...p,
+          status: 'Approved' as ApprovalStatus,
+          certificateId: certId,
+          certificateIssuedDate: issuedDate,
+          certificateExpiryDate: expiryDate,
+          certificateValidityTenure: validityTenure,
+          certificateQrToken: qrToken,
+          certificateType: certType,
+          certificateConditions: conditions,
+          certificateOfficerSignature: sig,
+          pendingWith: 'Completed',
+          pendingAction: 'Certificate Issued',
+          lastUpdatedDateTime: nowStr,
+          activityHistory: [newAct, ...(p.activityHistory || [])]
+        };
+      }
+      return p;
+    }));
+
+    // Audit log & notification
+    setNotifications(prev => [
+      {
+        id: `notif-${Date.now()}`,
+        userId: currentUser.id,
+        projectId: activeProject?.id,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        title: `📜 Official ${certType} Certificate Issued`,
+        message: `Officer ${currentUser.name} issued certificate ${certId} for your clearance. Download in Document Centre.`,
+        type: 'SUCCESS',
+        read: false,
+        channels: ['IN_APP', 'EMAIL']
+      },
+      ...prev
+    ]);
+
+    setAuditLogs(prev => [
+      {
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        user: currentUser.name,
+        role: currentUser.role,
+        action: `Issued Digital Certificate (${certType})`,
+        newStatus: 'Approved',
+        ipAddress: '10.240.12.91',
+        details: `Issued ${certType} Certificate ${certId} with ${validityTenure} validity for item ${itemId}.`
+      },
+      ...prev
+    ]);
+
+    return { certificateId: certId, qrToken };
   };
 
   return (
@@ -1921,6 +2204,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         officerRequestDocument,
         officerScheduleInspection,
         officerMarkDelayed,
+        issueDigitalCertificate,
         submitNocApplication,
         scheduleJointInspection,
         completeJointInspection,

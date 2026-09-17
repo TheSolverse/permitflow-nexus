@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { pool, checkDbConnection, isDbConnected } from './db/pool';
 import { supabase } from './db/supabase';
 import { initDatabase } from './db/init';
@@ -17,6 +18,7 @@ import {
   createDocument,
   deleteDocument,
   getNocApplications,
+  createNocApplication,
   getJointInspections,
   getAuditLogs,
   getComplianceTasks,
@@ -541,33 +543,19 @@ app.get('/api/noc-applications', async (req, res) => {
 app.post('/api/noc-applications', async (req, res) => {
   try {
     const projectsList = await getProjects();
-    const newNoc = {
-      id: `noc-app-${Date.now()}`,
+    const newNoc = await createNocApplication({
       projectId: req.body.projectId || projectsList[0]?.id || 'proj-1',
       businessName: req.body.businessName || projectsList[0]?.businessName || 'Business Project',
-      appliedDate: new Date().toISOString().split('T')[0],
-      status: 'SUBMITTED',
+      nocType: req.body.nocType || 'FIRE',
+      nocName: req.body.nocName || 'Fire Safety Clearance NOC',
+      department: req.body.department || 'Directorate of Maharashtra Fire Services',
       urgency: req.body.urgency || 'NORMAL',
-      slaDaysLeft: 15,
+      slaDaysLeft: req.body.slaDaysLeft || 15,
       technicalParameters: req.body.technicalParameters || {},
       documents: req.body.documents || [],
       queries: [],
       ...req.body
-    };
-
-    if (isDbConnected()) {
-      await pool.query(
-        `INSERT INTO noc_applications (
-          id, project_id, business_name, noc_type, noc_name, department, 
-          applied_date, status, urgency, sla_days_left, technical_parameters, documents, queries
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-        [
-          newNoc.id, newNoc.projectId, newNoc.businessName, newNoc.nocType, newNoc.nocName,
-          newNoc.department, newNoc.appliedDate, newNoc.status, newNoc.urgency, newNoc.slaDaysLeft,
-          JSON.stringify(newNoc.technicalParameters), JSON.stringify(newNoc.documents), JSON.stringify(newNoc.queries)
-        ]
-      );
-    }
+    });
 
     res.status(201).json(newNoc);
   } catch (err: any) {
@@ -880,6 +868,18 @@ app.post('/api/ai/explain-query', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Static Frontend Assets (Unified Single Link Serving)
+const distPath = path.resolve(process.cwd(), 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 // Boot and Server Initialization
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {

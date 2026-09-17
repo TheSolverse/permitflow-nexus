@@ -81,6 +81,14 @@ export const INITIAL_USERS: User[] = [
     phone: '+91 022 2659 0812',
   },
   {
+    id: 'usr-11',
+    name: 'Registrar Arvind K. Joshi',
+    email: 'registrar.crc@mca.gov.in',
+    role: 'OFFICER',
+    department: 'Ministry of Corporate Affairs (MCA) - Central Registration Centre (CRC)',
+    phone: '+91 0124 220 5500',
+  },
+  {
     id: 'usr-9',
     name: 'PFN Admin Portal',
     email: 'admin@permitflownexus.gov.in',

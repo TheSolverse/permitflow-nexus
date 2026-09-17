@@ -37,38 +37,45 @@ export const Navbar: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const switchRole = async (role: 'ENTREPRENEUR' | 'OFFICER' | 'ADMIN') => {
-    const target = INITIAL_USERS.find(u => u.role === role);
-    if (target) {
-      try {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: target.email,
+  const switchUserAccount = async (targetUser: typeof INITIAL_USERS[0]) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: targetUser.email,
+        password: 'Password@123'
+      });
+      if (error && error.message.includes('Invalid login credentials')) {
+        await supabase.auth.signUp({
+          email: targetUser.email,
+          password: 'Password@123',
+          options: {
+            data: {
+              name: targetUser.name,
+              role: targetUser.role
+            }
+          }
+        });
+        await supabase.auth.signInWithPassword({
+          email: targetUser.email,
           password: 'Password@123'
         });
-        if (error && error.message.includes('Invalid login credentials')) {
-          await supabase.auth.signUp({
-            email: target.email,
-            password: 'Password@123',
-            options: {
-              data: {
-                name: target.name,
-                role: target.role
-              }
-            }
-          });
-          await supabase.auth.signInWithPassword({
-            email: target.email,
-            password: 'Password@123'
-          });
-        }
-      } catch (err) {
-        console.warn('[Navbar] switchRole Supabase Auth notice:', err);
       }
+    } catch (err) {
+      console.warn('[Navbar] switchUserAccount Supabase Auth notice:', err);
+    }
 
-      setCurrentUser(target);
-      if (role === 'ENTREPRENEUR') setActiveTab('dashboard');
-      else if (role === 'OFFICER') setActiveTab('officer-dashboard');
-      else if (role === 'ADMIN') setActiveTab('admin-dashboard');
+    setCurrentUser(targetUser);
+    if (targetUser.role === 'ENTREPRENEUR') setActiveTab('dashboard');
+    else if (targetUser.role.startsWith('OFFICER') || targetUser.role === 'OFFICER') setActiveTab('officer-dashboard');
+    else if (targetUser.role === 'ADMIN') setActiveTab('admin-dashboard');
+  };
+
+  const switchRole = async (role: 'ENTREPRENEUR' | 'OFFICER' | 'ADMIN') => {
+    let target = INITIAL_USERS.find(u => u.role === role);
+    if (!target && role === 'OFFICER') {
+      target = INITIAL_USERS.find(u => u.role.startsWith('OFFICER'));
+    }
+    if (target) {
+      await switchUserAccount(target);
     }
   };
 
@@ -173,9 +180,9 @@ export const Navbar: React.FC = () => {
               </button>
               <button
                 onClick={() => switchRole('OFFICER')}
-                className={`px-3 py-1 rounded-lg font-extrabold transition-all cursor-pointer ${currentUser.role === 'OFFICER' ? 'bg-[#2E6F40] text-white shadow-xs' : 'text-[#4A6B53] dark:text-[#A3D4B3] hover:text-[#253D2C] dark:hover:text-white'}`}
+                className={`px-3 py-1 rounded-lg font-extrabold transition-all cursor-pointer ${currentUser.role.startsWith('OFFICER') || currentUser.role === 'OFFICER' ? 'bg-[#2E6F40] text-white shadow-xs' : 'text-[#4A6B53] dark:text-[#A3D4B3] hover:text-[#253D2C] dark:hover:text-white'}`}
               >
-                Officer
+                Officer Desks
               </button>
               <button
                 onClick={() => switchRole('ADMIN')}
@@ -199,50 +206,103 @@ export const Navbar: React.FC = () => {
                     {currentUser.name}
                   </div>
                   <div className="text-[10px] text-slate-500 dark:text-slate-400 capitalize font-semibold">
-                    {currentUser.role.toLowerCase()}
+                    {currentUser.role.toLowerCase().replace('_', ' ')}
                   </div>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 mr-1" />
               </button>
 
               {userDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-2 z-50">
-                  <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-700">
+                <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-[#1B2D23] rounded-2xl shadow-xl border border-slate-200 dark:border-[#2A4736] py-2 z-50 animate-in fade-in duration-150 max-h-[85vh] overflow-y-auto">
+                  <div className="px-4 py-2 border-b border-slate-100 dark:border-[#2A4736]">
                     <div className="font-bold text-xs text-slate-900 dark:text-white">{currentUser.name}</div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400">{currentUser.email}</div>
-                    <div className="mt-1 inline-block px-2 py-0.5 text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded border border-slate-200 dark:border-slate-600">
+                    <div className="text-[11px] text-slate-500 dark:text-[#A3D4B3]">{currentUser.email}</div>
+                    {currentUser.department && (
+                      <div className="mt-1 text-[10px] text-emerald-700 dark:text-[#68BA7F] font-semibold">
+                        {currentUser.department}
+                      </div>
+                    )}
+                    <div className="mt-1.5 inline-block px-2 py-0.5 text-[10px] font-extrabold bg-[#CFFFDC]/40 dark:bg-[#253D2C] text-[#2E6F40] dark:text-[#CFFFDC] rounded-md border border-[#68BA7F]/40 dark:border-[#2E6F40]">
                       Role: {currentUser.role}
                     </div>
                   </div>
 
+                  {/* Entrepreneurs */}
                   <div className="py-1">
-                    <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                      Switch Role (Demo Mode)
+                    <div className="px-3 py-1 text-[10px] font-extrabold text-slate-400 dark:text-[#A3D4B3] uppercase tracking-wider">
+                      Entrepreneurs (Business Units)
                     </div>
-                    <button
-                      onClick={() => { switchRole('ENTREPRENEUR'); setUserDropdownOpen(false); }}
-                      className="w-full text-left px-4 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 font-medium cursor-pointer"
-                    >
-                      <UserIcon className="w-3.5 h-3.5 text-blue-500" />
-                      Entrepreneur (Rahul Sharma)
-                    </button>
-                    <button
-                      onClick={() => { switchRole('OFFICER'); setUserDropdownOpen(false); }}
-                      className="w-full text-left px-4 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 font-medium cursor-pointer"
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                      Government Officer (Dr. V. K. Patil)
-                    </button>
-                    <button
-                      onClick={() => { switchRole('ADMIN'); setUserDropdownOpen(false); }}
-                      className="w-full text-left px-4 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 font-medium cursor-pointer"
-                    >
-                      <Lock className="w-3.5 h-3.5 text-purple-500" />
-                      Platform Admin (PFN Admin)
-                    </button>
+                    {INITIAL_USERS.filter(u => u.role === 'ENTREPRENEUR').map(u => (
+                      <button
+                        key={u.id}
+                        onClick={() => { switchUserAccount(u); setUserDropdownOpen(false); }}
+                        className={`w-full text-left px-3.5 py-1.5 text-xs hover:bg-[#F0FAF3] dark:hover:bg-[#253D2C] flex items-center justify-between font-medium cursor-pointer transition-colors ${
+                          currentUser.id === u.id ? 'bg-[#F0FAF3] dark:bg-[#253D2C] text-[#2E6F40] dark:text-[#CFFFDC] font-bold' : 'text-slate-700 dark:text-[#D1E8DA]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <UserIcon className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                          <div className="truncate">
+                            <div className="truncate">{u.name}</div>
+                            <div className="text-[10px] text-slate-400 truncate">{u.organization}</div>
+                          </div>
+                        </div>
+                        {currentUser.id === u.id && <div className="w-1.5 h-1.5 rounded-full bg-[#2E6F40] shrink-0" />}
+                      </button>
+                    ))}
                   </div>
 
-                  <div className="border-t border-slate-100 dark:border-slate-700 pt-1 space-y-0.5">
+                  {/* Department Officers */}
+                  <div className="py-1 border-t border-slate-100 dark:border-[#2A4736]">
+                    <div className="px-3 py-1 text-[10px] font-extrabold text-slate-400 dark:text-[#A3D4B3] uppercase tracking-wider">
+                      Department Officers (Direct Inbox)
+                    </div>
+                    {INITIAL_USERS.filter(u => u.role.startsWith('OFFICER') || u.role === 'OFFICER').map(u => (
+                      <button
+                        key={u.id}
+                        onClick={() => { switchUserAccount(u); setUserDropdownOpen(false); }}
+                        className={`w-full text-left px-3.5 py-1.5 text-xs hover:bg-[#F0FAF3] dark:hover:bg-[#253D2C] flex items-center justify-between font-medium cursor-pointer transition-colors ${
+                          currentUser.id === u.id ? 'bg-[#F0FAF3] dark:bg-[#253D2C] text-[#2E6F40] dark:text-[#CFFFDC] font-bold' : 'text-slate-700 dark:text-[#D1E8DA]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <div className="truncate">
+                            <div className="truncate">{u.name}</div>
+                            <div className="text-[10px] text-slate-400 truncate">{u.department || u.role}</div>
+                          </div>
+                        </div>
+                        {currentUser.id === u.id && <div className="w-1.5 h-1.5 rounded-full bg-[#2E6F40] shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* System Admins */}
+                  <div className="py-1 border-t border-slate-100 dark:border-[#2A4736]">
+                    <div className="px-3 py-1 text-[10px] font-extrabold text-slate-400 dark:text-[#A3D4B3] uppercase tracking-wider">
+                      Administrative Oversight
+                    </div>
+                    {INITIAL_USERS.filter(u => u.role === 'ADMIN').map(u => (
+                      <button
+                        key={u.id}
+                        onClick={() => { switchUserAccount(u); setUserDropdownOpen(false); }}
+                        className={`w-full text-left px-3.5 py-1.5 text-xs hover:bg-[#F0FAF3] dark:hover:bg-[#253D2C] flex items-center justify-between font-medium cursor-pointer transition-colors ${
+                          currentUser.id === u.id ? 'bg-[#F0FAF3] dark:bg-[#253D2C] text-[#2E6F40] dark:text-[#CFFFDC] font-bold' : 'text-slate-700 dark:text-[#D1E8DA]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <Lock className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                          <div className="truncate">
+                            <div className="truncate">{u.name}</div>
+                            <div className="text-[10px] text-slate-400 truncate">{u.department || 'Single Window Admin'}</div>
+                          </div>
+                        </div>
+                        {currentUser.id === u.id && <div className="w-1.5 h-1.5 rounded-full bg-[#2E6F40] shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-slate-100 dark:border-[#2A4736] pt-1 space-y-0.5">
                     <button
                       onClick={async () => {
                         setUserDropdownOpen(false);
@@ -272,6 +332,7 @@ export const Navbar: React.FC = () => {
 
         </div>
       </div>
+
 
       {/* Account Deletion Confirmation Modal */}
       {showDeleteModal && (

@@ -185,11 +185,27 @@ export function analyzeDocumentOCR(
  * Pre-validate complete application document bundle before submission
  */
 export function preValidateApplicationBundle(
-  approvalName: string,
-  requiredDocs: string[],
-  uploadedDocs: Array<{ docName: string; category: string; expiryDate?: string; status?: string }>,
-  businessName: string
+  approvalNameOrDocs: any,
+  requiredDocsOrApproval: any,
+  uploadedDocsList?: Array<{ docName: string; category: string; expiryDate?: string; status?: string }>,
+  businessNameStr?: string
 ) {
+  let approvalName = 'Approval Application';
+  let requiredDocs: string[] = [];
+  let uploadedDocs: Array<{ docName: string; category: string; expiryDate?: string; status?: string }> = [];
+  let businessName = businessNameStr || 'Business Unit';
+
+  if (Array.isArray(approvalNameOrDocs)) {
+    // Called as (uploadedDocs, approvalName)
+    uploadedDocs = approvalNameOrDocs;
+    approvalName = typeof requiredDocsOrApproval === 'string' ? requiredDocsOrApproval : 'Application';
+    requiredDocs = ['PAN Card', 'Aadhaar Card', 'Address Proof'];
+  } else {
+    approvalName = approvalNameOrDocs || 'Approval Application';
+    requiredDocs = Array.isArray(requiredDocsOrApproval) ? requiredDocsOrApproval : ['PAN Card', 'Aadhaar Card'];
+    uploadedDocs = Array.isArray(uploadedDocsList) ? uploadedDocsList : [];
+  }
+
   const missing: string[] = [];
   const expired: string[] = [];
   const nameMismatched: string[] = [];
@@ -197,9 +213,9 @@ export function preValidateApplicationBundle(
 
   for (const req of requiredDocs) {
     const match = uploadedDocs.find(u => 
-      u.docName.toLowerCase().includes(req.toLowerCase()) || 
-      u.category.toLowerCase().includes(req.toLowerCase()) ||
-      req.toLowerCase().includes(u.category.toLowerCase())
+      (u.docName || '').toLowerCase().includes(req.toLowerCase()) || 
+      (u.category || '').toLowerCase().includes(req.toLowerCase()) ||
+      req.toLowerCase().includes((u.category || '').toLowerCase())
     );
 
     if (!match) {
@@ -228,10 +244,11 @@ export function preValidateApplicationBundle(
 
   return {
     isValidForSubmission,
+    readyForSubmission: isValidForSubmission,
     missingDocuments: missing,
     expiredDocuments: expired,
     nameMismatchedDocuments: nameMismatched,
     warnings,
-    readinessScore: isValidForSubmission ? 100 : Math.max(20, Math.round(((requiredDocs.length - missing.length - expired.length) / requiredDocs.length) * 100))
+    readinessScore: isValidForSubmission ? 100 : Math.max(20, Math.round(((requiredDocs.length - missing.length - expired.length) / Math.max(1, requiredDocs.length)) * 100))
   };
 }

@@ -11,7 +11,8 @@ export const OfficerQueryPage: React.FC = () => {
   const isDish = currentUser.role === 'OFFICER_DISH' || userDept.includes('Safety') || userDept.includes('DISH');
   const isMidc = currentUser.role === 'OFFICER_MIDC' || userDept.includes('MIDC') || userDept.includes('Infrastructure');
   const isMsedcl = currentUser.role === 'OFFICER_MSEDCL' || userDept.includes('Electricity') || userDept.includes('MSEDCL');
-  const isFssai = currentUser.role === 'OFFICER_FSSAI' || userDept.includes('Food') || userDept.includes('FSSAI');
+  const isFssai = currentUser.role === 'OFFICER_FSSAI' || userDept.includes('Food') || userDept.includes('FSSAI') || userDept.includes('FDA');
+  const isMca = currentUser.role === 'OFFICER_MCA' || userDept.includes('Corporate Affairs') || userDept.includes('MCA') || userDept.includes('Registration Centre');
 
   const scopedApps = applications.filter(app => {
     if (currentUser.role === 'ADMIN') return true;
@@ -21,7 +22,8 @@ export const OfficerQueryPage: React.FC = () => {
     if (isDish && (dept.includes('safety') || dept.includes('dish') || dept.includes('labour'))) return true;
     if (isMidc && dept.includes('midc')) return true;
     if (isMsedcl && (dept.includes('electricity') || dept.includes('msedcl'))) return true;
-    if (isFssai && (dept.includes('food') || dept.includes('fssai'))) return true;
+    if (isFssai && (dept.includes('food') || dept.includes('fssai') || dept.includes('fda'))) return true;
+    if (isMca && (dept.includes('corporate') || dept.includes('mca') || dept.includes('crc') || dept.includes('incorporation') || dept.includes('registration centre'))) return true;
     if (currentUser.department && dept.includes(currentUser.department.toLowerCase())) return true;
     return false;
   });

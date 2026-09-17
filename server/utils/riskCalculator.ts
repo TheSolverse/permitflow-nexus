@@ -35,10 +35,10 @@ export function calculateRiskScore(
   if (project.landType === 'Agricultural Conversion') {
     locationScore = 18;
     locationExplanation = 'Non-industrial land conversion requires additional revenue & environmental NOCs.';
-  } else if (project.midcArea.includes('Tarapur') || project.midcArea.includes('Waluj')) {
+  } else if ((project.midcArea || '').includes('Tarapur') || (project.midcArea || '').includes('Waluj')) {
     locationScore = 12;
     locationExplanation = 'High-density industrial zone subject to strict MPCB environmental audits.';
-  } else if (project.midcArea.includes('Chakan')) {
+  } else if ((project.midcArea || '').includes('Chakan')) {
     locationScore = 8;
     locationExplanation = 'Developed MIDC industrial cluster with streamlined infrastructure.';
   }

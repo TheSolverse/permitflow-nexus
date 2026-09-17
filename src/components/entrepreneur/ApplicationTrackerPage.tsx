@@ -170,6 +170,24 @@ export const ApplicationTrackerPage: React.FC = () => {
                 </div>
               )}
 
+              {/* Action Banner for Inspection Scheduled / Pending */}
+              {(app.status === 'Inspection Scheduled' || app.status === 'Inspection Pending' || Boolean((app as any).inspectionDate)) && app.status !== 'Approved' && (
+                <div className="p-3.5 rounded-xl bg-purple-50 border border-purple-300 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 text-purple-900 font-medium">
+                    <Calendar className="w-4 h-4 text-purple-700 shrink-0" />
+                    <span>
+                      Site Inspection Scheduled: <strong>{(app as any).inspectionDate || 'Inspection Pending'}</strong> by {app.officerAssigned || app.department}.
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setSelectedAppDetail(app)}
+                    className="px-3.5 py-1.5 rounded-lg bg-purple-800 hover:bg-purple-700 text-white font-extrabold shrink-0 shadow-xs cursor-pointer flex items-center gap-1"
+                  >
+                    <span>View Inspection Details</span>
+                  </button>
+                </div>
+              )}
+
               {/* Card Footer */}
               <div className="pt-2 flex items-center justify-between text-xs border-t border-slate-100">
                 <span className="text-slate-400 text-[11px]">

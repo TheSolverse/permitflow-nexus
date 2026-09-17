@@ -267,6 +267,8 @@ export async function createProject(projectData: Partial<BusinessProject>): Prom
 
 // ================= APPLICATIONS =================
 export async function getApplications(filters?: { userId?: string; projectId?: string; status?: string; department?: string }): Promise<Application[]> {
+  let list: Application[] = [];
+
   if (isDbConnected()) {
     try {
       let query = 'SELECT * FROM applications WHERE 1=1';
@@ -292,7 +294,7 @@ export async function getApplications(filters?: { userId?: string; projectId?: s
 
       query += ' ORDER BY created_at DESC';
       const res = await pool.query(query, params);
-      return res.rows.map(r => ({
+      list = res.rows.map(r => ({
         id: r.id,
         appId: r.app_id,
         projectId: r.project_id,
@@ -316,41 +318,56 @@ export async function getApplications(filters?: { userId?: string; projectId?: s
     }
   }
 
-  try {
-    let q = supabase.from('applications').select('*').order('created_at', { ascending: false });
-    if (filters?.projectId) q = q.eq('project_id', filters.projectId);
-    if (filters?.status) q = q.eq('status', filters.status);
-    if (filters?.department) q = q.ilike('department', `%${filters.department}%`);
-    const { data, error } = await q;
-    if (!error && data && data.length > 0) {
-      return data.map((r: any) => ({
-        id: r.id,
-        appId: r.app_id,
-        projectId: r.project_id,
-        businessName: r.business_name,
-        approvalId: r.approval_id,
-        approvalName: r.approval_name,
-        department: r.department,
-        submissionDate: r.submission_date,
-        slaDeadlineDate: r.sla_deadline_date,
-        slaDaysRemaining: r.sla_days_remaining,
-        status: r.status,
-        officerAssigned: r.officer_assigned,
-        riskScore: r.risk_score,
-        remarks: r.remarks,
-        timeline: typeof r.timeline === 'string' ? JSON.parse(r.timeline) : (r.timeline || []),
-        queries: typeof r.queries === 'string' ? JSON.parse(r.queries) : (r.queries || []),
-        documentIds: typeof r.document_ids === 'string' ? JSON.parse(r.document_ids) : (r.document_ids || [])
-      }));
+  if (list.length === 0) {
+    try {
+      let q = supabase.from('applications').select('*').order('created_at', { ascending: false });
+      if (filters?.projectId) q = q.eq('project_id', filters.projectId);
+      if (filters?.status) q = q.eq('status', filters.status);
+      if (filters?.department) q = q.ilike('department', `%${filters.department}%`);
+      const { data, error } = await q;
+      if (!error && data && data.length > 0) {
+        list = data.map((r: any) => ({
+          id: r.id,
+          appId: r.app_id,
+          projectId: r.project_id,
+          businessName: r.business_name,
+          approvalId: r.approval_id,
+          approvalName: r.approval_name,
+          department: r.department,
+          submissionDate: r.submission_date,
+          slaDeadlineDate: r.sla_deadline_date,
+          slaDaysRemaining: r.sla_days_remaining,
+          status: r.status,
+          officerAssigned: r.officer_assigned,
+          riskScore: r.risk_score,
+          remarks: r.remarks,
+          timeline: typeof r.timeline === 'string' ? JSON.parse(r.timeline) : (r.timeline || []),
+          queries: typeof r.queries === 'string' ? JSON.parse(r.queries) : (r.queries || []),
+          documentIds: typeof r.document_ids === 'string' ? JSON.parse(r.document_ids) : (r.document_ids || [])
+        }));
+      }
+    } catch (e) {
+      console.error('Error fetching applications from Supabase:', e);
     }
-  } catch (e) {
-    console.error('Error fetching applications from Supabase:', e);
   }
 
-  let list = [...memoryApplications];
+  // Merge in-memory applications so all sessions and test runs stay synced
+  const existingIds = new Set(list.map(a => a.id));
+  for (const memApp of memoryApplications) {
+    if (!existingIds.has(memApp.id)) {
+      list.push(memApp);
+    } else {
+      // update with latest memory copy if it was modified
+      const idx = list.findIndex(a => a.id === memApp.id);
+      if (idx >= 0 && memApp.timeline && memApp.timeline.length > (list[idx].timeline || []).length) {
+        list[idx] = memApp;
+      }
+    }
+  }
+
   if (filters?.projectId) list = list.filter(a => a.projectId === filters.projectId);
   if (filters?.status) list = list.filter(a => a.status === filters.status);
-  if (filters?.department) list = list.filter(a => a.department.toLowerCase().includes(filters.department!.toLowerCase()));
+  if (filters?.department) list = list.filter(a => (a.department || '').toLowerCase().includes(filters.department!.toLowerCase()));
   return list;
 }
 
@@ -381,6 +398,8 @@ export async function createApplication(data: Partial<Application>): Promise<App
     queries: [],
     documentIds: data.documentIds && data.documentIds.length > 0 ? data.documentIds : []
   };
+
+  memoryApplications.unshift(newApp);
 
   if (isDbConnected()) {
     try {
@@ -435,7 +454,6 @@ export async function createApplication(data: Partial<Application>): Promise<App
     console.error('Error inserting application into Supabase:', e);
   }
 
-  memoryApplications.unshift(newApp);
   return newApp;
 }
 
@@ -584,6 +602,8 @@ export async function deleteDocument(docId: string): Promise<{ success: boolean 
 
 // ================= NOC APPLICATIONS =================
 export async function getNocApplications(filters?: { userId?: string; projectId?: string; status?: string; nocType?: string }): Promise<NocApplication[]> {
+  let list: NocApplication[] = [];
+
   if (isDbConnected()) {
     try {
       let query = 'SELECT * FROM noc_applications WHERE 1=1';
@@ -608,7 +628,7 @@ export async function getNocApplications(filters?: { userId?: string; projectId?
       }
       query += ' ORDER BY created_at DESC';
       const res = await pool.query(query, params);
-      return res.rows.map(r => ({
+      list = res.rows.map(r => ({
         id: r.id,
         projectId: r.project_id,
         businessName: r.business_name,
@@ -633,43 +653,98 @@ export async function getNocApplications(filters?: { userId?: string; projectId?
     }
   }
 
-  try {
-    let q = supabase.from('noc_applications').select('*').order('created_at', { ascending: false });
-    if (filters?.projectId) q = q.eq('project_id', filters.projectId);
-    if (filters?.status) q = q.eq('status', filters.status);
-    if (filters?.nocType) q = q.eq('noc_type', filters.nocType);
-    const { data, error } = await q;
-    if (!error && data && data.length > 0) {
-      return data.map((r: any) => ({
-        id: r.id,
-        projectId: r.project_id,
-        businessName: r.business_name,
-        nocType: r.noc_type,
-        nocName: r.noc_name,
-        department: r.department,
-        appliedDate: r.applied_date,
-        status: r.status,
-        urgency: r.urgency,
-        slaDaysLeft: r.sla_days_left,
-        technicalParameters: typeof r.technical_parameters === 'string' ? JSON.parse(r.technical_parameters) : (r.technical_parameters || {}),
-        documents: typeof r.documents === 'string' ? JSON.parse(r.documents) : (r.documents || []),
-        queries: typeof r.queries === 'string' ? JSON.parse(r.queries) : (r.queries || []),
-        provisionalCertUrl: r.provisional_cert_url,
-        finalCertUrl: r.final_cert_url,
-        qrCodeData: r.qr_code_data,
-        issuedDate: r.issued_date,
-        certificateId: r.certificate_id
-      }));
+  if (list.length === 0) {
+    try {
+      let q = supabase.from('noc_applications').select('*').order('created_at', { ascending: false });
+      if (filters?.projectId) q = q.eq('project_id', filters.projectId);
+      if (filters?.status) q = q.eq('status', filters.status);
+      if (filters?.nocType) q = q.eq('noc_type', filters.nocType);
+      const { data, error } = await q;
+      if (!error && data && data.length > 0) {
+        list = data.map((r: any) => ({
+          id: r.id,
+          projectId: r.project_id,
+          businessName: r.business_name,
+          nocType: r.noc_type,
+          nocName: r.noc_name,
+          department: r.department,
+          appliedDate: r.applied_date,
+          status: r.status,
+          urgency: r.urgency,
+          slaDaysLeft: r.sla_days_left,
+          technicalParameters: typeof r.technical_parameters === 'string' ? JSON.parse(r.technical_parameters) : (r.technical_parameters || {}),
+          documents: typeof r.documents === 'string' ? JSON.parse(r.documents) : (r.documents || []),
+          queries: typeof r.queries === 'string' ? JSON.parse(r.queries) : (r.queries || []),
+          provisionalCertUrl: r.provisional_cert_url,
+          finalCertUrl: r.final_cert_url,
+          qrCodeData: r.qr_code_data,
+          issuedDate: r.issued_date,
+          certificateId: r.certificate_id
+        }));
+      }
+    } catch (e) {
+      console.error('Error fetching NOC applications from Supabase:', e);
     }
-  } catch (e) {
-    console.error('Error fetching NOC applications from Supabase:', e);
   }
 
-  let list = [...memoryNoc];
+  // Merge in-memory NOCs
+  const existingIds = new Set(list.map(n => n.id));
+  for (const memNoc of memoryNoc) {
+    if (!existingIds.has(memNoc.id)) {
+      list.push(memNoc);
+    } else {
+      const idx = list.findIndex(n => n.id === memNoc.id);
+      if (idx >= 0 && memNoc.status !== list[idx].status) {
+        list[idx] = memNoc;
+      }
+    }
+  }
+
   if (filters?.projectId) list = list.filter(n => n.projectId === filters.projectId);
   if (filters?.status) list = list.filter(n => n.status === filters.status);
   if (filters?.nocType) list = list.filter(n => n.nocType === filters.nocType);
   return list;
+}
+
+export async function createNocApplication(data: Partial<NocApplication>): Promise<NocApplication> {
+  const newNoc: NocApplication = {
+    id: data.id || `noc-app-${Date.now()}`,
+    projectId: data.projectId || memoryProjects[0]?.id || 'proj-1',
+    businessName: data.businessName || memoryProjects[0]?.businessName || 'Business Unit',
+    nocType: data.nocType || 'FIRE',
+    nocName: data.nocName || 'Fire Safety Clearance NOC',
+    department: data.department || 'Directorate of Maharashtra Fire Services',
+    appliedDate: new Date().toISOString().split('T')[0],
+    status: data.status || 'SUBMITTED',
+    urgency: data.urgency || 'NORMAL',
+    slaDaysLeft: data.slaDaysLeft || 15,
+    technicalParameters: data.technicalParameters || {},
+    documents: data.documents || [],
+    queries: data.queries || [],
+    ...data
+  };
+
+  memoryNoc.unshift(newNoc);
+
+  if (isDbConnected()) {
+    try {
+      await pool.query(
+        `INSERT INTO noc_applications (
+          id, project_id, business_name, noc_type, noc_name, department, 
+          applied_date, status, urgency, sla_days_left, technical_parameters, documents, queries
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+        [
+          newNoc.id, newNoc.projectId, newNoc.businessName, newNoc.nocType, newNoc.nocName,
+          newNoc.department, newNoc.appliedDate, newNoc.status, newNoc.urgency, newNoc.slaDaysLeft,
+          JSON.stringify(newNoc.technicalParameters), JSON.stringify(newNoc.documents), JSON.stringify(newNoc.queries)
+        ]
+      );
+    } catch (e) {
+      console.error('Error inserting NOC into DB:', e);
+    }
+  }
+
+  return newNoc;
 }
 
 // ================= JOINT INSPECTIONS =================

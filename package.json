@@ -12,6 +12,11 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test": "vitest run",
+    "test:features": "npx tsx scripts/test_all_features.ts",
+    "test:scenario": "npx tsx scripts/test_real_world_scenario.ts",
+    "test:parallel": "npx tsx scripts/test_parallel_and_domain_routing.ts",
+    "test:food": "npx tsx scripts/test_food_officer_workflow.ts",
+    "test:mca": "npx tsx scripts/test_mca_officer_workflow.ts",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -7,7 +7,8 @@ export type Role =
   | 'OFFICER_DISH' 
   | 'OFFICER_MIDC' 
   | 'OFFICER_MSEDCL' 
-  | 'OFFICER_FSSAI';
+  | 'OFFICER_FSSAI'
+  | 'OFFICER_MCA';
 
 export type Language = 'en' | 'mr' | 'hi';
 
@@ -110,6 +111,14 @@ export interface ParallelPermissionItem {
   lastUpdatedDate: string;
   remarks?: string;
   activityHistory?: { id: string; timestamp: string; actor: string; department: string; action: string; notes?: string }[];
+  certificateId?: string;
+  certificateIssuedDate?: string;
+  certificateExpiryDate?: string;
+  certificateValidityTenure?: string;
+  certificateQrToken?: string;
+  certificateType?: 'PROVISIONAL' | 'FINAL';
+  certificateConditions?: string;
+  certificateOfficerSignature?: string;
 }
 
 export interface ParallelWorkflowSummary {
@@ -286,6 +295,14 @@ export interface Application {
   documentIds: string[];
   riskScore: number;
   remarks?: string;
+  certificateId?: string;
+  certificateIssuedDate?: string;
+  certificateExpiryDate?: string;
+  certificateValidityTenure?: string;
+  certificateQrToken?: string;
+  certificateType?: 'PROVISIONAL' | 'FINAL';
+  certificateConditions?: string;
+  certificateOfficerSignature?: string;
 }
 
 export interface InspectionItem {
