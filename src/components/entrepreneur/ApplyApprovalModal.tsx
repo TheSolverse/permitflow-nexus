@@ -245,6 +245,15 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
       else if (lower.includes('sanction') || lower.includes('building')) fileUrl = '/datafile/26_Building_Plan_Sanction_Copy/building_plan_sanction_copy.jpg';
       else if (lower.includes('site') && lower.includes('plan')) fileUrl = '/datafile/28_Site_Plan/site_plan.jpg';
       else if (lower.includes('hazard')) fileUrl = '/datafile/29_Hazard_Material_Sheet/hazard_material_sheet.jpg';
+      else if (lower.includes('load')) fileUrl = '/datafile/30_Load_Estimation_Sanction/load_estimation_sanction.jpg';
+      else if (lower.includes('electrical safety')) fileUrl = '/datafile/31_Electrical_Safety_Certificate/electrical_safety_certificate.jpg';
+      else if (lower.includes('water consumption')) fileUrl = '/datafile/32_Water_Consumption_Estimation_Sheet/water_consumption_estimation_sheet.jpg';
+      else if (lower.includes('etp flow')) fileUrl = '/datafile/33_ETP_Flow_Scheme/etp_flow_scheme.jpg';
+      else if (lower.includes('plumbing')) fileUrl = '/datafile/34_Plumbing_Layout/plumbing_layout.jpg';
+      else if (lower.includes('single line') || lower.includes('sld')) fileUrl = '/datafile/35_Single_Line_Diagram/single_line_diagram.jpg';
+      else if (lower.includes('transformer')) fileUrl = '/datafile/36_Transformer_Test_Certificate/transformer_test_certificate.jpg';
+      else if (lower.includes('earthing')) fileUrl = '/datafile/37_Earthing_Pit_Resistance_Test/earthing_pit_resistance_test.jpg';
+      else if (lower.includes('contractor') || lower.includes('electrical contractor')) fileUrl = '/datafile/38_Electrical_Contractor_License/electrical_contractor_license.jpg';
       else fileUrl = '/datafile/17_Architectural_Blueprints/17_architectural_blueprints.jpg';
     }
 

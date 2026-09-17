@@ -195,6 +195,16 @@ const APPROVED_STATUTORY_SIGNATURES = [
   'FIRE FIGHTING SYSTEM', 'FIRE FIGHTING DRAWING', '27_fire_fighting_system_drawing', 'fire_fighting_system_drawing', 'fire fighting',
   'SITE PLAN', 'LOCATION PLAN', '28_site_plan', 'site_plan',
   'HAZARD MATERIAL SHEET', 'HAZARDOUS MATERIAL', 'MSDS', '29_hazard_material_sheet', 'hazard_material_sheet', 'hazard material',
+  // Electrical, Water & Utility Infrastructure Clearances
+  'LOAD ESTIMATION', 'LOAD SANCTION', '30_load_estimation_sanction', 'load_estimation_sanction',
+  'ELECTRICAL SAFETY', 'SAFETY CERTIFICATE', '31_electrical_safety_certificate', 'electrical_safety_certificate',
+  'WATER CONSUMPTION', 'CONSUMPTION ESTIMATION', '32_water_consumption_estimation_sheet', 'water_consumption_estimation_sheet',
+  'ETP FLOW', 'FLOW SCHEME', '33_etp_flow_scheme', 'etp_flow_scheme',
+  'PLUMBING LAYOUT', 'PLUMBING', '34_plumbing_layout', 'plumbing_layout',
+  'SINGLE LINE DIAGRAM', 'SLD', '35_single_line_diagram', 'single_line_diagram',
+  'TRANSFORMER TEST', 'TRANSFORMER CERTIFICATE', '36_transformer_test_certificate', 'transformer_test_certificate',
+  'EARTHING PIT', 'RESISTANCE TEST', '37_earthing_pit_resistance_test', 'earthing_pit_resistance_test',
+  'ELECTRICAL CONTRACTOR', 'CONTRACTOR LICENSE', '38_electrical_contractor_license', 'electrical_contractor_license',
   // Folders & Data Sources
   'datafile', 'sample_documents', 'mock_documents'
 ];

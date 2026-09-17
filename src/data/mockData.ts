@@ -770,6 +770,51 @@ export const INITIAL_DOCUMENTS: DocumentItem[] = [
       issues: ['Document has not been uploaded yet.'],
       recommendations: ['Upload Form V Environmental Audit Report to proceed with Pollution CTO renewal.']
     }
+  },
+  {
+    id: 'doc-10',
+    projectId: 'proj-1',
+    docName: 'Single Line Diagram (SLD) of High Tension Electrical System',
+    category: 'Single Line Diagram (SLD)',
+    fileUrl: '/datafile/35_Single_Line_Diagram/single_line_diagram.jpg',
+    fileSize: '3.1 MB',
+    uploadDate: '2026-08-15',
+    status: 'Valid',
+    aiValidationResult: {
+      confidence: 97,
+      issues: [],
+      recommendations: ['Approved & signed by Chartered Electrical Safety Engineer for MSEDCL power connection.']
+    }
+  },
+  {
+    id: 'doc-11',
+    projectId: 'proj-1',
+    docName: 'Transformer & Substation Insulating Oil Test Certificate',
+    category: 'Transformer Test Certificate',
+    fileUrl: '/datafile/36_Transformer_Test_Certificate/transformer_test_certificate.jpg',
+    fileSize: '1.9 MB',
+    uploadDate: '2026-08-16',
+    status: 'Valid',
+    aiValidationResult: {
+      confidence: 95,
+      issues: [],
+      recommendations: ['Breakdown voltage and dielectric strength certified compliant with IS 1866 standards.']
+    }
+  },
+  {
+    id: 'doc-12',
+    projectId: 'proj-1',
+    docName: 'Water Consumption Estimation Sheet & Daily Demand Schedule',
+    category: 'Water Consumption Estimation Sheet',
+    fileUrl: '/datafile/32_Water_Consumption_Estimation_Sheet/water_consumption_estimation_sheet.jpg',
+    fileSize: '2.2 MB',
+    uploadDate: '2026-08-18',
+    status: 'Valid',
+    aiValidationResult: {
+      confidence: 96,
+      issues: [],
+      recommendations: ['MIDC industrial water supply demand breakdown verified by Public Health Engineering Dept.']
+    }
   }
 ];
 
