@@ -636,7 +636,71 @@ export const LoginPage: React.FC = () => {
                 </div>
               </button>
 
-              {/* 8. Admin */}
+              {/* 8. MCA Officer */}
+              <button
+                type="button"
+                onClick={() => {
+                  const u = INITIAL_USERS.find(user => user.role === 'OFFICER_MCA' || user.email.includes('mca'));
+                  if (u) { setCurrentUser(u); setActiveTab('officer-dashboard'); }
+                }}
+                className="p-2 rounded-xl bg-cyan-50/60 hover:bg-cyan-100/60 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-900 flex items-center gap-2 text-left cursor-pointer"
+              >
+                <span className="w-6 h-6 rounded bg-cyan-100 text-cyan-800 dark:bg-cyan-900 text-xs flex items-center justify-center font-bold text-[10px]">8</span>
+                <div>
+                  <div className="font-bold text-[11px] text-cyan-950 dark:text-cyan-200">MCA CRC Officer</div>
+                  <div className="text-[9px] text-cyan-700 dark:text-cyan-400">Arvind K. Joshi</div>
+                </div>
+              </button>
+
+              {/* 9. GST Officer */}
+              <button
+                type="button"
+                onClick={() => {
+                  const u = INITIAL_USERS.find(user => user.role === 'OFFICER_GST' || user.email.includes('gst'));
+                  if (u) { setCurrentUser(u); setActiveTab('officer-dashboard'); }
+                }}
+                className="p-2 rounded-xl bg-emerald-50/60 hover:bg-emerald-100/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 flex items-center gap-2 text-left cursor-pointer"
+              >
+                <span className="w-6 h-6 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900 text-xs flex items-center justify-center font-bold text-[10px]">9</span>
+                <div>
+                  <div className="font-bold text-[11px] text-emerald-950 dark:text-emerald-200">GST Officer</div>
+                  <div className="text-[9px] text-emerald-700 dark:text-emerald-400">Rajesh Kumar</div>
+                </div>
+              </button>
+
+              {/* 10. MSME Officer */}
+              <button
+                type="button"
+                onClick={() => {
+                  const u = INITIAL_USERS.find(user => user.role === 'OFFICER_MSME' || user.email.includes('msme'));
+                  if (u) { setCurrentUser(u); setActiveTab('officer-dashboard'); }
+                }}
+                className="p-2 rounded-xl bg-blue-50/60 hover:bg-blue-100/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 flex items-center gap-2 text-left cursor-pointer"
+              >
+                <span className="w-6 h-6 rounded bg-blue-100 text-blue-800 dark:bg-blue-900 text-xs flex items-center justify-center font-bold text-[10px]">10</span>
+                <div>
+                  <div className="font-bold text-[11px] text-blue-950 dark:text-blue-200">MSME DIC Officer</div>
+                  <div className="text-[9px] text-blue-700 dark:text-blue-400">N. K. Verma</div>
+                </div>
+              </button>
+
+              {/* 11. Professional Tax Officer */}
+              <button
+                type="button"
+                onClick={() => {
+                  const u = INITIAL_USERS.find(user => user.role === 'OFFICER_PTAX' || user.email.includes('ptax'));
+                  if (u) { setCurrentUser(u); setActiveTab('officer-dashboard'); }
+                }}
+                className="p-2 rounded-xl bg-rose-50/60 hover:bg-rose-100/60 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 flex items-center gap-2 text-left cursor-pointer"
+              >
+                <span className="w-6 h-6 rounded bg-rose-100 text-rose-800 dark:bg-rose-900 text-xs flex items-center justify-center font-bold text-[10px]">11</span>
+                <div>
+                  <div className="font-bold text-[11px] text-rose-950 dark:text-rose-200">P-Tax Officer</div>
+                  <div className="text-[9px] text-rose-700 dark:text-rose-400">Subhash Patil</div>
+                </div>
+              </button>
+
+              {/* 12. Admin */}
               <button
                 type="button"
                 onClick={() => {
@@ -645,7 +709,7 @@ export const LoginPage: React.FC = () => {
                 }}
                 className="p-2 rounded-xl bg-purple-50/60 hover:bg-purple-100/60 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900 flex items-center gap-2 text-left cursor-pointer"
               >
-                <span className="w-6 h-6 rounded bg-purple-100 text-purple-800 dark:bg-purple-900 text-xs flex items-center justify-center font-bold text-[10px]">8</span>
+                <span className="w-6 h-6 rounded bg-purple-100 text-purple-800 dark:bg-purple-900 text-xs flex items-center justify-center font-bold text-[10px]">12</span>
                 <div>
                   <div className="font-bold text-[11px] text-purple-950 dark:text-purple-200">Platform Admin</div>
                   <div className="text-[9px] text-purple-700 dark:text-purple-400">MAITRI Admin</div>

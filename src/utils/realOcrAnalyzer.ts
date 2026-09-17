@@ -153,20 +153,24 @@ export function assessQuality(ocrConfidence: number, textLength: number, hasRequ
  * Grants exception ONLY to official statutory licenses and proof certificates.
  */
 const APPROVED_STATUTORY_SIGNATURES = [
-  // PAN
-  'PERMANENT ACCOUNT NUMBER', 'INCOME TAX', 'INCOMETAX', 'ABCDE1234F', 'ABCDE', 'आयकर विभाग', 'pan_card', 'pan card',
-  // Aadhaar
+  // PAN Card
+  'PERMANENT ACCOUNT NUMBER', 'INCOME TAX', 'INCOMETAX', 'ABCDE1234F', 'AAACA9821F', 'आयकर विभाग', 'pan_card', 'pan card', 'company pan card', 'pan_apex_foods',
+  // Incorporation Certificate
+  'MINISTRY OF CORPORATE AFFAIRS', 'CERTIFICATE OF INCORPORATION', 'COMPANIES ACT', 'CIN U15400MH', 'incorporation_certificate', 'incorporation certificate', 'incorporation_cert',
+  // Bank Account Details
+  'STATE BANK OF INDIA', 'CERTIFICATE OF CORPORATE BANK ACCOUNT', 'IFSC CODE', 'SBIN0001234', 'bank_account_details', 'bank account details', 'bank_details',
+  // Lease / Ownership Deed
+  'REGISTERED LEASE AGREEMENT', 'LEASE DEED AGREEMENT', 'LESSOR', 'LESSEE', 'BHARAT NON JUDICIAL', 'lease_agreement', 'registered_lease', 'lease deed', 'lease_ownership_deed', 'lease/ownership deed', 'midc_lease',
+  // Aadhaar Card
   'UNIQUE IDENTIFICATION', 'UIDAI', 'AADHAAR', 'ADHAAR', '9812 3456 7890', '9812', 'MERA AADHAAR', 'aadhaar_card', 'aadhaar card',
-  // GST
-  'GOODS AND SERVICES', 'GSTIN', 'FORM GST REG-06', '27AAACA9812K1Z8', '27AAACA', 'gst_registration', 'gst_certificate', 'gst certificate',
-  // Fire NOC
-  'DIRECTORATE OF MAHARASHTRA FIRE', 'FIRE SAFETY NOC', 'MFS/NOC/2026/04918', 'MFS/NOC', 'fire_safety', 'fire safety',
-  // MPCB
-  'MAHARASHTRA POLLUTION CONTROL BOARD', 'CONSENT TO ESTABLISH', 'MPCB/CTE/RO-PUNE/2026/0912', 'MPCB/CTE', 'mpcb_consent', 'mpcb',
-  // DISH
+  // GST Certificate
+  'GOODS AND SERVICES', 'GSTIN', 'FORM GST REG-06', '27AAACA9812K1Z8', '27AAACA9821F1ZH', 'gst_registration', 'gst_certificate', 'gst certificate', 'gst_cert',
+  // Fire NOC & Layout
+  'DIRECTORATE OF MAHARASHTRA FIRE', 'FIRE SAFETY NOC', 'MFS/NOC/2026/04918', 'MFS/NOC', 'fire_safety', 'fire safety', 'fire_layout',
+  // MPCB Consent
+  'MAHARASHTRA POLLUTION CONTROL BOARD', 'CONSENT TO ESTABLISH', 'MPCB/CTE/RO-PUNE/2026/0912', 'MPCB/CTE', 'mpcb_consent', 'mpcb', 'water_test',
+  // DISH Factory Licence
   'DIRECTORATE OF INDUSTRIAL SAFETY', 'FACTORY LICENCE (FORM 1)', 'DISH/FL/PUN/2026/8812', 'DISH/FL', 'dish_factory', 'dish',
-  // Lease Deed
-  'REGISTERED LEASE AGREEMENT', 'LESSOR', 'LESSEE', 'BHARAT NON JUDICIAL', 'lease_agreement', 'registered_lease', 'lease deed',
   // Utility Bill
   'MAHARASHTRA STATE ELECTRICITY', 'MSEDCL', 'ELECTRICITY BILL', '015891234567', 'electricity_bill', 'utility bill',
   // Owner NOC
@@ -174,7 +178,20 @@ const APPROVED_STATUTORY_SIGNATURES = [
   // DSC
   'DIGITAL SIGNATURE CERTIFICATE', 'EMUDHRA', 'CLASS 3', 'dsc_class3', 'digital signature',
   // MoA & AoA
-  'e-MEMORANDUM OF ASSOCIATION', 'FORM INC-33', 'INC-33', 'INC-34', 'draft_moa', 'moa', 'aoa'
+  'e-MEMORANDUM OF ASSOCIATION', 'FORM INC-33', 'INC-33', 'INC-34', 'draft_moa', 'moa', 'aoa',
+  // Building, Structural, MIDC & Phase 2-5 Clearances
+  'MIDC LAND ALLOTMENT', 'LAND ALLOTMENT LETTER', 'ALLOTMENT LETTER', '16_midc_land_allotment', 'midc_land_allotment', 'midc allotment',
+  'ARCHITECTURAL BLUEPRINT', 'BLUEPRINT', 'ARCHITECTURAL PLAN', '17_architectural_blueprints', 'architectural_blueprints', 'architectural blueprint',
+  'STRUCTURAL STABILITY', 'STABILITY CERTIFICATE', '18_structural_stability_certificate', 'structural_stability_certificate', 'structural stability',
+  'TOPOGRAPHICAL SURVEY', 'CONTOUR SURVEY', 'SURVEY MAP', '19_topographical_survey', 'topographical_survey', 'topographical survey',
+  'PROCESS FLOW DIAGRAM', 'PROCESS FLOW', 'MASS BALANCE', '20_process_flow_diagram', 'process_flow_diagram', 'process flow',
+  'EFFLUENT TREATMENT PLANT', 'ETP PROPOSAL', 'POLLUTION CONTROL PLAN', '21_etp_proposal', 'etp_proposal', 'effluent treatment',
+  'MACHINERY LAYOUT', 'LAYOUT PLAN', 'PLANT LAYOUT', '22_machinery_layout_plan', 'machinery_layout_plan', 'machinery layout',
+  'ELECTRICAL SINGLE LINE', 'SINGLE LINE DIAGRAM', 'SLD', 'MSEDCL', '23_electrical_single_line_diagram', 'electrical_single_line_diagram', 'single line diagram',
+  'WATER ANALYSIS REPORT', 'LAB REPORT', 'WATER QUALITY', '24_water_analysis_lab_report', 'water_analysis_lab_report', 'water analysis',
+  'FOOD SAFETY MANAGEMENT', 'FSMS PLAN', 'FSSAI PLAN', '25_food_safety_management_plan', 'food_safety_management_plan', 'food safety',
+  // Folders & Data Sources
+  'datafile', 'sample_documents', 'mock_documents'
 ];
 
 /**
@@ -236,7 +253,7 @@ export async function performRealOcr(
     rawUpper.includes(sig.toUpperCase()) || fileNameLower.includes(sig.toLowerCase()) || docTitle.toLowerCase().includes(sig.toLowerCase())
   );
 
-  const isUnrelatedFile = hasKnownLogo || hasReceiptKeywords || hasPresentationKeywords || !matchesApprovedStatutoryDoc;
+  const isUnrelatedFile = (hasKnownLogo || hasReceiptKeywords || hasPresentationKeywords) && !matchesApprovedStatutoryDoc;
 
   // 3. DOCUMENT CLASSIFICATION
   const classification = classifyDocumentByOcr(extractedRawText, category);

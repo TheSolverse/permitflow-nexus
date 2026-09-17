@@ -154,7 +154,17 @@ export const SmartChecklistPage: React.FC = () => {
     sector: selectedSector,
     subSector: selectedSubSector
   };
-  const checklist = generateSmartChecklist(previewProject, applications);
+  const allUserApps = [
+    ...applications,
+    ...parallelPermissions.map(p => ({
+      id: p.id,
+      approvalId: p.approvalId,
+      approvalName: p.approvalName,
+      status: p.status,
+      projectId: p.projectId
+    }))
+  ];
+  const checklist = generateSmartChecklist(previewProject, allUserApps);
 
   // Phase Lock Helper
   const isPhaseUnlocked = (phaseNum: number): boolean => {
@@ -228,17 +238,22 @@ export const SmartChecklistPage: React.FC = () => {
     if (item.status === 'Rejected' || item.status === 'Not Started') {
       setSelectedApprovalForApply(item);
     } else {
-      const match = applications.find(a => 
+      const parallelMatch = parallelPermissions.find(p => p.approvalId === item.id || p.approvalName.toLowerCase().trim() === item.name.toLowerCase().trim());
+      const appMatch = applications.find(a => 
         (item.applicationId && a.id === item.applicationId) || 
         a.approvalId === item.id || 
-        a.approvalName.toLowerCase() === item.name.toLowerCase()
+        a.approvalName.toLowerCase().trim() === item.name.toLowerCase().trim()
       );
 
-      if (match) {
-        setSelectedAppDetail(match);
+      const isApproved = item.status === 'Approved' || parallelMatch?.status === 'Approved' || appMatch?.status === 'Approved';
+      const targetStatus: ApprovalStatus = isApproved ? 'Approved' : (item.status || appMatch?.status || parallelMatch?.status || 'Submitted');
+
+      if (appMatch) {
+        setSelectedAppDetail({
+          ...appMatch,
+          status: targetStatus
+        });
       } else {
-        const parallelMatch = parallelPermissions.find(p => p.approvalId === item.id || p.approvalName.toLowerCase().includes(item.name.toLowerCase()));
-        
         const trackedApp: Application = {
           id: item.applicationId || `app-${Date.now()}`,
           appId: `PFN-2026-${item.department.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '')}-${Math.floor(100 + Math.random() * 900)}`,
@@ -250,7 +265,7 @@ export const SmartChecklistPage: React.FC = () => {
           submissionDate: parallelMatch?.submittedDate || new Date().toISOString().split('T')[0],
           slaDeadlineDate: parallelMatch?.slaDeadlineDate || new Date(Date.now() + (item.estimatedTimelineDays || 15) * 86400000).toISOString().split('T')[0],
           slaDaysRemaining: parallelMatch?.slaDaysRemaining || item.estimatedTimelineDays || 15,
-          status: item.status,
+          status: targetStatus,
           officerAssigned: parallelMatch?.assignedOfficer || 'Department Desk Officer',
           timeline: parallelMatch?.activityHistory?.map(a => ({
             id: a.id,
@@ -258,16 +273,24 @@ export const SmartChecklistPage: React.FC = () => {
             description: a.notes || `${a.department}: ${a.action}`,
             timestamp: a.timestamp,
             actor: a.actor,
-            role: 'OFFICER' as const
+            role: a.role as any
           })) || [
             {
-              id: `t-${Date.now()}`,
-              title: 'Application Under Officer Scrutiny',
-              description: `Application for ${item.name} assigned to ${parallelMatch?.assignedOfficer || 'Department Officer'}.`,
+              id: `t-1-${Date.now()}`,
+              title: 'Application Submitted',
+              description: 'Application submitted successfully to department portal.',
               timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
-              actor: parallelMatch?.assignedOfficer || 'Auto Dispatcher',
-              role: 'OFFICER'
-            }
+              actor: currentUser.name,
+              role: 'ENTREPRENEUR'
+            },
+            ...(isApproved ? [{
+              id: `t-2-${Date.now()}`,
+              title: 'Status Changed to Approved',
+              description: 'All technical parameters and safety documentation verified and approved.',
+              timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+              actor: 'Department Officer',
+              role: 'OFFICER' as const
+            }] : [])
           ],
           queries: parallelMatch?.openQueries?.map(q => ({
             id: q.id,

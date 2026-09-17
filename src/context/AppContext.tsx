@@ -834,6 +834,82 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return app;
     }));
 
+    // Synchronize parallelPermissions state for entrepreneur dashboard
+    const targetApp = applications.find(a => a.id === appId);
+    if (targetApp) {
+      setParallelPermissions(prev => prev.map(item => {
+        if (
+          item.id === appId || 
+          item.approvalId === appId || 
+          item.approvalId === targetApp.approvalId || 
+          item.approvalName.toLowerCase().trim() === targetApp.approvalName.toLowerCase().trim()
+        ) {
+          return {
+            ...item,
+            status,
+            remarks: remarks || item.remarks,
+            lastUpdatedDate: new Date().toISOString().split('T')[0],
+            lastUpdatedDateTime: new Date().toLocaleString()
+          };
+        }
+        return item;
+      }));
+
+      // Send live notification to Entrepreneur
+      setNotifications(prev => [
+        {
+          id: `notif-${Date.now()}`,
+          userId: targetApp.userId || currentUser.id,
+          projectId: targetApp.projectId,
+          timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+          title: `Clearance Status Updated: ${status}`,
+          message: `Officer ${currentUser.name} (${currentUser.department || 'Statutory Department'}) updated your "${targetApp.approvalName}" status to ${status}.`,
+          type: status === 'Approved' ? 'SUCCESS' : status === 'Rejected' ? 'WARNING' : 'INFO',
+          read: false,
+          channels: ['IN_APP']
+        },
+        ...prev
+      ]);
+
+      // Automatically issue & add statutory certificate to Entrepreneur Document Vault upon Approval
+      if (status === 'Approved') {
+        const appNameLower = targetApp.approvalName.toLowerCase();
+        let certFileUrl = '/sample_documents/incorporation_certificate.jpg';
+        if (appNameLower.includes('gst')) certFileUrl = '/sample_documents/gst_certificate.jpg';
+        else if (appNameLower.includes('lease') || appNameLower.includes('midc') || appNameLower.includes('building')) certFileUrl = '/sample_documents/lease_ownership_deed.jpg';
+        else if (appNameLower.includes('pan')) certFileUrl = '/sample_documents/pan_card.jpg';
+        else if (appNameLower.includes('bank')) certFileUrl = '/sample_documents/bank_account_details.jpg';
+
+        const regNo = `MH-2026-STAT-${Math.floor(10000 + Math.random() * 90000)}`;
+        const certDocName = `Official Statutory Certificate - ${targetApp.approvalName}`;
+
+        const newVaultCert: DocumentItem = {
+          id: `doc-cert-${Date.now()}`,
+          projectId: targetApp.projectId || activeProjectId,
+          docName: certDocName,
+          category: `${targetApp.department || 'Statutory License'}`,
+          fileUrl: certFileUrl,
+          fileSize: '1.4 MB',
+          uploadDate: new Date().toISOString().split('T')[0],
+          status: 'Valid',
+          aiValidationResult: {
+            confidence: 99,
+            issues: [],
+            recommendations: ['Official Statutory License Issued & Cryptographically Signed by Government Officer.'],
+            extractedName: activeProject?.businessName || targetApp.businessName,
+            extractedRegNo: regNo
+          }
+        };
+
+        setDocuments(prevDocs => {
+          if (prevDocs.some(d => d.docName === certDocName && d.projectId === newVaultCert.projectId)) {
+            return prevDocs;
+          }
+          return [newVaultCert, ...prevDocs];
+        });
+      }
+    }
+
     // Persist status update to Supabase / Backend
     updateApplicationStatusApi(appId, status, remarks, currentUser.name).catch(err => console.warn('Could not save status update to backend:', err));
   };

@@ -28,6 +28,7 @@ export const EntrepreneurDashboard: React.FC = () => {
     projects,
     activeProject, 
     applications, 
+    parallelPermissions,
     documents,
     complianceTasks, 
     jointInspections,
@@ -39,13 +40,24 @@ export const EntrepreneurDashboard: React.FC = () => {
 
   const [isExpiryAlertOpen, setIsExpiryAlertOpen] = useState(false);
 
+  const allUserApps = [
+    ...applications,
+    ...parallelPermissions.map(p => ({
+      id: p.id,
+      approvalId: p.approvalId,
+      approvalName: p.approvalName,
+      status: p.status,
+      projectId: p.projectId
+    }))
+  ];
+
   const hasProjects = projects.length > 0 && !!activeProject?.id;
-  const checklist = hasProjects ? generateSmartChecklist(activeProject, applications) : [];
+  const checklist = hasProjects ? generateSmartChecklist(activeProject, allUserApps) : [];
   const totalApprovals = checklist.length;
 
-  const projectApps = applications.filter(a => a.projectId === activeProject?.id);
-  const approvedCount = projectApps.filter(a => a.status === 'Approved').length;
-  const underReviewCount = projectApps.filter(a => a.status === 'Under Review' || a.status === 'Submitted' || a.status === 'Inspection Scheduled').length;
+  const projectApps = allUserApps.filter(a => a.projectId === activeProject?.id);
+  const approvedCount = checklist.filter(a => a.status === 'Approved').length;
+  const underReviewCount = checklist.filter(a => a.status === 'Under Review' || a.status === 'Submitted' || a.status === 'Inspection Scheduled').length;
   
   // Real pending queries raised by officers from DB
   const realPendingQueries = projectApps.flatMap(app => 

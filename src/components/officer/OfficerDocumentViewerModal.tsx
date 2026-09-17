@@ -151,35 +151,33 @@ export const OfficerDocumentViewerModal: React.FC<Props> = ({
               </div>
 
               {/* REAL UPLOADED FILE PREVIEW (If entrepreneur uploaded an actual image/file/PDF) */}
-              {doc.fileUrl && (doc.fileUrl.startsWith('blob:') || doc.fileUrl.startsWith('data:') || doc.fileUrl.startsWith('http')) ? (
+              {doc.fileUrl && (doc.fileUrl.startsWith('blob:') || doc.fileUrl.startsWith('data:') || doc.fileUrl.startsWith('http') || doc.fileUrl.startsWith('/')) ? (
                 <div className="space-y-4 mb-6">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-200">
                     <div>
-                      <div className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider">Entrepreneur Uploaded Original Attachment</div>
+                      <div className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider">Uploaded Attachment File</div>
                       <div className="text-sm font-extrabold text-slate-900 mt-0.5">{doc.docName}</div>
                     </div>
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                      Live Upload ({doc.fileSize || '1.2 MB'})
+                      Verified Attachment ({doc.fileSize || '1.2 MB'})
                     </span>
                   </div>
                   <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center p-3 min-h-[350px]">
-                    {doc.fileUrl.startsWith('data:application/pdf') || doc.docName.match(/\.pdf$/i) ? (
+                    {doc.fileUrl.endsWith('.pdf') ? (
                       <object
                         data={doc.fileUrl}
                         type="application/pdf"
                         className="w-full h-[500px] rounded-xl"
                       >
-                        <div className="text-center p-6 space-y-3">
-                          <FileText className="w-12 h-12 text-slate-400 mx-auto" />
-                          <p className="font-bold text-slate-800">Uploaded PDF File: {doc.docName}</p>
-                          <a
-                            href={doc.fileUrl}
-                            download={doc.docName}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-[#2E6F40] text-white rounded-xl text-xs font-bold"
-                          >
-                            <Download className="w-4 h-4" /> Download PDF Attachment
-                          </a>
-                        </div>
+                        <img 
+                          src={doc.fileUrl.replace(/\.pdf$/i, '.jpg')} 
+                          alt={doc.docName} 
+                          className="max-h-[480px] w-auto max-w-full object-contain rounded-xl shadow-xs"
+                          onError={(e) => {
+                            // Fallback to direct image
+                            (e.target as HTMLImageElement).src = doc.fileUrl;
+                          }}
+                        />
                       </object>
                     ) : (
                       <img 

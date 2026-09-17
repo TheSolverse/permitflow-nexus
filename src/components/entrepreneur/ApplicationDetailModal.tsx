@@ -19,7 +19,10 @@ import {
   Printer,
   Download,
   Award,
-  RotateCcw
+  RotateCcw,
+  Sparkles,
+  FolderPlus,
+  Check
 } from 'lucide-react';
 
 interface Props {
@@ -28,11 +31,45 @@ interface Props {
 }
 
 export const ApplicationDetailModal: React.FC<Props> = ({ app, onClose }) => {
-  const { respondToQuery, documents, setActiveTab } = useApp();
+  const { respondToQuery, documents, uploadDocument, setActiveTab, updateApplicationStatus } = useApp();
   const [responseText, setResponseText] = useState('');
   const [responseDocName, setResponseDocName] = useState('');
   const [isPrinting, setIsPrinting] = useState(false);
   const [isReapplyOpen, setIsReapplyOpen] = useState(false);
+
+  const [isSavedToVault, setIsSavedToVault] = useState<boolean>(() => {
+    return documents.some(d => d.docName.toLowerCase().includes(app.approvalName.toLowerCase()));
+  });
+
+  const handleSaveToVault = () => {
+    const appNameLower = app.approvalName.toLowerCase();
+    let certFileUrl = '/sample_documents/incorporation_certificate.jpg';
+    if (appNameLower.includes('gst')) certFileUrl = '/sample_documents/gst_certificate.jpg';
+    else if (appNameLower.includes('lease') || appNameLower.includes('midc') || appNameLower.includes('building')) certFileUrl = '/sample_documents/lease_ownership_deed.jpg';
+    else if (appNameLower.includes('pan')) certFileUrl = '/sample_documents/pan_card.jpg';
+    else if (appNameLower.includes('bank')) certFileUrl = '/sample_documents/bank_account_details.jpg';
+
+    const regNo = `MH-LIC-2026-${app.appId.replace(/[^0-9]/g, '') || '8841'}`;
+    const certDocTitle = `Official License Certificate - ${app.approvalName}`;
+
+    uploadDocument(
+      certDocTitle,
+      app.department || 'Statutory License',
+      null,
+      {
+        confidence: 99,
+        issues: [],
+        recommendations: ['Official Statutory License Issued & Cryptographically Signed by Government Officer.'],
+        extractedName: app.businessName,
+        extractedRegNo: regNo,
+        status: 'Valid',
+        isAuthenticGovDoc: true
+      },
+      certFileUrl
+    );
+
+    setIsSavedToVault(true);
+  };
 
   const matchedApproval = INITIAL_APPROVAL_TYPES.find(a => a.id === app.approvalId || a.name === app.approvalName) || {
     id: app.approvalId || 'appr-custom',
@@ -89,12 +126,28 @@ export const ApplicationDetailModal: React.FC<Props> = ({ app, onClose }) => {
             </p>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-3">
+            {app.status !== 'Approved' && (
+              <button
+                type="button"
+                onClick={() => {
+                  updateApplicationStatus(app.id, 'Approved', 'Approved by Department Officer upon successful statutory document verification.');
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-[#2E6F40] hover:bg-[#253D2C] text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md cursor-pointer transition-all border border-[#CFFFDC]/30"
+                title="Approve this application as Officer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#CFFFDC]" />
+                <span>Approve Application</span>
+              </button>
+            )}
+
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Modal Scrollable Content */}
@@ -122,7 +175,31 @@ export const ApplicationDetailModal: React.FC<Props> = ({ app, onClose }) => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleSaveToVault}
+                    disabled={isSavedToVault}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-xs ${
+                      isSavedToVault
+                        ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800 cursor-default'
+                        : 'bg-amber-500 hover:bg-amber-600 text-slate-950 font-black cursor-pointer shadow-md'
+                    }`}
+                    title={isSavedToVault ? 'License is stored in your Document Vault' : 'Save this official license certificate into your Document Vault'}
+                  >
+                    {isSavedToVault ? (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-300" />
+                        <span>Saved to Vault ✓</span>
+                      </>
+                    ) : (
+                      <>
+                        <FolderPlus className="w-4 h-4 text-slate-950" />
+                        <span>+ Add to Vault</span>
+                      </>
+                    )}
+                  </button>
+
                   <button
                     onClick={handlePrintCertificate}
                     className="px-4 py-2 rounded-xl bg-[#2E6F40] hover:bg-[#253D2C] text-white font-extrabold text-xs shadow-md flex items-center gap-2 cursor-pointer transition-all"

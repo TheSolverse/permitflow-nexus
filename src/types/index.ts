@@ -8,7 +8,10 @@ export type Role =
   | 'OFFICER_MIDC' 
   | 'OFFICER_MSEDCL' 
   | 'OFFICER_FSSAI'
-  | 'OFFICER_MCA';
+  | 'OFFICER_MCA'
+  | 'OFFICER_GST'
+  | 'OFFICER_MSME'
+  | 'OFFICER_PTAX';
 
 export type Language = 'en' | 'mr' | 'hi';
 

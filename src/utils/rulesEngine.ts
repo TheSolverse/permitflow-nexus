@@ -219,21 +219,31 @@ export function generateSmartChecklist(
     addAppr('appr-12'); // Default to FSSAI
   }
 
-  // Filter current applications TO THIS SPECIFIC PROJECT ONLY!
-  const projectApps = currentApplications.filter(app => app.projectId === project.id);
+  // Filter current applications TO THIS SPECIFIC PROJECT ONLY (or unassigned)!
+  const projectApps = currentApplications.filter(app => !app.projectId || app.projectId === project.id);
 
   // Map initial items
   let rawChecklist: SmartChecklistItem[] = selectedApprovals.map(appr => {
-    const appMatch = projectApps.find(app => 
+    const matches = projectApps.filter(app => 
       app.approvalId === appr.id ||
-      (appr.id === 'appr-8' && app.approvalId === 'mpcb-cte') ||
-      (appr.id === 'appr-5' && app.approvalId === 'midc-bldg') ||
-      (appr.id === 'appr-6' && app.approvalId === 'fire-noc') ||
-      (appr.id === 'appr-7' && app.approvalId === 'dish-factory') ||
-      (appr.id === 'appr-10' && app.approvalId === 'msedcl-power') ||
-      (appr.id === 'appr-12' && app.approvalId === 'fssai-licence') ||
-      (app.approvalName && appr.name && app.approvalName.toLowerCase().trim() === appr.name.toLowerCase().trim())
+      app.id === appr.id ||
+      (appr.id === 'appr-8' && (app.approvalId === 'mpcb-cte' || app.approvalId === 'appr-8')) ||
+      (appr.id === 'appr-5' && (app.approvalId === 'midc-bldg' || app.approvalId === 'appr-5')) ||
+      (appr.id === 'appr-6' && (app.approvalId === 'fire-noc' || app.approvalId === 'appr-6')) ||
+      (appr.id === 'appr-7' && (app.approvalId === 'dish-factory' || app.approvalId === 'appr-7')) ||
+      (appr.id === 'appr-10' && (app.approvalId === 'msedcl-power' || app.approvalId === 'appr-10')) ||
+      (appr.id === 'appr-12' && (app.approvalId === 'fssai-licence' || app.approvalId === 'appr-12')) ||
+      (app.approvalName && appr.name && (
+        app.approvalName.toLowerCase().trim() === appr.name.toLowerCase().trim() ||
+        app.approvalName.toLowerCase().includes(appr.name.toLowerCase().substring(0, 10)) ||
+        appr.name.toLowerCase().includes(app.approvalName.toLowerCase().substring(0, 10))
+      ))
     );
+
+    // Prioritize 'Approved' status if any matching record is approved
+    const approvedMatch = matches.find(m => m.status === 'Approved');
+    const appMatch = approvedMatch || matches[0];
+
     const status: ApprovalStatus = appMatch ? appMatch.status : 'Not Started';
     const applicationId = appMatch ? appMatch.id : undefined;
     const phaseNumber = getPhaseNumber(appr.id);
