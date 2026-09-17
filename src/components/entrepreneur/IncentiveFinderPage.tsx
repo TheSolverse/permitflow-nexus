@@ -582,7 +582,7 @@ export const IncentiveFinderPage: React.FC = () => {
                   type="url"
                   value={adminApplyUrlInput}
                   onChange={(e) => setAdminApplyUrlInput(e.target.value)}
-                  placeholder="https://maitri.mahaonline.gov.in/"
+                  placeholder="https://industry.maharashtra.gov.in/"
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-mono focus:ring-2 focus:ring-purple-500 outline-none"
                 />
                 <span className="text-[10px] text-slate-500">Used specifically for the "Apply Scheme" action.</span>

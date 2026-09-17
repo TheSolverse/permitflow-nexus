@@ -236,7 +236,7 @@ export const MAHARASHTRA_REGULATORY_KNOWLEDGE: RegulatoryKnowledgeItem[] = [
     processSteps: [
       'Step 1: Obtain Eligibility Certificate (EC) from District Industries Centre (DIC) or Joint Director of Industries.',
       'Step 2: Commence commercial production within prescribed period (3 years for Micro/Small, 4 years for Medium).',
-      'Step 3: Submit annual SGST refund claims through MAITRI Single Window Portal.',
+      'Step 3: Submit annual SGST refund claims through Single Window Portal.',
       'Step 4: Receive 50% to 80% FCI fiscal basket as direct bank account disbursement over 7-10 years.'
     ],
     timelineDays: 60,

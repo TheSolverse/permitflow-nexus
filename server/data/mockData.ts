@@ -1010,8 +1010,8 @@ export const INITIAL_INCENTIVE_SCHEMES: IncentiveScheme[] = [
     nextAction: 'File Eligibility Certificate Application under PSI 2019 within 180 days of commercial production.',
     requiredNextStep: 'File Eligibility Certificate Application under PSI 2019 within 180 days of commercial production.',
     tags: ['MSME Support Scheme', 'Capital Subsidy', 'Food Processing Special'],
-    officialUrl: 'https://maitri.mahaonline.gov.in/',
-    officialApplyUrl: 'https://maitri.mahaonline.gov.in/',
+    officialUrl: 'https://industry.maharashtra.gov.in/',
+    officialApplyUrl: 'https://industry.maharashtra.gov.in/',
     officialInfoUrl: 'https://di.maharashtra.gov.in'
   },
   {
@@ -1028,8 +1028,8 @@ export const INITIAL_INCENTIVE_SCHEMES: IncentiveScheme[] = [
     nextAction: 'Submit Form ED-Exemption along with MSEDCL Load Sanction copy.',
     requiredNextStep: 'Submit Form ED-Exemption along with MSEDCL Load Sanction copy.',
     tags: ['Electricity Duty Exemption', 'Operational Savings'],
-    officialUrl: 'https://maitri.mahaonline.gov.in/',
-    officialApplyUrl: 'https://maitri.mahaonline.gov.in/',
+    officialUrl: 'https://industry.maharashtra.gov.in/',
+    officialApplyUrl: 'https://industry.maharashtra.gov.in/',
     officialInfoUrl: 'https://ene.maharashtra.gov.in'
   },
   {

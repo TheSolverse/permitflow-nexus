@@ -132,14 +132,14 @@ describe('IncentiveFinderPage Component', () => {
 
     // Open first scheme (PSI)
     fireEvent.click(applyButtons[0]);
-    expect(screen.getAllByText('maitri.mahaonline.gov.in').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('industry.maharashtra.gov.in').length).toBeGreaterThan(0);
     
     // Cancel first modal
     fireEvent.click(screen.getByRole('button', { name: /^Cancel$/i }));
 
     // Open second scheme (Electricity Duty)
     fireEvent.click(applyButtons[1]);
-    expect(screen.getAllByText('maitri.mahaonline.gov.in').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('industry.maharashtra.gov.in').length).toBeGreaterThan(0);
 
     // Cancel second modal
     fireEvent.click(screen.getByRole('button', { name: /^Cancel$/i }));

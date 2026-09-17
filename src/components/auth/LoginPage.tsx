@@ -712,7 +712,7 @@ export const LoginPage: React.FC = () => {
                 <span className="w-6 h-6 rounded bg-purple-100 text-purple-800 dark:bg-purple-900 text-xs flex items-center justify-center font-bold text-[10px]">12</span>
                 <div>
                   <div className="font-bold text-[11px] text-purple-950 dark:text-purple-200">Platform Admin</div>
-                  <div className="text-[9px] text-purple-700 dark:text-purple-400">MAITRI Admin</div>
+                  <div className="text-[9px] text-purple-700 dark:text-purple-400">PermitFlow Admin</div>
                 </div>
               </button>
             </div>
