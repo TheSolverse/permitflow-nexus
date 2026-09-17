@@ -190,6 +190,11 @@ const APPROVED_STATUTORY_SIGNATURES = [
   'ELECTRICAL SINGLE LINE', 'SINGLE LINE DIAGRAM', 'SLD', 'MSEDCL', '23_electrical_single_line_diagram', 'electrical_single_line_diagram', 'single line diagram',
   'WATER ANALYSIS REPORT', 'LAB REPORT', 'WATER QUALITY', '24_water_analysis_lab_report', 'water_analysis_lab_report', 'water analysis',
   'FOOD SAFETY MANAGEMENT', 'FSMS PLAN', 'FSSAI PLAN', '25_food_safety_management_plan', 'food_safety_management_plan', 'food safety',
+  // Biofactory / Construction Clearances
+  'BUILDING PLAN SANCTION', 'SANCTION COPY', '26_building_plan_sanction_copy', 'building_plan_sanction_copy', 'building plan',
+  'FIRE FIGHTING SYSTEM', 'FIRE FIGHTING DRAWING', '27_fire_fighting_system_drawing', 'fire_fighting_system_drawing', 'fire fighting',
+  'SITE PLAN', 'LOCATION PLAN', '28_site_plan', 'site_plan',
+  'HAZARD MATERIAL SHEET', 'HAZARDOUS MATERIAL', 'MSDS', '29_hazard_material_sheet', 'hazard_material_sheet', 'hazard material',
   // Folders & Data Sources
   'datafile', 'sample_documents', 'mock_documents'
 ];
