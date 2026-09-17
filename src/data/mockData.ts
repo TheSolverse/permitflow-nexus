@@ -815,6 +815,66 @@ export const INITIAL_DOCUMENTS: DocumentItem[] = [
       issues: [],
       recommendations: ['MIDC industrial water supply demand breakdown verified by Public Health Engineering Dept.']
     }
+  },
+  {
+    id: 'doc-13',
+    projectId: 'proj-1',
+    docName: 'Food Safety Management Plan (FSMS Plan) & SOP',
+    category: 'Food Safety Management Plan',
+    fileUrl: '/datafile/25_Food_Safety_Management_Plan/food_safety_management_plan.jpg',
+    fileSize: '2.8 MB',
+    uploadDate: '2026-08-20',
+    status: 'Valid',
+    aiValidationResult: {
+      confidence: 98,
+      issues: [],
+      recommendations: ['HACCP flow diagram and critical control points verified compliant with FSSAI standards.']
+    }
+  },
+  {
+    id: 'doc-14',
+    projectId: 'proj-1',
+    docName: 'Potable Water Analysis Test Report (NABL Approved Lab)',
+    category: 'Water Analysis Test Report',
+    fileUrl: '/datafile/24_Water_Analysis_Lab_Report/water_analysis_test_report.jpg',
+    fileSize: '1.6 MB',
+    uploadDate: '2026-08-22',
+    status: 'Valid',
+    aiValidationResult: {
+      confidence: 97,
+      issues: [],
+      recommendations: ['Physical, chemical, and microbiological water purity levels meet IS 10500 drinking water parameters.']
+    }
+  },
+  {
+    id: 'doc-15',
+    projectId: 'proj-1',
+    docName: 'Master List of Food Categories & Processed Sub-Products',
+    category: 'List of Food Categories',
+    fileUrl: '/datafile/39_List_of_Food_Categories/list_of_food_categories.jpg',
+    fileSize: '1.4 MB',
+    uploadDate: '2026-08-23',
+    status: 'Valid',
+    aiValidationResult: {
+      confidence: 96,
+      issues: [],
+      recommendations: ['Food category codes aligned with FSSAI FoSCoS portal product categorization.']
+    }
+  },
+  {
+    id: 'doc-16',
+    projectId: 'proj-1',
+    docName: 'Food Processing Plant Machinery & Stainless Steel Equipment List',
+    category: 'Equipment List',
+    fileUrl: '/datafile/40_Equipment_List/equipment_list.jpg',
+    fileSize: '2.5 MB',
+    uploadDate: '2026-08-24',
+    status: 'Valid',
+    aiValidationResult: {
+      confidence: 99,
+      issues: [],
+      recommendations: ['SS 304 food-grade contact surface specifications verified for all processing machinery.']
+    }
   }
 ];
 

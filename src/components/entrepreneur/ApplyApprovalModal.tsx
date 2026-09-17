@@ -254,6 +254,10 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
       else if (lower.includes('transformer')) fileUrl = '/datafile/36_Transformer_Test_Certificate/transformer_test_certificate.jpg';
       else if (lower.includes('earthing')) fileUrl = '/datafile/37_Earthing_Pit_Resistance_Test/earthing_pit_resistance_test.jpg';
       else if (lower.includes('contractor') || lower.includes('electrical contractor')) fileUrl = '/datafile/38_Electrical_Contractor_License/electrical_contractor_license.jpg';
+      else if (lower.includes('food safety') || lower.includes('fsms')) fileUrl = '/datafile/25_Food_Safety_Management_Plan/food_safety_management_plan.jpg';
+      else if (lower.includes('water analysis') || lower.includes('water test')) fileUrl = '/datafile/24_Water_Analysis_Lab_Report/water_analysis_test_report.jpg';
+      else if (lower.includes('food categories') || lower.includes('list of food')) fileUrl = '/datafile/39_List_of_Food_Categories/list_of_food_categories.jpg';
+      else if (lower.includes('equipment list') || lower.includes('equipment schedule')) fileUrl = '/datafile/40_Equipment_List/equipment_list.jpg';
       else fileUrl = '/datafile/17_Architectural_Blueprints/17_architectural_blueprints.jpg';
     }
 
@@ -477,7 +481,10 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
                     (docName.toLowerCase().includes('land') && d.docName.toLowerCase().includes('land')) ||
                     (docName.toLowerCase().includes('gst') && d.docName.toLowerCase().includes('gst')) ||
                     (docName.toLowerCase().includes('pan') && d.docName.toLowerCase().includes('pan')) ||
-                    (docName.toLowerCase().includes('building') && d.docName.toLowerCase().includes('building'))
+                    (docName.toLowerCase().includes('building') && d.docName.toLowerCase().includes('building')) ||
+                    (docName.toLowerCase().includes('food') && (d.docName.toLowerCase().includes('food') || d.category.toLowerCase().includes('food'))) ||
+                    (docName.toLowerCase().includes('water') && (d.docName.toLowerCase().includes('water') || d.category.toLowerCase().includes('water'))) ||
+                    (docName.toLowerCase().includes('equipment') && (d.docName.toLowerCase().includes('equipment') || d.category.toLowerCase().includes('equipment')))
                   )
                 );
 

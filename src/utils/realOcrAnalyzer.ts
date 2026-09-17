@@ -205,6 +205,9 @@ const APPROVED_STATUTORY_SIGNATURES = [
   'TRANSFORMER TEST', 'TRANSFORMER CERTIFICATE', '36_transformer_test_certificate', 'transformer_test_certificate',
   'EARTHING PIT', 'RESISTANCE TEST', '37_earthing_pit_resistance_test', 'earthing_pit_resistance_test',
   'ELECTRICAL CONTRACTOR', 'CONTRACTOR LICENSE', '38_electrical_contractor_license', 'electrical_contractor_license',
+  // FSSAI / Food Processing Documents
+  'LIST OF FOOD CATEGORIES', 'FOOD CATEGORIES', '39_list_of_food_categories', 'list_of_food_categories',
+  'EQUIPMENT LIST', 'EQUIPMENT SCHEDULE', '40_equipment_list', 'equipment_list',
   // Folders & Data Sources
   'datafile', 'sample_documents', 'mock_documents'
 ];
