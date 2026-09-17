@@ -1568,19 +1568,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     inspectionDate?: string,
     delayReason?: string
   ) => {
-    let updatedTarget: ParallelPermissionItem | undefined;
-    let targetProjectId = activeProject?.id;
-    let targetApprovalName = '';
+    // 1. Synchronously find matching item first
+    const matchedPerm = parallelPermissions.find(p => p.id === permId || p.approvalId === permId || (p.approvalName && p.approvalName.toLowerCase().trim() === permId.toLowerCase().trim()));
+    const matchedApp = applications.find(a => a.id === permId || a.approvalId === permId || (a.approvalName && a.approvalName.toLowerCase().trim() === permId.toLowerCase().trim()));
 
-    // 1. Synchronize applications state
+    const targetProjectId = matchedPerm?.projectId || matchedApp?.projectId || activeProject?.id;
+    const targetApprovalName = matchedPerm?.approvalName || matchedApp?.approvalName || '';
+    const targetApprovalId = matchedPerm?.approvalId || matchedApp?.approvalId || permId;
+
+    let updatedTarget: ParallelPermissionItem | undefined = matchedPerm;
+
+    // 2. Synchronize applications state
     setApplications(prev => prev.map(app => {
       const isMatch = app.id === permId || 
         app.approvalId === permId || 
-        (app.approvalName && app.approvalName.toLowerCase() === permId.toLowerCase());
+        (targetApprovalId && app.approvalId === targetApprovalId) ||
+        (targetApprovalName && app.approvalName.toLowerCase().trim() === targetApprovalName.toLowerCase().trim() && (!targetProjectId || app.projectId === targetProjectId));
       
       if (isMatch) {
-        targetProjectId = app.projectId;
-        targetApprovalName = app.approvalName;
         return {
           ...app,
           status: newStatus,
@@ -1602,57 +1607,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return app;
     }));
 
-    // 2. Synchronize parallelPermissions state
+    // 3. Synchronize parallelPermissions state
     setParallelPermissions(prevPermissions => {
       const exists = prevPermissions.some(p => 
         p.id === permId || 
         p.approvalId === permId || 
-        (targetApprovalName && p.approvalName.toLowerCase() === targetApprovalName.toLowerCase() && (!targetProjectId || p.projectId === targetProjectId))
+        (targetApprovalId && p.approvalId === targetApprovalId) ||
+        (targetApprovalName && p.approvalName.toLowerCase().trim() === targetApprovalName.toLowerCase().trim() && (!targetProjectId || p.projectId === targetProjectId))
       );
 
-      if (!exists) {
-        const matchedApp = applications.find(a => 
-          a.id === permId || 
-          a.approvalId === permId || 
-          (targetApprovalName && a.approvalName.toLowerCase() === targetApprovalName.toLowerCase())
-        );
-        if (matchedApp) {
-          const newP: ParallelPermissionItem = {
-            id: permId,
-            projectId: matchedApp.projectId,
-            approvalId: matchedApp.approvalId,
-            approvalName: matchedApp.approvalName,
-            department: matchedApp.department,
-            category: 'Registration',
-            assignedOfficer: currentUser.name,
-            officerEmail: currentUser.email,
-            status: newStatus,
-            delayReason: delayReason,
-            pendingWith: newStatus === 'Approved' ? 'Completed' : (newStatus === 'Inspection Pending' ? 'Field Inspector & Entrepreneur' : 'Department Officer'),
-            pendingAction: newStatus === 'Approved' ? 'Permission Issued' : (newStatus === 'Inspection Pending' ? `Prepare site for audit on ${inspectionDate || 'scheduled date'}` : 'Officer Processing'),
-            dateReceived: matchedApp.submissionDate || new Date().toISOString().split('T')[0],
-            lastUpdatedDateTime: new Date().toLocaleString(),
-            pendingDocs: [],
-            queriesCount: 0,
-            slaDeadlineDate: matchedApp.slaDeadlineDate,
-            slaDaysRemaining: matchedApp.slaDaysRemaining || 15,
-            dependencies: [],
-            submittedDate: matchedApp.submissionDate,
-            lastUpdatedDate: new Date().toISOString().split('T')[0],
-            documentIds: matchedApp.documentIds,
-            inspectionDate: inspectionDate,
-            remarks: remarks || `Permission status set to ${newStatus}`
-          };
-          updatedTarget = newP;
-          return [newP, ...prevPermissions];
-        }
-        return prevPermissions;
+      if (!exists && matchedApp) {
+        const newP: ParallelPermissionItem = {
+          id: permId,
+          projectId: matchedApp.projectId,
+          approvalId: matchedApp.approvalId,
+          approvalName: matchedApp.approvalName,
+          department: matchedApp.department,
+          category: 'Registration',
+          assignedOfficer: currentUser.name,
+          officerEmail: currentUser.email,
+          status: newStatus,
+          delayReason: delayReason,
+          pendingWith: newStatus === 'Approved' ? 'Completed' : (newStatus === 'Inspection Pending' ? 'Field Inspector & Entrepreneur' : 'Department Officer'),
+          pendingAction: newStatus === 'Approved' ? 'Permission Issued' : (newStatus === 'Inspection Pending' ? `Prepare site for audit on ${inspectionDate || 'scheduled date'}` : 'Officer Processing'),
+          dateReceived: matchedApp.submissionDate || new Date().toISOString().split('T')[0],
+          lastUpdatedDateTime: new Date().toLocaleString(),
+          pendingDocs: [],
+          queriesCount: 0,
+          slaDeadlineDate: matchedApp.slaDeadlineDate,
+          slaDaysRemaining: matchedApp.slaDaysRemaining || 15,
+          dependencies: [],
+          submittedDate: matchedApp.submissionDate,
+          lastUpdatedDate: new Date().toISOString().split('T')[0],
+          documentIds: matchedApp.documentIds,
+          inspectionDate: inspectionDate,
+          remarks: remarks || `Permission status set to ${newStatus}`
+        };
+        updatedTarget = newP;
+        return [newP, ...prevPermissions];
       }
 
       const updatedList = prevPermissions.map(p => {
         const isMatch = p.id === permId || 
           p.approvalId === permId || 
-          (targetApprovalName && p.approvalName.toLowerCase() === targetApprovalName.toLowerCase() && (!targetProjectId || p.projectId === targetProjectId));
+          (targetApprovalId && p.approvalId === targetApprovalId) ||
+          (targetApprovalName && p.approvalName.toLowerCase().trim() === targetApprovalName.toLowerCase().trim() && (!targetProjectId || p.projectId === targetProjectId));
         
         if (isMatch) {
           const updated: ParallelPermissionItem = {
@@ -1672,15 +1671,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return p;
       });
 
-      if (newStatus === 'Approved' && updatedTarget) {
+      if (newStatus === 'Approved') {
         const approvedApprovalIds = new Set(
           updatedList
-            .filter(p => p.projectId === updatedTarget!.projectId && p.status === 'Approved')
+            .filter(p => p.projectId === targetProjectId && p.status === 'Approved')
             .map(p => p.approvalId)
         );
 
         return updatedList.map(p => {
-          if (p.projectId === updatedTarget!.projectId && p.status === 'Blocked by Dependency' && p.dependencies.length > 0) {
+          if (p.projectId === targetProjectId && p.status === 'Blocked by Dependency' && p.dependencies.length > 0) {
             const allSatisfied = p.dependencies.every(depId => approvedApprovalIds.has(depId));
             if (allSatisfied) {
               return {
@@ -1688,17 +1687,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 status: 'Submitted' as ApprovalStatus,
                 blockedBy: [],
                 remarks: `Auto-unblocked: Prerequisites (${p.dependencies.join(', ')}) have been granted approval.`
-              };
-            } else {
-              const remainingBlocked = p.dependencies
-                .filter(depId => !approvedApprovalIds.has(depId))
-                .map(depId => {
-                  const depItem = updatedList.find(i => i.projectId === updatedTarget!.projectId && i.approvalId === depId);
-                  return depItem ? depItem.approvalName : depId;
-                });
-              return {
-                ...p,
-                blockedBy: remainingBlocked
               };
             }
           }
@@ -1749,7 +1737,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const raiseParallelPermissionQuery = (permId: string, queryCategory: string, queryText: string, dueDate: string) => {
     setParallelPermissions(prev => prev.map(p => {
-      if (p.id === permId) {
+      if (p.id === permId || p.approvalId === permId) {
         const newQuery = {
           id: `q-perm-${Date.now()}`,
           queryCategory,
@@ -1787,7 +1775,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const respondToParallelPermissionQuery = (permId: string, queryId: string, responseText: string) => {
     setParallelPermissions(prev => prev.map(p => {
-      if (p.id === permId) {
+      if (p.id === permId || p.approvalId === permId) {
         const remainingQueries = (p.openQueries || []).filter(q => q.id !== queryId);
         const newStatus = remainingQueries.length === 0 ? 'Under Review' as ApprovalStatus : 'More Information Needed' as ApprovalStatus;
         const nowStr = new Date().toLocaleString();
@@ -1818,52 +1806,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const officerApprovePermission = (permId: string, remarks?: string) => {
     updateParallelPermissionStatus(permId, 'Approved', remarks);
-    setParallelPermissions(prev => prev.map(p => {
-      if (p.id === permId) {
-        const nowStr = new Date().toLocaleString();
-        const newAct = {
-          id: `act-${Date.now()}`,
-          timestamp: nowStr,
-          actor: currentUser.name,
-          department: currentUser.department || 'Department Officer',
-          action: 'Approved Permission',
-          notes: remarks || 'Approval Granted'
-        };
-        return {
-          ...p,
-          pendingWith: 'Completed',
-          pendingAction: 'Permission Issued',
-          lastUpdatedDateTime: nowStr,
-          activityHistory: [newAct, ...(p.activityHistory || [])]
-        };
-      }
-      return p;
-    }));
   };
 
   const officerRejectPermission = (permId: string, remarks?: string) => {
     updateParallelPermissionStatus(permId, 'Rejected', remarks);
-    setParallelPermissions(prev => prev.map(p => {
-      if (p.id === permId) {
-        const nowStr = new Date().toLocaleString();
-        const newAct = {
-          id: `act-${Date.now()}`,
-          timestamp: nowStr,
-          actor: currentUser.name,
-          department: currentUser.department || 'Department Officer',
-          action: 'Rejected Application',
-          notes: remarks || 'Application Rejected'
-        };
-        return {
-          ...p,
-          pendingWith: 'Closed',
-          pendingAction: 'Re-application Required',
-          lastUpdatedDateTime: nowStr,
-          activityHistory: [newAct, ...(p.activityHistory || [])]
-        };
-      }
-      return p;
-    }));
   };
 
   const officerRequestDocument = (permId: string, documentName: string, instructions?: string) => {
