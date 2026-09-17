@@ -456,9 +456,20 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
               {requiredDocs.map((docName, idx) => {
                 const attached = uploadedFiles[docName];
                 const matchingExistingDocs = documents.filter(d => 
-                  d.projectId === activeProject?.id &&
-                  (d.docName.toLowerCase().includes(docName.toLowerCase()) || 
-                   d.category.toLowerCase().includes(docName.toLowerCase()))
+                  (d.projectId === activeProject?.id || d.userId === currentUser?.id || !d.projectId) &&
+                  (
+                    d.docName.toLowerCase().includes(docName.toLowerCase()) || 
+                    d.category.toLowerCase().includes(docName.toLowerCase()) ||
+                    docName.toLowerCase().includes(d.docName.toLowerCase()) ||
+                    (docName.toLowerCase().includes('fire') && d.docName.toLowerCase().includes('fire')) ||
+                    (docName.toLowerCase().includes('stability') && d.docName.toLowerCase().includes('stability')) ||
+                    (docName.toLowerCase().includes('machinery') && d.docName.toLowerCase().includes('machinery')) ||
+                    (docName.toLowerCase().includes('plan') && (d.docName.toLowerCase().includes('plan') || d.category.toLowerCase().includes('plan'))) ||
+                    (docName.toLowerCase().includes('land') && d.docName.toLowerCase().includes('land')) ||
+                    (docName.toLowerCase().includes('gst') && d.docName.toLowerCase().includes('gst')) ||
+                    (docName.toLowerCase().includes('pan') && d.docName.toLowerCase().includes('pan')) ||
+                    (docName.toLowerCase().includes('building') && d.docName.toLowerCase().includes('building'))
+                  )
                 );
 
                 return (
@@ -514,18 +525,20 @@ export const ApplyApprovalModal: React.FC<ApplyApprovalModalProps> = ({
                           />
                         </label>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectingVaultForDoc(docName);
-                            setVaultSearchQuery('');
-                          }}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-[#2E6F40] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                          title="Select certificate or document directly from your Document Vault"
-                        >
-                          <FolderCheck className="w-3.5 h-3.5 text-[#2E6F40] dark:text-emerald-400" />
-                          <span>{attached ? 'Replace from Vault' : '+ From Vault'}</span>
-                        </button>
+                        {matchingExistingDocs.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectingVaultForDoc(docName);
+                              setVaultSearchQuery('');
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-[#2E6F40] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                            title="Select certificate or document directly from your Document Vault"
+                          >
+                            <FolderCheck className="w-3.5 h-3.5 text-[#2E6F40] dark:text-emerald-400" />
+                            <span>{attached ? 'Replace from Vault' : '+ From Vault'}</span>
+                          </button>
+                        )}
 
                         {attached && (
                           <button

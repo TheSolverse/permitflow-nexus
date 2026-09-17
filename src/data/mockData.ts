@@ -732,20 +732,31 @@ export const INITIAL_DOCUMENTS: DocumentItem[] = [
     id: 'doc-7',
     projectId: 'proj-1',
     docName: 'Structural Stability Certificate by Chartered Engineer',
-    category: 'Building Plan',
-    fileUrl: '/mock_documents/stability_cert.pdf',
-    fileSize: '1.1 MB',
-    uploadDate: '2026-07-18',
-    status: 'Expired',
+    category: 'Structural Stability Certificate',
+    fileUrl: '/datafile/18_Structural_Stability_Certificate/stability_certificate.jpg',
+    fileSize: '1.8 MB',
+    uploadDate: '2026-08-10',
+    status: 'Valid',
     aiValidationResult: {
-      confidence: 50,
-      issues: [
-        'Certificate date is 2023-04-10 with 3-year audit validity. Current status: Expired 4 months ago.'
-      ],
-      recommendations: [
-        'Obtain a fresh Structural Audit & Stability Certificate from an empanelled structural engineer.'
-      ],
-      extractedExpiry: '2026-04-10'
+      confidence: 98,
+      issues: [],
+      recommendations: ['Certified by Empanelled Chartered Structural Engineer. Load capacity verified sound.'],
+      extractedExpiry: '2029-08-10'
+    }
+  },
+  {
+    id: 'doc-9',
+    projectId: 'proj-1',
+    docName: 'Industrial Machinery Layout Plan & Equipment Schedule',
+    category: 'Machinery Layout Plan',
+    fileUrl: '/datafile/22_Machinery_Layout_Plan/machinery_layout_plan.jpg',
+    fileSize: '2.4 MB',
+    uploadDate: '2026-08-12',
+    status: 'Valid',
+    aiValidationResult: {
+      confidence: 96,
+      issues: [],
+      recommendations: ['Factory machinery safety distances and gangway clearances compliant with DISH Form 1 requirements.']
     }
   },
   {
