@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { ApprovalStatus, ParallelPermissionItem, Application } from '../../types';
 import { ApplicationReviewModal } from './ApplicationReviewModal';
+import { getPhaseNumber } from '../../utils/rulesEngine';
 
 export const DepartmentOfficerDesk: React.FC = () => {
   const { 
@@ -78,9 +79,15 @@ export const DepartmentOfficerDesk: React.FC = () => {
     return false;
   });
 
-  // Deduplicate permissions by unique combination of (projectId + approvalId)
+  // Deduplicate and filter permissions to ONLY those submitted by real entrepreneurs for existing projects
+  const realSubmittedPermissions = scopedPermissions.filter(item => {
+    const targetProj = projects.find(p => p.id === item.projectId);
+    if (!targetProj) return false;
+    return item.status !== 'Not Started';
+  });
+
   const uniqueScopedPermissions = Array.from(
-    new Map(scopedPermissions.map(item => [`${item.projectId}_${item.approvalId}`, item])).values()
+    new Map(realSubmittedPermissions.map(item => [`${item.projectId}_${item.approvalId}`, item])).values()
   );
 
   const filteredPermissions = uniqueScopedPermissions.filter(item => {
@@ -270,6 +277,9 @@ export const DepartmentOfficerDesk: React.FC = () => {
                     <div className="space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-extrabold text-sm text-[#253D2C] dark:text-white">{item.approvalName}</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-[#2E6F40] text-white">
+                          Phase {getPhaseNumber(item.approvalId)}
+                        </span>
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
                           {item.status}
                         </span>

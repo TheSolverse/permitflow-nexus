@@ -515,28 +515,55 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       documentIds: documentIds && documentIds.length > 0 ? documentIds : documents.filter(d => d.projectId === activeProject.id).map(d => d.id)
     };
 
-    setApplications(prev => [newApp, ...prev.filter(a => a.id !== newApp.id)]);
+    setApplications(prev => [newApp, ...prev.filter(a => !(a.projectId === activeProject.id && a.approvalId === approvalId))]);
 
-    // Also sync parallelPermissions so department officers see the uploaded documents
+    // Also sync parallelPermissions so department officers see the uploaded documents & real application
     const attachedDocNames = documents.filter(d => d.projectId === activeProject.id && newApp.documentIds.includes(d.id)).map(d => d.docName);
+    
     setParallelPermissions(prev => {
-      const exists = prev.some(p => p.projectId === activeProject.id && (p.approvalId === approvalId || p.approvalName.toLowerCase().includes(approvalName.toLowerCase())));
-      if (exists) {
-        return prev.map(p => {
-          if (p.projectId === activeProject.id && (p.approvalId === approvalId || p.approvalName.toLowerCase().includes(approvalName.toLowerCase()))) {
-            return {
-              ...p,
-              status: 'Submitted' as ApprovalStatus,
-              documentIds: newApp.documentIds,
-              pendingDocs: attachedDocNames.length > 0 ? attachedDocNames : p.pendingDocs,
-              lastUpdatedDate: new Date().toISOString().split('T')[0],
-              lastUpdatedDateTime: new Date().toLocaleString()
-            };
+      const existingIdx = prev.findIndex(p => p.projectId === activeProject.id && (p.approvalId === approvalId || p.approvalName.toLowerCase().trim() === approvalName.toLowerCase().trim()));
+      
+      const updatedItem: ParallelPermissionItem = {
+        id: existingIdx >= 0 ? prev[existingIdx].id : `perm-${Date.now()}`,
+        projectId: activeProject.id,
+        approvalId: approvalId,
+        approvalName: approvalName,
+        department: department,
+        category: 'Clearance',
+        assignedOfficer: existingIdx >= 0 ? prev[existingIdx].assignedOfficer : 'Department Officer',
+        officerEmail: existingIdx >= 0 ? prev[existingIdx].officerEmail : 'officer@maharashtra.gov.in',
+        status: 'Submitted' as ApprovalStatus,
+        pendingWith: department.split(' ')[0] + ' Officer',
+        pendingAction: 'Desk scrutiny & document review',
+        dateReceived: new Date().toISOString().split('T')[0],
+        lastUpdatedDateTime: new Date().toLocaleString(),
+        pendingDocs: attachedDocNames.length > 0 ? attachedDocNames : [],
+        queriesCount: 0,
+        slaDeadlineDate: new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0],
+        slaDaysRemaining: 15,
+        dependencies: [],
+        submittedDate: new Date().toISOString().split('T')[0],
+        lastUpdatedDate: new Date().toISOString().split('T')[0],
+        remarks: remarks || `Application submitted by ${currentUser.name} for project ${activeProject.businessName}`,
+        documentIds: newApp.documentIds,
+        activityHistory: [
+          {
+            id: `act-${Date.now()}`,
+            timestamp: new Date().toLocaleString(),
+            actor: currentUser.name,
+            department: 'Entrepreneur',
+            action: 'Application Submitted',
+            notes: `Application for ${approvalName} submitted to ${department}.`
           }
-          return p;
-        });
+        ]
+      };
+
+      if (existingIdx >= 0) {
+        const next = [...prev];
+        next[existingIdx] = updatedItem;
+        return next;
       }
-      return prev;
+      return [updatedItem, ...prev];
     });
 
     // Persist to Supabase Database
