@@ -131,6 +131,24 @@ export const DepartmentOfficerDesk: React.FC = () => {
 
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
 
+  // Helper for canonical key mapping
+  const getCanonicalKey = (item: ParallelPermissionItem) => {
+    const pId = item.projectId || '';
+    const name = (item.approvalName || '').toLowerCase().trim();
+    const id = (item.approvalId || '').toLowerCase().trim();
+
+    let core = id || name;
+    if (name.includes('fire') || id.includes('fire')) core = 'fire-noc';
+    else if (name.includes('mpcb') || name.includes('pollution') || id.includes('mpcb') || id.includes('cte')) core = 'mpcb-cte';
+    else if (name.includes('dish') || name.includes('factory') || id.includes('dish') || id.includes('factory')) core = 'dish-licence';
+    else if (name.includes('midc') || name.includes('building') || id.includes('midc')) core = 'midc-building';
+    else if (name.includes('msedcl') || name.includes('electricity') || id.includes('msedcl')) core = 'msedcl-power';
+    else if (name.includes('fssai') || name.includes('food') || id.includes('fssai')) core = 'fssai-licence';
+    else if (name.includes('company incorporation') || name.includes('spice+') || id.includes('mca') || id.includes('appr-1')) core = 'mca-incorporation';
+
+    return `${pId}_${core}`;
+  };
+
   // Deduplicate and filter permissions to ONLY those for existing projects
   const realSubmittedPermissions = [...scopedPermissions, ...appDerivedPermissions].filter(item => {
     const targetProj = projects.find(p => p.id === item.projectId);
@@ -138,9 +156,36 @@ export const DepartmentOfficerDesk: React.FC = () => {
     return item.status !== 'Not Started';
   });
 
-  const uniqueScopedPermissions = Array.from(
-    new Map(realSubmittedPermissions.map(item => [`${item.projectId}_${(item.approvalId || item.approvalName).toLowerCase().trim()}`, item])).values()
-  );
+  const permMap = new Map<string, ParallelPermissionItem>();
+  const statusScore: Record<string, number> = {
+    'Approved': 100,
+    'Rejected': 90,
+    'More Information Needed': 80,
+    'Inspection Pending': 70,
+    'Query Raised': 60,
+    'Under Review': 50,
+    'Submitted': 40,
+    'Ready to Apply': 30,
+    'Documents Needed': 20,
+    'Blocked by Dependency': 10,
+    'Not Started': 0
+  };
+
+  for (const item of realSubmittedPermissions) {
+    const key = getCanonicalKey(item);
+    const existing = permMap.get(key);
+    if (!existing) {
+      permMap.set(key, item);
+    } else {
+      const existingScore = statusScore[existing.status] || 0;
+      const currentScore = statusScore[item.status] || 0;
+      if (currentScore > existingScore) {
+        permMap.set(key, item);
+      }
+    }
+  }
+
+  const uniqueScopedPermissions = Array.from(permMap.values());
 
   const filteredPermissions = uniqueScopedPermissions.filter(item => {
     const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
