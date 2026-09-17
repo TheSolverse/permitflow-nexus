@@ -286,9 +286,41 @@ export const SimplePermissionCardView: React.FC = () => {
       {/* Permission Cards Grid */}
       <div className="space-y-4">
         {filteredList.length === 0 ? (
-          <div className="bg-white dark:bg-[#16261C] rounded-2xl p-8 text-center text-gray-500 border border-[#D4EEDC] dark:border-[#253D2C]">
-            No permission applications match the selected filter tab.
-          </div>
+          currentProjectPermissions.length === 0 ? (
+            <div className="bg-white dark:bg-[#16261C] rounded-2xl p-8 sm:p-10 text-center border border-[#D4EEDC] dark:border-[#253D2C] shadow-xs space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-[#F4FAF6] dark:bg-[#1A2E22] border border-[#D4EEDC] dark:border-[#253D2C] flex items-center justify-center mx-auto text-[#2E6F40] dark:text-[#68BA7F]">
+                <FileText className="w-7 h-7" />
+              </div>
+              <div className="space-y-1.5 max-w-md mx-auto">
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                  No Active Applications for {activeProject.businessName}
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  You haven't submitted any clearance applications for this project profile yet. You can auto-route all applications instantly or apply step-by-step from your Smart Checklist.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <button
+                  onClick={() => triggerParallelAutoRouting(activeProject.id)}
+                  className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition-all shadow-sm inline-flex items-center gap-2 cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Auto-Route All Clearances Now</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('smart-checklist')}
+                  className="px-4 py-2.5 rounded-xl bg-[#2E6F40] hover:bg-[#235833] text-white font-extrabold text-xs transition-all shadow-sm inline-flex items-center gap-2 cursor-pointer"
+                >
+                  <FileText className="w-4 h-4 text-[#CFFFDC]" />
+                  <span>Open Smart Clearance Checklist</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-[#16261C] rounded-2xl p-8 text-center text-gray-500 border border-[#D4EEDC] dark:border-[#253D2C]">
+              No permission applications match the selected filter tab.
+            </div>
+          )
         ) : (
           filteredList.map((item) => {
             const colorMeta = getColorIndicator(item.status);
