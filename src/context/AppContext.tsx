@@ -660,8 +660,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setDocuments(prev => [newDoc, ...prev.filter(d => d.id !== newDoc.id)]);
 
-    // Persist document to Supabase / Backend Express Database
-    uploadDocumentApi(newDoc).catch(err => console.warn('Could not save document to backend:', err));
+    // Persist document to Backend Express Server & Local Disk Storage
+    uploadDocumentApi(newDoc).then(saved => {
+      if (saved && saved.fileUrl) {
+        setDocuments(prev => prev.map(d => d.id === newDoc.id ? { ...d, fileUrl: saved.fileUrl } : d));
+      }
+    }).catch(err => console.warn('Could not save document to backend:', err));
 
     return newDoc;
   };

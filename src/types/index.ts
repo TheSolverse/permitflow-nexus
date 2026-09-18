@@ -236,6 +236,7 @@ export interface StructuredOcrAnalysis {
 export interface DocumentItem {
   id: string;
   projectId: string;
+  userId?: string;
   docName: string;
   category: string;
   fileUrl?: string;
@@ -284,6 +285,7 @@ export interface Application {
   id: string;
   appId: string; // e.g. PFN-2026-MPCB-091
   projectId: string;
+  userId?: string;
   businessName: string;
   approvalId: string;
   approvalName: string;

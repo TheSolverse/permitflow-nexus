@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { pool, isDbConnected } from './pool';
 import { supabase } from './supabase';
 import { 
@@ -28,11 +30,42 @@ import {
   JointInspection 
 } from '../types';
 
+const LOCAL_DOCS_JSON_PATH = path.resolve(process.cwd(), 'public/uploads/user_documents.json');
+
+function loadDiskDocuments(): DocumentItem[] {
+  try {
+    if (fs.existsSync(LOCAL_DOCS_JSON_PATH)) {
+      const raw = fs.readFileSync(LOCAL_DOCS_JSON_PATH, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.error('[queries] Failed to load disk documents:', err);
+  }
+  return [];
+}
+
+export function saveDiskDocuments(docs: DocumentItem[]) {
+  try {
+    const dir = path.dirname(LOCAL_DOCS_JSON_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(LOCAL_DOCS_JSON_PATH, JSON.stringify(docs, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[queries] Failed to save disk documents:', err);
+  }
+}
+
+const diskDocs = loadDiskDocuments();
+
 // In-memory cache / fallback store
 let memoryUsers = [...INITIAL_USERS];
 let memoryProjects = [...INITIAL_PROJECTS];
 let memoryApplications = [...INITIAL_APPLICATIONS];
-let memoryDocuments = [...INITIAL_DOCUMENTS];
+let memoryDocuments = diskDocs.length > 0 ? diskDocs : [...INITIAL_DOCUMENTS];
 let memoryInspections = [...INITIAL_INSPECTIONS];
 let memoryCompliance = [...INITIAL_COMPLIANCE_TASKS];
 let memoryIncentives = [...INITIAL_INCENTIVE_SCHEMES];
@@ -579,6 +612,7 @@ export async function createDocument(docData: Partial<DocumentItem>): Promise<Do
   } else {
     memoryDocuments.unshift(newDoc);
   }
+  saveDiskDocuments(memoryDocuments);
 
   return newDoc;
 }
@@ -597,6 +631,7 @@ export async function deleteDocument(docId: string): Promise<{ success: boolean 
     console.error('Error deleting document from Supabase:', e);
   }
   memoryDocuments = memoryDocuments.filter(d => d.id !== docId);
+  saveDiskDocuments(memoryDocuments);
   return { success: true };
 }
 

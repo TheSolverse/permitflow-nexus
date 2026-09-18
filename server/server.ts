@@ -383,6 +383,9 @@ app.post('/api/queries/:queryId/respond', async (req, res) => {
   }
 });
 
+// Serve uploads directory statically for stored documents & certificates
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'public/uploads')));
+
 // ================= DOCUMENTS =================
 app.get('/api/documents', async (req, res) => {
   try {
@@ -396,7 +399,30 @@ app.get('/api/documents', async (req, res) => {
 
 app.post('/api/documents', async (req, res) => {
   try {
-    const { id, projectId, docName, category, fileUrl, fileSize, status, aiValidationResult } = req.body;
+    let { id, projectId, docName, category, fileUrl, fileSize, status, aiValidationResult } = req.body;
+    
+    // If fileUrl is a Base64 string, write it to public/uploads disk folder for git persistence
+    if (fileUrl && fileUrl.startsWith('data:')) {
+      try {
+        const matches = fileUrl.match(/^data:(.+);base64,(.+)$/);
+        if (matches) {
+          const mimeType = matches[1];
+          const ext = mimeType.includes('pdf') ? 'pdf' : mimeType.includes('png') ? 'png' : mimeType.includes('jpeg') || mimeType.includes('jpg') ? 'jpg' : 'bin';
+          const cleanDocName = (docName || 'document').replace(/[^a-zA-Z0-9_-]/g, '_');
+          const fileName = `${Date.now()}_${cleanDocName}.${ext}`;
+          const uploadsDir = path.resolve(process.cwd(), 'public/uploads');
+          if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+          }
+          const filePath = path.join(uploadsDir, fileName);
+          fs.writeFileSync(filePath, Buffer.from(matches[2], 'base64'));
+          fileUrl = `/uploads/${fileName}`;
+        }
+      } catch (writeErr) {
+        console.error('Failed to write Base64 file to disk:', writeErr);
+      }
+    }
+
     const newDoc = await createDocument({
       id,
       projectId,
