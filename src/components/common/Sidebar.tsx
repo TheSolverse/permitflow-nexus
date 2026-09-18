@@ -62,7 +62,7 @@ export const Sidebar: React.FC = () => {
     currentUser.role === 'ADMIN' ? adminNav : officerNav;
 
   return (
-    <aside className="w-64 bg-white dark:bg-[#16261C] text-[#253D2C] dark:text-[#E8F7ED] min-h-[calc(100vh-4rem)] flex flex-col border-r border-[#D4EEDC] dark:border-[#253D2C] shrink-0 shadow-xs rounded-2xl overflow-hidden my-1 transition-colors duration-200">
+    <aside className="hidden md:flex w-64 bg-white dark:bg-[#16261C] text-[#253D2C] dark:text-[#E8F7ED] min-h-[calc(100vh-4rem)] flex-col border-r border-[#D4EEDC] dark:border-[#253D2C] shrink-0 shadow-xs rounded-2xl overflow-hidden my-1 transition-colors duration-200">
       
       {/* Active Workspace Header - Plain Clean Box */}
       <div className="p-4 border-b border-[#D4EEDC] dark:border-[#253D2C] bg-white dark:bg-[#16261C]">

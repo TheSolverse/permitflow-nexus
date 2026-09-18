@@ -12,7 +12,25 @@ import {
   LogOut, 
   Lock,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Menu,
+  X,
+  LayoutDashboard,
+  PlusCircle,
+  CheckSquare,
+  FileText,
+  Search,
+  Calendar,
+  CalendarClock,
+  Gift,
+  ShieldAlert,
+  HelpCircle,
+  ClipboardCheck,
+  MessageSquareText,
+  Sliders,
+  Bell,
+  Activity,
+  BarChart3
 } from 'lucide-react';
 import { t } from '../../utils/translations';
 import { INITIAL_USERS } from '../../data/mockData';
@@ -27,6 +45,7 @@ export const Navbar: React.FC = () => {
     activeProjectId, 
     setActiveProjectId, 
     activeProject,
+    activeTab,
     setActiveTab,
     deleteAccount,
     signOutUser
@@ -34,6 +53,7 @@ export const Navbar: React.FC = () => {
 
   const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -328,10 +348,171 @@ export const Navbar: React.FC = () => {
               )}
             </div>
 
+            {/* Mobile Navigation Hamburger Toggle Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-xl text-[#253D2C] dark:text-[#E8F7ED] hover:bg-[#F0FAF3] dark:hover:bg-[#1E3326] border border-[#D4EEDC] dark:border-[#2A4736] transition-colors cursor-pointer"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5 text-rose-600 dark:text-rose-400" /> : <Menu className="w-5 h-5 text-[#2E6F40] dark:text-[#68BA7F]" />}
+            </button>
+
           </div>
 
         </div>
       </div>
+
+      {/* Mobile Navigation Sheet / Drawer */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-[#D4EEDC] dark:border-[#253D2C] bg-white dark:bg-[#16261C] px-4 py-4 space-y-4 animate-in slide-in-from-top duration-200 shadow-lg">
+          
+          {/* Active Business Switcher for Entrepreneurs (Mobile) */}
+          {currentUser.role === 'ENTREPRENEUR' && activeProject && (
+            <div className="p-3 bg-[#F0FAF3] dark:bg-[#1E3326] rounded-xl border border-[#D4EEDC] dark:border-[#2A4736] space-y-2">
+              <div className="text-[10px] text-[#60826A] dark:text-[#A3D4B3] font-bold uppercase tracking-wider flex items-center justify-between">
+                <span>Active Business Unit:</span>
+                <span className="text-[#2E6F40] dark:text-[#68BA7F]">{activeProject.sector}</span>
+              </div>
+              <select
+                value={activeProjectId}
+                onChange={(e) => {
+                  setActiveProjectId(e.target.value);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full text-xs font-extrabold bg-white dark:bg-[#16261C] text-[#253D2C] dark:text-white border border-[#D4EEDC] dark:border-[#2A4736] rounded-lg px-3 py-2 cursor-pointer"
+              >
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.businessName} ({p.district})</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Role Switcher Pills (Mobile) */}
+          <div className="flex items-center gap-1.5 bg-[#F0FAF3] dark:bg-[#1E3326] p-1.5 rounded-xl border border-[#D4EEDC] dark:border-[#2A4736] text-xs">
+            <button
+              onClick={() => { switchRole('ENTREPRENEUR'); setMobileMenuOpen(false); }}
+              className={`flex-1 py-1.5 rounded-lg font-extrabold text-center transition-all ${currentUser.role === 'ENTREPRENEUR' ? 'bg-[#2E6F40] text-white shadow-xs' : 'text-[#4A6B53] dark:text-[#A3D4B3]'}`}
+            >
+              Entrepreneur
+            </button>
+            <button
+              onClick={() => { switchRole('OFFICER'); setMobileMenuOpen(false); }}
+              className={`flex-1 py-1.5 rounded-lg font-extrabold text-center transition-all ${currentUser.role.startsWith('OFFICER') || currentUser.role === 'OFFICER' ? 'bg-[#2E6F40] text-white shadow-xs' : 'text-[#4A6B53] dark:text-[#A3D4B3]'}`}
+            >
+              Officer Desks
+            </button>
+            <button
+              onClick={() => { switchRole('ADMIN'); setMobileMenuOpen(false); }}
+              className={`flex-1 py-1.5 rounded-lg font-extrabold text-center transition-all ${currentUser.role === 'ADMIN' ? 'bg-[#2E6F40] text-white shadow-xs' : 'text-[#4A6B53] dark:text-[#A3D4B3]'}`}
+            >
+              Admin
+            </button>
+          </div>
+
+          {/* Full Role Navigation Items (Mobile) */}
+          <div className="space-y-1 pt-1 max-h-[60vh] overflow-y-auto">
+            <div className="text-[10px] font-extrabold text-[#60826A] dark:text-[#68BA7F] uppercase tracking-wider px-2 pb-1">
+              Navigation Menu
+            </div>
+            
+            {currentUser.role === 'ENTREPRENEUR' && (
+              <>
+                {[
+                  { id: 'dashboard', label: 'Overview & Analytics', icon: LayoutDashboard },
+                  { id: 'new-project', label: 'Create New Project', icon: PlusCircle },
+                  { id: 'checklist', label: 'Smart Clearance Rules', icon: CheckSquare },
+                  { id: 'documents', label: 'Uploaded Document Vault', icon: FileText },
+                  { id: 'applications', label: 'Application Tracker', icon: Search },
+                  { id: 'inspections', label: 'Joint Inspection Planner', icon: Calendar },
+                  { id: 'compliance', label: 'Statutory Compliance', icon: CalendarClock },
+                  { id: 'incentives', label: 'Subsidy & Incentive Finder', icon: Gift },
+                  { id: 'risk-score', label: 'AI Risk Matrix Engine', icon: ShieldAlert },
+                  { id: 'ai-assistant', label: 'Approval Helpdesk & AI', icon: HelpCircle },
+                ].map(item => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                        isActive ? 'bg-[#2E6F40] text-white' : 'text-[#253D2C] dark:text-[#E8F7ED] hover:bg-[#F0FAF3] dark:hover:bg-[#1E3326]'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </>
+            )}
+
+            {(currentUser.role.startsWith('OFFICER') || currentUser.role === 'OFFICER') && (
+              <>
+                {[
+                  { id: 'officer-dashboard', label: 'Department Scrutiny Desk', icon: LayoutDashboard },
+                  { id: 'officer-nocs', label: 'NOC & Joint Inspections', icon: ShieldCheck },
+                  { id: 'officer-app-review', label: 'Application Desk Review', icon: ClipboardCheck },
+                  { id: 'officer-queries', label: 'Query & Clarification Desk', icon: MessageSquareText },
+                  { id: 'officer-inspections', label: 'Site Inspection Schedule', icon: Calendar },
+                  { id: 'officer-analytics', label: 'SLA Performance Analytics', icon: BarChart3 },
+                ].map(item => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                        isActive ? 'bg-[#2E6F40] text-white' : 'text-[#253D2C] dark:text-[#E8F7ED] hover:bg-[#F0FAF3] dark:hover:bg-[#1E3326]'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </>
+            )}
+
+            {currentUser.role === 'ADMIN' && (
+              <>
+                {[
+                  { id: 'admin-dashboard', label: 'Assignment Console', icon: LayoutDashboard },
+                  { id: 'admin-rules', label: 'Rules Engine Manager', icon: Sliders },
+                  { id: 'admin-notifications', label: 'System Notifications', icon: Bell },
+                  { id: 'admin-audit', label: 'System Audit Logs', icon: Activity },
+                ].map(item => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                        isActive ? 'bg-[#2E6F40] text-white' : 'text-[#253D2C] dark:text-[#E8F7ED] hover:bg-[#F0FAF3] dark:hover:bg-[#1E3326]'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
 
       {/* Account Deletion Confirmation Modal */}
