@@ -3,6 +3,9 @@
 > **One platform for approvals, compliance, and growth.**  
 > An intelligent approval and compliance management platform for entrepreneurs and industrial units in Maharashtra.
 
+🌐 **Live Deployment**: [https://permitflow-nexus-solverse-one.vercel.app/](https://permitflow-nexus-solverse-one.vercel.app/)  
+📁 **GitHub Organization Repository**: [https://github.com/TheSolverse/permitflow-nexus](https://github.com/TheSolverse/permitflow-nexus)
+
 ---
 
 ## 📌 Project Purpose
