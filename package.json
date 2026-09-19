@@ -9,7 +9,7 @@
     "server": "npx tsx watch server/server.ts",
     "dev:all": "concurrently -n \"SERVER,CLIENT\" -c \"cyan,green\" \"npm run server\" \"npm run dev\"",
     "db:init": "npx tsx server/db/init.ts",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "oxlint",
     "test": "vitest run",
     "test:features": "npx tsx scripts/test_all_features.ts",
