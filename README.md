@@ -106,3 +106,7 @@ npm run build
 
 ## ⚖️ Advisory Disclaimer
 *PermitFlow Nexus is a working demonstration platform built with simulated Maharashtra department workflows, mock AI OCR logic, and seed datasets. It is designed so real government single-window APIs (such as MAITRI) can be integrated seamlessly in production.*
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
